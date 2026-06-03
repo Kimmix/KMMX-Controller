@@ -8,7 +8,7 @@
 ### Controller V2 Preview
 <img src="doc\ControllerV2.png" alt="Kimmix Controller V2">
 
-### Controller V5 Preview
+### Controller V4 Preview
 <img src="doc\ControllerV4.3.png" alt="Kimmix Controller V4">
 
 </div>
