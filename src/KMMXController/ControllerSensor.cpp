@@ -26,6 +26,9 @@ void KMMXController::setupSensors() {
     eyeState.setState(EyeStateEnum::IDLE, true, 0);      // Persistent, no timeout (initial state)
     mouthState.setState(MouthStateEnum::IDLE, true, 0);  // Persistent, no timeout (initial state)
 
+    // Connect FXState to EyeState for automatic blushingFX rendering
+    fxState.setEyeStatePtr(&eyeState);
+
     // Create sensor reading task on Core 1 (separate from rendering for better performance)
     // This prevents slow I2C sensors (like VL6180X) from blocking the render task
     xTaskCreatePinnedToCore(readSensorTask, "SensorTask", 4096, this, 2, &sensorTaskHandle, 1);
