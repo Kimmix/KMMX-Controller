@@ -101,6 +101,13 @@ class KMMXController {
 
     void renderFace();
     void handleBoop();
+    void handleBoopCompleted(float speed, bool eyeAlreadyActive);
+    void handleBoopInRange();
+    void handleBoopContinuous(bool eyeAlreadyActive);
+    void handleBoopAngry();
+    void handleBoopIdle(bool wasInRange, bool wasBooped);
+    template<typename StateType, typename EnumType>
+    void setStateIfDifferent(StateType& state, EnumType targetState, unsigned long timeout);
     void updateOLED();
     void drawOLEDFaceMirror(const SensorData& sensors);
     void drawOLEDSensorBars(const SensorData& sensors);
@@ -150,9 +157,8 @@ class KMMXController {
     bool isSleeping = false;
     bool accelerometerInitialized = false;  // Track if accelerometer successfully initialized
     bool oledInitialized = false;  // Track if OLED successfully initialized
-    bool boopInitialized = false, inBoopRange = false, isBooping = false, isContinuousBoop = false, isAngry = false;
+    bool boopInitialized = false;
     unsigned short prevHornBright = hornInitBrightness;
-    float boopSpeed = 0.0f;
     // Motion detection state structures
     struct TiltDetector {
         float tiltAngleX = 0.0f;  // Forward/back tilt

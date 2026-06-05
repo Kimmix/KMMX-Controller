@@ -21,6 +21,18 @@ enum BoopState {
 };
 
 /**
+ * Boop status structure consolidating all output states.
+ * Returned by getBoop() to simplify the interface.
+ */
+struct BoopStatus {
+    bool isInRange = false;        // Object in boop range (boopMinThreshold < value < boopMaxThreshold)
+    bool isBoop = false;           // Boop completed (reached boopMaxThreshold)
+    bool isContinuous = false;     // Continuous boop active (holding at boopMaxThreshold)
+    bool isAngry = false;          // Angry state (value >= 1023, too close)
+    float boopSpeed = 0.0f;        // Approach speed (0.0-1.0) for animation intensity
+};
+
+/**
  * Boop detection and state management.
  *
  * Processes normalized proximity sensor data (0-1023) and manages state
@@ -42,11 +54,7 @@ class Boop {
      * Process sensor value and update boop state.
      *
      * @param sensorValue Normalized proximity (0-1023)
-     * @param isInRange Output: in boop range
-     * @param isBoop Output: boop completed
-     * @param boopSpeed Output: approach speed (0.0-1.0)
-     * @param isContinuous Output: continuous boop active
-     * @param isAngry Output: angry state (too close)
+     * @return BoopStatus structure containing all boop state flags
      */
-    void getBoop(uint16_t& sensorValue, bool& isInRange, bool& isBoop, float& boopSpeed, bool& isContinuous, bool& isAngry);
+    BoopStatus getBoop(uint16_t sensorValue);
 };

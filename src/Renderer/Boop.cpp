@@ -22,32 +22,28 @@ float Boop::calculateBoopSpeed() {
  * - BOOP_CONTINUOUS -> IDLE: value < boopMaxThreshold
  * - ANGRY -> IDLE: value < boopMaxThreshold
  */
-void Boop::getBoop(uint16_t& sensorValue, bool& isInRange, bool& isBoop, float& boopSpeed, bool& isContinuous, bool& isAngry) {
-    isInRange = false;
-    isBoop = false;
-    isContinuous = false;
-    isAngry = false;
+BoopStatus Boop::getBoop(uint16_t sensorValue) {
+    BoopStatus status;
 
     switch (currentBoopState) {
         case IDLE:
             if (sensorValue > boopMinThreshold && sensorValue < boopMaxThreshold) {
                 currentBoopState = BOOP_IN_PROGRESS;
                 boopStartTime = millis();
-                isInRange = true;
+                status.isInRange = true;
             } else if (sensorValue >= 1023) {
                 currentBoopState = ANGRY;
-                isAngry = true;
+                status.isAngry = true;
             }
             break;
 
         case BOOP_IN_PROGRESS:
-            isInRange = true;
+            status.isInRange = true;
             if (sensorValue >= boopMaxThreshold) {
-                boopSpeed = calculateBoopSpeed();
-                if (boopSpeed > 0.0) {
-                    isBoop = true;
+                status.boopSpeed = calculateBoopSpeed();
+                if (status.boopSpeed > 0.0) {
+                    status.isBoop = true;
                     currentBoopState = BOOP_CONTINUOUS;
-                    isContinuous = true;
                 } else {
                     currentBoopState = IDLE;
                 }
@@ -57,17 +53,19 @@ void Boop::getBoop(uint16_t& sensorValue, bool& isInRange, bool& isBoop, float& 
             break;
 
         case BOOP_CONTINUOUS:
-            isContinuous = true;
+            status.isContinuous = true;
             if (sensorValue < boopMaxThreshold) {
                 currentBoopState = IDLE;
             }
             break;
 
         case ANGRY:
-            isAngry = true;
+            status.isAngry = true;
             if (sensorValue < boopMaxThreshold) {
                 currentBoopState = IDLE;
             }
             break;
     }
+
+    return status;
 }
