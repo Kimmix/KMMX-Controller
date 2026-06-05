@@ -29,7 +29,7 @@ void FXState::update() {
 
 void FXState::handleAutoStateChanges() {
     if (eyeState && eyeState->getState() == EyeStateEnum::SMILE) {
-        currentState = FXStateEnum::Blush;
+        // currentState = FXStateEnum::Blush;
     } else if (eyeState && eyeState->getState() == EyeStateEnum::CRY) {
         // Keep tears active while in CRY state
         if (currentState != FXStateEnum::Tears) {
