@@ -29,12 +29,11 @@ void MouthState::startMic() {
 }
 
 void MouthState::update() {
-    // Check for custom duration auto-reset
     if (customResetDuration > 0) {
         if (millis() - stateStartTime >= customResetDuration) {
-            customResetDuration = 0;  // Reset for next state
-            setState(prevState, false, 0);  // Properly restore state (not just direct assignment)
-            return;  // Exit early - state just changed
+            customResetDuration = 0;
+            setState(prevState, false, 0);
+            return;
         }
     }
 
@@ -45,11 +44,9 @@ void MouthState::update() {
             break;
         case MouthStateEnum::BOOP:
             display->drawMouth(mouthOH15);
-            // No more manual timeout check - handled by customResetDuration
             break;
         case MouthStateEnum::ANGRYBOOP:
             angryBoop();
-            // No more manual timeout check - handled by customResetDuration
             break;
         case MouthStateEnum::TALKING:
             if (visemeFrame == mouthDefault) {
@@ -107,17 +104,16 @@ void MouthState::setState(MouthStateEnum newState, bool isPersistent, unsigned l
     if (currentState != newState) {
         isTransitioning = true;
         currentState = newState;
-        stateStartTime = millis();  // Track state start time
+        stateStartTime = millis();
     }
 }
 
 void MouthState::savePrevState(MouthStateEnum newState) {
-    // No exclusions - let isPersistent parameter control saving logic
     prevState = newState;
 }
 
 void MouthState::playPrevState() {
-    setState(prevState, false, 0);  // Restore previous state (temporary, manual control)
+    setState(prevState, false, 0);
 }
 
 MouthStateEnum MouthState::getState() const {
@@ -138,17 +134,13 @@ void MouthState::resetMovingMouth() {
 
 void MouthState::setSlowAnimation(bool slow) {
     if (slow) {
-        // Slow breathing: use preset
         TimeBasedAnimation::setConfig(idleAnim, TimeBasedAnimation::CONFIG_BREATHING_SLOW);
     } else {
-        // Normal breathing: use preset
         TimeBasedAnimation::setConfig(idleAnim, TimeBasedAnimation::CONFIG_BREATHING);
     }
 }
 
 void MouthState::movingMouth() {
-    // Removed accelerometer-based tilt movement - replaced by motion detection system
-    // Default animation using TimeBasedAnimation
     mouthFrame = TimeBasedAnimation::update(idleAnim);
 }
 
@@ -188,11 +180,7 @@ void MouthState::initAnimationData(MouthAnimationData& data, const uint8_t** fra
 
     // Initialize transition animation (full animation, plays once)
     TimeBasedAnimation::init(data.transitionAnim, frames, frameCount, TimeBasedAnimation::CONFIG_TRANSITION);
-
-    // Initialize loop animation (last N frames only)
-    // If loopFrameCount is 0, no loop (animation plays once and holds on last frame)
     if (loopFrameCount > 0) {
-        // Uses pointer arithmetic to reference the last N frames without duplicating data
         TimeBasedAnimation::init(data.loopAnim, &frames[frameCount - loopFrameCount], loopFrameCount, loopConfig);
     }
 }
