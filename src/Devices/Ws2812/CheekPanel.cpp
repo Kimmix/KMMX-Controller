@@ -1,4 +1,5 @@
 #include "CheekPanel.h"
+#include "config.h"
 
 CheekPanel::CheekPanel(uint16_t numLeds, uint8_t pin)
     : strip(numLeds, pin, NEO_GRB + NEO_KHZ800),
@@ -6,7 +7,7 @@ CheekPanel::CheekPanel(uint16_t numLeds, uint8_t pin)
       animStep(0),
       animDirection(1),
       centerPos(0),
-      brightness(255) {}
+      brightness(sideLEDBrightness) {}
 
 void CheekPanel::configure(uint32_t color1, uint32_t color2, uint16_t updateInterval) {
     this->color1 = color1;

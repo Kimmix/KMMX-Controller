@@ -27,11 +27,14 @@ void KMMXController::setHornBrightness(int i) {
 }
 
 int KMMXController::getCheekBrightness() {
-    return cheekPanel.getBrightness();
+    // Map 0-255 internal range back to 0-100 for BLE interface
+    return fastMap<int>(cheekPanel.getBrightness(), 0, 255, 0, 100);
 }
 
 void KMMXController::setCheekBrightness(int i) {
-    cheekPanel.setBrightness(constrain(i, 0, 255));
+    // Map 0-100 input range to 0-255 range for NeoPixel brightness
+    int mappedBrightness = fastMap<int>(constrain(i, 0, 100), 0, 100, 0, 255);
+    cheekPanel.setBrightness(mappedBrightness);
 }
 
 void KMMXController::setCheekBackgroundColor(uint8_t r, uint8_t g, uint8_t b) {

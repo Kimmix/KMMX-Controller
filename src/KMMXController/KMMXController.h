@@ -158,7 +158,7 @@ class KMMXController {
     bool accelerometerInitialized = false;  // Track if accelerometer successfully initialized
     bool oledInitialized = false;  // Track if OLED successfully initialized
     bool boopInitialized = false;
-    unsigned short prevHornBright = hornInitBrightness;
+    unsigned short prevHornBright = hornBrightness;
     // Motion detection state structures
     struct TiltDetector {
         float tiltAngleX = 0.0f;  // Forward/back tilt

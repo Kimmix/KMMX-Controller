@@ -113,13 +113,13 @@ const uint8_t googlyPupilOffsetX = eyeOffsetX + 8;
 
 // --- Side LED Strip (WS2812) ---
 const uint8_t argbCount = 24;                   // Number of LEDs in the side strip
-const uint8_t sideLEDBrightness = 255;          // LED brightness (0-255)
+const uint8_t sideLEDBrightness = 128;          // LED brightness (0-255, mapped from 0-100 via BLE)
 const uint32_t sideColor1RGB = 0xFF446C;        // Base color: #FF446C Reddish Pink
 const uint32_t sideColor2RGB = 0xF9826C;        // Wave color: #F9826C Coral
 const uint16_t sideLEDFadeInterval = 100;       // Wave update interval (ms) - slow, relaxed animation
 
 // --- Horn LED (PWM) ---
-const uint8_t hornInitBrightness = 15;          // Initial brightness (0-255)
+const uint8_t hornBrightness = 20;              // Horn brightness (0-100)
 const uint8_t hornPwmChannel = 0;               // PWM channel number
 const uint16_t hornFrequency = 20000;           // PWM frequency in Hz
 const uint8_t hornResolution = 8;               // PWM resolution in bits

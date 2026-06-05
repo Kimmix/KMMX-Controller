@@ -5,8 +5,8 @@ HornLED::HornLED() {
     ledcSetup(hornPwmChannel, hornFrequency, hornResolution);
     ledcAttachPin(LED_PWM_PIN, hornPwmChannel);
     // Initialize brightness
-    currentBrightness = hornInitBrightness;
-    targetBrightness = hornInitBrightness;
+    currentBrightness = hornBrightness;
+    targetBrightness = hornBrightness;
     pwmValue = fastMap<int>(currentBrightness, 0, 100, hornMinBrightness, hornMaxBrightness);
     ledcWrite(hornPwmChannel, pwmValue);
 }
