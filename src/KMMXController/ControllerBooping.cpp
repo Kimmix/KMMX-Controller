@@ -34,7 +34,7 @@ void KMMXController::handleBoop() {
         // Object in boop range (boopMinThreshold < value < boopMaxThreshold)
         else if (inBoopRange) {
             if (mouthState.getState() != MouthStateEnum::BOOP) {
-                mouthState.setState(MouthStateEnum::BOOP, false, 700);
+                mouthState.setState(MouthStateEnum::BOOP, false, 0);  // No timeout while in range
             }
             if (isSleeping) {
                 resetIdleTime();
@@ -46,6 +46,9 @@ void KMMXController::handleBoop() {
         else if (isContinuousBoop) {
             if (eyeState.getState() != EyeStateEnum::BOOP) {
                 eyeState.setState(EyeStateEnum::BOOP, false, 2500);
+            }
+            if (mouthState.getState() != MouthStateEnum::BOOP) {
+                mouthState.setState(MouthStateEnum::BOOP, false, 0);  // No timeout while holding
             }
             statusLED.setColor(Color::PINK);
             wasBooped = true;
@@ -63,6 +66,11 @@ void KMMXController::handleBoop() {
         }
         // Idle (no boop conditions)
         else {
+            // If just left boop range or continuous boop, set timeout to fade out mouth
+            if ((wasInBoopRange || wasBooped) && mouthState.getState() == MouthStateEnum::BOOP) {
+                mouthState.setState(MouthStateEnum::BOOP, false, 700);
+            }
+
             // Show sad if approached but didn't complete boop
             if (wasInBoopRange && !wasBooped) {
                 if (eyeState.getState() != EyeStateEnum::SAD) {
