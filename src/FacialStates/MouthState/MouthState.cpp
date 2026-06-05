@@ -105,13 +105,10 @@ void MouthState::update() {
 }
 
 void MouthState::setState(MouthStateEnum newState, bool isPersistent, unsigned long durationMs) {
-    // Save previous state ONLY if persistent
-    if (isPersistent) {
-        savePrevState(currentState);
+    // Mark as transitioning if state is changing
+    if (currentState != newState) {
+        isTransitioning = true;
     }
-
-    // Universal duration handling - no special cases
-    customResetDuration = durationMs;
 
     // State-specific initialization
     switch (newState) {
@@ -146,10 +143,14 @@ void MouthState::setState(MouthStateEnum newState, bool isPersistent, unsigned l
             break;
     }
 
-    if (currentState != newState) {
-        isTransitioning = true;
-        currentState = newState;
-        stateStartTime = millis();
+    // Update state and timestamp
+    currentState = newState;
+    stateStartTime = millis();
+    customResetDuration = durationMs;  // Store custom duration (0 = infinite)
+
+    // Only save as previous state if persistent
+    if (isPersistent) {
+        savePrevState(currentState);
     }
 }
 
