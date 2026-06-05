@@ -7,12 +7,14 @@
 [![Status](https://img.shields.io/badge/Status-In%20Development-orange.svg)](https://github.com/Kimmix/KMMX-Fursuit)
 
 ### Controller V2 Preview
-<img src="doc\ControllerV2.png" alt="Kimmix Controller V2">
+<img src="doc\ControllerV2.webp" alt="Kimmix Controller V2">
 
 ### Controller V4 Preview
-<img src="doc\ControllerV4.3.png" alt="Kimmix Controller V4">
+<img src="doc\ControllerV4.3.webp" alt="Kimmix Controller V4">
 
 </div>
+
+Custom PCB designed in collaboration with [Tas.Polar](https://github.com/BaiTian6641)
 
 ## 📢 Project Status
 
@@ -38,44 +40,23 @@
 ## 🦊 Demo & Gallery
 
 <div align="center">
-  <h3>Sleeping Idle Animation</h3>
-  <a href="https://x.com/kimmix00/status/1792751189395927293/video/1" target="_blank">
-    <img src="https://img.shields.io/badge/View%20on%20X-Sleeping%20Animation-1DA1F2" alt="Sleeping Animation Demo">
-  </a>
 
-  <h3>Booping Interaction</h3>
-  <a href="https://x.com/kimmix00/status/1687878110430339072/video/1" target="_blank">
-    <img src="https://img.shields.io/badge/View%20on%20X-Booping%20Demo-1DA1F2" alt="Booping Demo">
-  </a>
+### Booping Interaction
+<img src="doc/demo-boop.webp" alt="Booping Demo" width="400">
 
-  <h3>Bluetooth Smartphone Control</h3>
-  <a href="https://x.com/kimmix00/status/1704465522497397001/video/1" target="_blank">
-    <img src="https://img.shields.io/badge/View%20on%20X-BLE%20Control%20Demo-1DA1F2" alt="BLE Control Demo">
-  </a>
+[🎥 Watch full video on X](https://x.com/kimmix00/status/1687878110430339072/video/1)
 
-  <h3>Viseme</h3>
-  <a href="https://x.com/kimmix00/status/1638887564550754306/video/1" target="_blank">
-    <img src="https://img.shields.io/badge/View%20on%20X-BLE%20Control%20Demo-1DA1F2" alt="Viseme Demo">
-  </a>
+### Bluetooth Smartphone Control
+<img src="doc/demo-ble.webp" alt="BLE Control Demo" width="400">
 
-  <i>[ Future gallery of additional photos/videos showing the fursuit in action ]</i>
+[🎥 Watch full video on X](https://x.com/kimmix00/status/1704465522497397001/video/1)
+
+### Viseme (Audio-Reactive)
+<img src="doc/demo-viseme.webp" alt="Viseme Demo" width="400">
+
+[🎥 Watch full video on X](https://x.com/kimmix00/status/1638887564550754306/video/1)
+
 </div>
-
-## 🛠️ Hardware
-
-<details>
-<summary>Click to expand hardware details</summary>
-
-This project is designed to run on an ESP32-based custom board (specifically the ESP32-S3) and includes:
-
-- **HUB75 LED Matrix panels** (64x32 pixel resolution)
-- **APDS9930** proximity sensor for booping interaction
-- **LIS3DH** accelerometer for motion detection
-- **I2S Microphone** for audio input (viseme detection)
-- **WS2812 RGB LEDs** for cheek panels and status indicators
-- **PWM-controlled LEDs** for horn illumination
-
-</details>
 
 ## 📋 Project Structure
 
@@ -99,70 +80,75 @@ This project is designed to run on an ESP32-based custom board (specifically the
 
 ## 🚀 Getting Started
 
+> **⚠️ Advanced Users Only:** This setup assumes familiarity with ESP32 development, PlatformIO, and embedded systems. The configuration is specific to my custom hardware, so expect to need significant modifications for your own build.
+
 ### Prerequisites
 
-- [PlatformIO](https://platformio.org/) (recommended) or Arduino IDE
-- ESP32 development board (preferably ESP32-S3)
-- LED matrix panels and other hardware components as specified in the code
+**Required:**
+- [PlatformIO](https://platformio.org/) IDE or PlatformIO Core
+- ESP32-S3 development board (or compatible ESP32 variant)
+- Basic understanding of C/C++ and embedded development
+- Soldering skills for hardware assembly
 
-### Setup
-
-<details>
-<summary>Click to expand setup instructions</summary>
-
-1. Clone the repository:
-
-   ```
-   git clone https://github.com/yourusername/KMMX-Fursuit.git
-   ```
-
-2. Open the project in PlatformIO or Arduino IDE
-
-3. Install the required dependencies (listed in platformio.ini):
-   - h2zero/NimBLE-Arduino
-   - Adafruit GFX Library
-   - Adafruit MPR121
-   - arduinoFFT
-   - Adafruit LIS3DH
-   - ESP32 HUB75 LED MATRIX PANEL DMA Display
-   - APDS-9930 Ambient Light and Proximity Sensor
-   - Adafruit NeoPixel
-
-4. Configure your hardware connections in `src/config.h`
-
-5. Build and upload to your ESP32 board
-
-</details>
+**Hardware Components:**
+- HUB75 LED Matrix panels (64x32 resolution recommended)
+- APDS9930 proximity sensor (optional, for booping feature)
+- LIS3DH accelerometer (optional, for motion detection)
+- I2S microphone module (optional, for viseme/audio reactivity)
+- WS2812 LED strips (optional, for cheek/status LEDs)
+- Appropriate power supply (5V, sufficient current for LED panels)
 
 ## ⚙️ Configuration
 
-The project is highly configurable. Main settings can be adjusted in `src/config.h`, including:
+> **Note:** Configuration is currently scattered across multiple files and tailored to my specific hardware. Expect to dig through the source code to customize for your setup.
 
-- Pin assignments for all hardware components
-- LED matrix resolution and brightness settings
-- Animation timing parameters
-- Sensor sensitivity thresholds
-- BLE connectivity settings
+Key configuration areas you'll need to review:
 
-## 🎮 Usage
+- **Pin assignments** for all hardware components
+- **LED matrix settings** (resolution, brightness, color correction)
+- **Animation timing** parameters and frame rates
+- **Sensor thresholds** (proximity, accelerometer sensitivity)
+- **Bluetooth/BLE** device name and service UUIDs
+- **Feature flags** to enable/disable specific hardware modules
 
-Once programmed, the controller will:
+Look for configuration in:
+- Pin definitions in device-specific source files
+- Main controller initialization code
+- Individual device driver files in `src/Devices/`
 
-1. Initialize all hardware components
-2. Start displaying default eye and mouth animations
-3. Respond to "boops" via the proximity sensor
-4. React to speech and sounds with viseme animations
-5. Respond to physical movement via the accelerometer
-6. Accept Bluetooth commands for changing expressions and settings
+## 🎮 Web Control Panel
+
+Control your fursuit remotely via Bluetooth using a web browser!
+
+<div align="center">
+  <img src="doc\ble-web-app.webp" alt="BLE Web Control Panel" width="600">
+
+  <p>
+    <strong>📦 <a href="https://github.com/Kimmix/KMMX-ControlPanel">Project Repository</a></strong> |
+    <strong>🌐 <a href="https://kimmix-control.anthro.asia">Live Demo</a></strong>
+  </p>
+
+  <p>A web-based control interface using Web Bluetooth API to wirelessly control expressions, animations, and settings from your smartphone or computer.</p>
+</div>
+
+**Features:**
+- 📱 Works on any device with Web Bluetooth support (Chrome/Edge on Android, macOS, Windows)
+- 🎭 Change facial expressions on the fly
+- 🎨 Adjust LED brightness and colors
+- ⚙️ Configure controller settings remotely
+- 🔋 No app installation required - runs directly in your browser
 
 ## ✨ Animation Creation
 
-Create your own custom animations using the bitmap tool:
+You can create custom animations using the included bitmap tools:
 
-1. Design your animations in Adobe Photoshop or After Effects
-2. Use the provided converter tool in `bitmapTool/` to convert to the proper format
-3. Add the generated header files to your project
-4. Configure the new animations in the controller
+1. Design your animations as image sequences in Adobe Photoshop or After Effects
+2. Export frames as individual images
+3. Use the converter tool in `bitmapTool/` to convert to C++ bitmap arrays
+4. Add the generated header files to your project's `src/Bitmaps/` directory
+5. Register and configure the new animations in the controller code
+
+**Note:** The bitmap tool is specific to my workflow and may require customization for your needs. Documentation for the tool is limited, so expect some trial and error.
 
 ## 📄 License
 
