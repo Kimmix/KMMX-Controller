@@ -17,10 +17,25 @@ MouthState::MouthState(Hub75DMA* display) : display(display) {
     initAnimationData(ehData, mouthEhAnimation, ehLength, 0, TimeBasedAnimation::CONFIG_ANTICIPATION);
 
     // Pout: loop last 10 frames
-    initAnimationData(poutData, mouthPoutAnimation, poutLength, 10, TimeBasedAnimation::CONFIG_SMOOTH_LOOP);
+    initAnimationData(poutData, mouthPoutAnimation, poutLength, 20, TimeBasedAnimation::CONFIG_SMOOTH_LOOP);
 
     // Drooling: loop last 20 frames
     initAnimationData(droolingData, mouthDroolingAnimation, droolingLength, 20, TimeBasedAnimation::CONFIG_BREATHING);
+
+    // Angry: loop last 20 frames
+    initAnimationData(angryNewData, mouthAngryNewAnimation, angryNewLength, 20, TimeBasedAnimation::CONFIG_SMOOTH_LOOP);
+
+    // Lower: loop last 20 frames
+    initAnimationData(lowerData, mouthLowerAnimation, lowerLength, 20, TimeBasedAnimation::CONFIG_SMOOTH_LOOP);
+
+    // Shock: loop last 20 frames
+    initAnimationData(shockData, mouthShockAnimation, shockLength, 20, TimeBasedAnimation::CONFIG_SMOOTH_LOOP);
+
+    // Small: loop last 20 frames
+    initAnimationData(smallData, mouthSmallAnimation, smallLength, 20, TimeBasedAnimation::CONFIG_SMOOTH_LOOP);
+
+    // Worry: loop last 20 frames
+    initAnimationData(worryData, mouthWorryAnimation, worryLength, 20, TimeBasedAnimation::CONFIG_SMOOTH_LOOP);
 }
 
 void MouthState::startMic() {
@@ -69,6 +84,21 @@ void MouthState::update() {
         case MouthStateEnum::DROOLING:
             playAnimationWithLoop(droolingData);
             break;
+        case MouthStateEnum::ANGRY:
+            playAnimationWithLoop(angryNewData);
+            break;
+        case MouthStateEnum::LOWER:
+            playAnimationWithLoop(lowerData);
+            break;
+        case MouthStateEnum::SHOCK:
+            playAnimationWithLoop(shockData);
+            break;
+        case MouthStateEnum::SMALL:
+            playAnimationWithLoop(smallData);
+            break;
+        case MouthStateEnum::WORRY:
+            playAnimationWithLoop(worryData);
+            break;
         default:
             break;
     }
@@ -96,6 +126,21 @@ void MouthState::setState(MouthStateEnum newState, bool isPersistent, unsigned l
             break;
         case MouthStateEnum::DROOLING:
             resetAnimation(droolingData);
+            break;
+        case MouthStateEnum::ANGRY:
+            resetAnimation(angryNewData);
+            break;
+        case MouthStateEnum::LOWER:
+            resetAnimation(lowerData);
+            break;
+        case MouthStateEnum::SHOCK:
+            resetAnimation(shockData);
+            break;
+        case MouthStateEnum::SMALL:
+            resetAnimation(smallData);
+            break;
+        case MouthStateEnum::WORRY:
+            resetAnimation(worryData);
             break;
         default:
             break;

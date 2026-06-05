@@ -173,6 +173,21 @@ void KMMXController::setMouth(int i) {
         case 4:
             mouthState.setState(MouthStateEnum::DROOLING, true, 0);  // Persistent, no timeout
             break;
+        case 5:
+            mouthState.setState(MouthStateEnum::ANGRY, true, 0);  // Persistent, no timeout
+            break;
+        case 6:
+            mouthState.setState(MouthStateEnum::LOWER, true, 0);  // Persistent, no timeout
+            break;
+        case 7:
+            mouthState.setState(MouthStateEnum::SHOCK, true, 0);  // Persistent, no timeout
+            break;
+        case 8:
+            mouthState.setState(MouthStateEnum::SMALL, true, 0);  // Persistent, no timeout
+            break;
+        case 9:
+            mouthState.setState(MouthStateEnum::WORRY, true, 0);  // Persistent, no timeout
+            break;
         default:
             mouthState.setState(MouthStateEnum::IDLE, true, 0);  // Persistent, no timeout
             mouthState.savePrevState(MouthStateEnum::IDLE);  // Reset restore point to IDLE for clean slate

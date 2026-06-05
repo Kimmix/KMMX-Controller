@@ -104,6 +104,11 @@ namespace StateNames {
             case MouthStateEnum::EH:        return "EH";
             case MouthStateEnum::POUT:      return "POUT";
             case MouthStateEnum::DROOLING:  return "DROOL";
+            case MouthStateEnum::ANGRY:     return "ANGRY";
+            case MouthStateEnum::LOWER:     return "LOWER";
+            case MouthStateEnum::SHOCK:     return "SHOCK";
+            case MouthStateEnum::SMALL:     return "SMALL";
+            case MouthStateEnum::WORRY:     return "WORRY";
             default:                        return "?";
         }
     }
