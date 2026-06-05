@@ -54,6 +54,11 @@ constexpr float pettingHappinessEndThreshold = 20.0f;            // Happiness le
 constexpr float pettingDeltaTimeMax = 2.0f;                      // Maximum delta time in seconds to accept (sanity check for time jumps)
 
 // ============================================================================
+// Boop Detection - Detects proximity sensor interactions
+// ============================================================================
+inline bool enableBoopDetection = true;                          // Enable/disable boop detection feature (BLE controllable)
+
+// ============================================================================
 // Tap Detection - Detects light taps for glitch effects
 // ============================================================================
 inline bool enableTapDetection = true;                           // Enable/disable tap detection feature (BLE controllable)

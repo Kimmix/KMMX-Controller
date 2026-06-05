@@ -1,12 +1,13 @@
 #include "KMMXController.h"
 #include "Network/BLE.h"
+#include "MotionDetectionConfig.h"
 extern BLEManager& bleManager;
 
 void KMMXController::update() {
     statusLED.update();
     cheekPanel.update();
     hornLED.update();
-    if (boopInitialized) {
+    if (boopInitialized && enableBoopDetection) {
         handleBoop();
     }
     if (oledInitialized) {
