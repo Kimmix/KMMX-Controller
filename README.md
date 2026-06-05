@@ -4,6 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Platform: ESP32](https://img.shields.io/badge/Platform-ESP32-blue.svg)](https://www.espressif.com/en/products/socs/esp32)
 [![IDE: PlatformIO](https://img.shields.io/badge/IDE-PlatformIO-orange.svg)](https://platformio.org/)
+[![Status](https://img.shields.io/badge/Status-In%20Development-orange.svg)](https://github.com/Kimmix/KMMX-Fursuit)
 
 ### Controller V2 Preview
 <img src="doc\ControllerV2.png" alt="Kimmix Controller V2">
@@ -12,6 +13,17 @@
 <img src="doc\ControllerV4.3.png" alt="Kimmix Controller V4">
 
 </div>
+
+## 📢 Project Status
+
+> **Note:** This is a personal project built for my own fursuit and is currently in active development. While the code is shared under the MIT License and you're welcome to use, modify, and adapt it for your own projects, please be aware that:
+>
+> - ⚠️ **No support is provided** at this time
+> - 🔧 Features and APIs may change without notice
+> - 🚧 Documentation may be incomplete or outdated
+> - 🐛 Bugs and incomplete features are expected
+>
+> Feel free to fork, experiment, and build upon this work within the terms of the MIT License. I'm sharing this publicly in the spirit of the maker community, but I'm not able to provide assistance, answer questions, or accept contributions at this stage of development.
 
 ## 🌟 Features
 
@@ -154,12 +166,31 @@ Create your own custom animations using the bitmap tool:
 
 ## 📄 License
 
-This project is licensed under the terms specified in the LICENSE file.
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+**TL;DR:** You're free to use, modify, and distribute this code for any purpose (commercial or personal), but it comes with no warranty. This project was built for my personal use, so while you're welcome to use it, please understand it's tailored to my specific hardware setup and requirements.
+
+## 🤝 Support & Contributing
+
+**Current Status:** Not accepting contributions or providing support.
+
+As this is a personal project still in active development, I'm not currently:
+- ❌ Accepting pull requests or contributions
+- ❌ Providing technical support or troubleshooting help
+- ❌ Answering questions about setup or usage
+- ❌ Maintaining issues or feature requests
+
+**However**, you're absolutely encouraged to:
+- ✅ Fork this repository and make it your own
+- ✅ Learn from the code and adapt it to your needs
+- ✅ Share your own creations with the community
+- ✅ Use this as a starting point for your own fursuit projects
 
 ## 📱 Contact
 
 <div align="center">
-  <p>For questions or support, reach out on Discord: kimmix</p>
+  <p>Find me on Discord: kimmix</p>
+  <p>Or my website: <a href="https://kimmix.anthro.asia/" target="_blank">kimmix.anthro.asia/</a></p>
 
 </div>
 
