@@ -34,16 +34,16 @@
 #define CH_C 19
 #define CH_D 20
 #define CH_E 17                     // Required for two panels or 64x64 panels with 1/32 scan
-#define CLK 14                      // V4: Changed from 41
-#define LAT 3                       // V4: Changed from 40
-#define OE 9                        // V4: Changed from 39
+#define CLK 14
+#define LAT 3
+#define OE 9
 
 // --- Other Pins ---
-#define LED_PWM_PIN 42              // V4: Horn LED (PWM controlled) - Changed from 21
-#define RGB_STATUS_PIN 38           // V4: RGB status LED (SK6812) - Changed from 45
-#define ARGB_PIN 10                 // V4: Side ARGB LED strip - Changed from 14
+#define LED_PWM_PIN 42              // Horn LED (PWM controlled)
+#define RGB_STATUS_PIN 38           // RGB status LED (SK6812)
+#define ARGB_PIN 10                 // Side ARGB LED strip
 
 // --- Fan Control Pins (V4 only) ---
-#define FAN_PWM_PIN 40              // V4: Fan PWM control
-#define FAN_SPD_PIN 41              // V4: Fan tachometer (speed readback)
 #define HAS_FAN_CONTROL 1           // Feature flag for fan control
+#define FAN_PWM_PIN 40              // Fan PWM control
+#define FAN_SPD_PIN 41              // Fan tachometer (speed readback)

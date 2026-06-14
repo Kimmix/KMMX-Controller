@@ -43,4 +43,4 @@
 #define ARGB_PIN 14                 // Side ARGB LED strip (WS2812)
 
 // --- Fan Control (Not available on V2) ---
-#define HAS_FAN_CONTROL 0           // Feature flag - no fan on V2
+#define HAS_FAN_CONTROL 0           // Feature flag
