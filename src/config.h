@@ -17,39 +17,24 @@
 // ============================================================================
 
 // ============================================================================
-// SECTION 1: Hardware Pin Assignments (ESP32-S3)
+// SECTION 1: Hardware Version Detection & Pin Assignments
 // ============================================================================
 
-// --- I2C Pins ---
-#define S3_SDA 9
-#define S3_SCL 3
+// Compile-time hardware version check
+#if defined(KMMX_CONTROLLER_V4) && defined(KMMX_CONTROLLER_V2)
+    #error "Cannot define both KMMX_CONTROLLER_V4 and KMMX_CONTROLLER_V2 simultaneously!"
+#endif
 
-// --- I2S Audio Pins ---
-#define I2S_WS 10                   // Word Select (LRCLK)
-#define I2S_SD 12                   // Serial Data
-#define I2S_SCK 11                  // Serial Clock (BCLK)
-#define I2S_PORT I2S_NUM_0          // I2S peripheral number
+#if !defined(KMMX_CONTROLLER_V4) && !defined(KMMX_CONTROLLER_V2)
+    #error "Must define either KMMX_CONTROLLER_V4 or KMMX_CONTROLLER_V2 in build flags!"
+#endif
 
-// --- HUB75 LED Matrix Pins (avoid QSPI pins) ---
-#define R1 4
-#define G1 5
-#define BL1 6
-#define R2 7
-#define G2 15
-#define BL2 16
-#define CH_A 18
-#define CH_B 8
-#define CH_C 19
-#define CH_D 20
-#define CH_E 17                     // Required for two panels or 64x64 panels with 1/32 scan
-#define CLK 41
-#define LAT 40
-#define OE 39
-
-// --- Other Pins ---
-#define LED_PWM_PIN 21              // Horn LED (PWM controlled)
-#define RGB_STATUS_PIN 45           // RGB status LED (onboard)
-#define ARGB_PIN 14                 // Side ARGB LED strip (WS2812)
+// Import version-specific pin configuration
+#ifdef KMMX_CONTROLLER_V4
+    #include "../boards/pins_v4.h"
+#else
+    #include "../boards/pins_v2.h"
+#endif
 
 // ============================================================================
 // SECTION 2: BLE Device Names (can be overridden by platformio.ini)
