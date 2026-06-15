@@ -26,7 +26,6 @@
     #error "No accelerometer type defined! Check board pin configuration."
 #endif
 
-// Conditional fan control (Pro board only)
 #if HAS_FAN_CONTROL
     #include "Devices/Fan/Fan.h"
 #endif
@@ -85,7 +84,7 @@ class KMMXController {
     float getFPS() const;
     int getTargetFPS() const;
 
-    // Fan Control (Pro board only)
+    // Fan Control
     #if HAS_FAN_CONTROL
     void setFanSpeed(int speed);                                    // Set fan speed 0-100
     int getFanSpeed();                                              // Get current fan speed
@@ -105,7 +104,7 @@ class KMMXController {
     std::unique_ptr<IProximitySensor> proximitySensor;  // Auto-detected proximity sensor (VL6180X or APDS9930)
     SSD1306 oledDisplay;
     #if HAS_FAN_CONTROL
-    Fan fan;  // Fan controller (Pro board only)
+    Fan fan;  // Fan controller
     #endif
     // Double-buffer for thread-safe sensor access
     SensorData sensorBuffer[2];

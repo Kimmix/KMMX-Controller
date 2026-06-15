@@ -20,20 +20,16 @@
 // SECTION 1: Board Selection & Hardware Capabilities
 // ============================================================================
 
-// Compile-time board selection check
-#if defined(BOARD_KMMX_PRO) && defined(BOARD_KMMX_BASIC)
-    #error "Cannot define both BOARD_KMMX_PRO and BOARD_KMMX_BASIC simultaneously!"
-#endif
-
-#if !defined(BOARD_KMMX_PRO) && !defined(BOARD_KMMX_BASIC)
-    #error "Must define either BOARD_KMMX_PRO or BOARD_KMMX_BASIC in build flags!"
-#endif
-
-// Import board-specific pin configuration and capabilities
-#ifdef BOARD_KMMX_PRO
+#if defined(BOARD_KMMX_V2)
+    #include "../boards/kmmx-protogen-v2pins.h"
+#elif defined(BOARD_KMMX_V4)
     #include "../boards/kmmx-protogen-v4pins.h"
 #else
-    #include "../boards/kmmx-protogen-v2pins.h"
+    #error "Unknown board! Define BOARD_KMMX_V2 or BOARD_KMMX_V4"
+#endif
+
+#ifndef BOARD_NAME
+    #error "Board config missing BOARD_NAME"
 #endif
 
 // ============================================================================
@@ -106,7 +102,7 @@ const uint16_t sideLEDFadeInterval = 100;       // Wave update interval (ms) - s
 // --- Horn LED ---
 const uint8_t hornBrightness = 20;              // Horn brightness (0-100)
 
-// --- Fan Control (Pro board only) ---
+// --- Fan Control ---
 #if HAS_FAN_CONTROL
 const uint8_t fanDefaultSpeed = 0;              // Default fan speed on startup (0-100, 0 = off for safety)
 #endif

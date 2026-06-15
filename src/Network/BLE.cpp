@@ -305,7 +305,7 @@ class GlitchIntensityCallbacks : public NimBLECharacteristicCallbacks {
     }
 };
 
-// Fan Control Callbacks (Pro board only)
+// Fan Control Callbacks
 #if HAS_FAN_CONTROL
 class FanSpeedCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
@@ -464,7 +464,7 @@ void BLEManager::setup() {
         BLE_GLITCH_INTENSITY_CHARACTERISTIC_UUID,
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
 
-    // Fan Control Characteristics (Pro board only)
+    // Fan Control Characteristics
     #if HAS_FAN_CONTROL
     fanSpeedCharacteristic = pService->createCharacteristic(
         BLE_FAN_SPEED_CHARACTERISTIC_UUID,
@@ -544,7 +544,7 @@ void BLEManager::setup() {
     uint8_t glitchInt = controller.getGlitchIntensity();
     glitchIntensityCharacteristic->setValue(&glitchInt, 1);
 
-    // Set fan control default values (Pro board only)
+    // Set fan control default values
     #if HAS_FAN_CONTROL
     uint8_t fanSpeed = controller.getFanSpeed();
     fanSpeedCharacteristic->setValue(&fanSpeed, 1);
@@ -580,7 +580,7 @@ void BLEManager::setup() {
     tapSensitivityCharacteristic->setCallbacks(new TapSensitivityCallbacks());
     glitchIntensityCharacteristic->setCallbacks(new GlitchIntensityCallbacks());
 
-    // Set fan control callbacks (Pro board only)
+    // Set fan control callbacks
     #if HAS_FAN_CONTROL
     fanSpeedCharacteristic->setCallbacks(new FanSpeedCallbacks());
     fanEnabledCharacteristic->setCallbacks(new FanEnabledCallbacks());

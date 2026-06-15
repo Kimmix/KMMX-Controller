@@ -81,7 +81,7 @@ void KMMXController::readSensorTask(void* parameter) {
         ctrl->mouthState.setSensorData(current);
         ctrl->eyeState.setSensorData(current);
 
-        // Update fan controller (Pro board only)
+        // Update fan controller
         #if HAS_FAN_CONTROL
         ctrl->fan.update();
         #endif

@@ -27,7 +27,7 @@ class MotionEnableFlagsCallbacks;
 class TapSensitivityCallbacks;
 class GlitchIntensityCallbacks;
 
-// Fan Control Callbacks (Pro board only)
+// Fan Control Callbacks
 #if HAS_FAN_CONTROL
 class FanSpeedCallbacks;
 class FanEnabledCallbacks;
@@ -63,7 +63,7 @@ class BLEManager {
     friend class TapSensitivityCallbacks;
     friend class GlitchIntensityCallbacks;
 
-    // Fan Control Callbacks (Pro board only)
+    // Fan Control Callbacks
     #if HAS_FAN_CONTROL
     friend class FanSpeedCallbacks;
     friend class FanEnabledCallbacks;
@@ -101,7 +101,7 @@ class BLEManager {
     NimBLECharacteristic* tapSensitivityCharacteristic;
     NimBLECharacteristic* glitchIntensityCharacteristic;
 
-    // Fan Control Characteristics (Pro board only)
+    // Fan Control Characteristics
     #if HAS_FAN_CONTROL
     NimBLECharacteristic* fanSpeedCharacteristic;
     NimBLECharacteristic* fanEnabledCharacteristic;

@@ -3,11 +3,10 @@
 #include <Arduino.h>
 #include "config.h"
 
-// Fan control is only available on Pro board
 #if HAS_FAN_CONTROL
 
 /**
- * @brief Fan Controller for KMMX Pro Board
+ * @brief Fan Controller
  *
  * This class manages a 4-pin PWM-controlled fan with tachometer feedback.
  * The fan is controlled via a TXU0202DCUR level shifter chip.

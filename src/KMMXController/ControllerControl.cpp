@@ -222,7 +222,7 @@ void KMMXController::reboot() {
     ESP.restart();
 }
 
-// Fan Control (Pro board only)
+// Fan Control
 #if HAS_FAN_CONTROL
 void KMMXController::setFanSpeed(int speed) {
     fan.setSpeed(speed);
