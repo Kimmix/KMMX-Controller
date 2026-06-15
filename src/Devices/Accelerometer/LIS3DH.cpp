@@ -11,12 +11,6 @@ bool LIS3DH::setUp() {
     return sensorInitialized;
 }
 
-void LIS3DH::setDataRate(uint8_t rate) {
-    if (sensorInitialized) {
-        lis.setDataRate((lis3dh_dataRate_t)rate);
-    }
-}
-
 sensors_event_t* LIS3DH::getSensorEvent() {
     if (sensorInitialized) {
         lis.getEvent(&event);

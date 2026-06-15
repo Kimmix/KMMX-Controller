@@ -51,17 +51,42 @@ void KMMXController::readSensorTask(void* parameter) {
         uint8_t writeBuffer = 1 - ctrl->activeBuffer;
         SensorData& data = ctrl->sensorBuffer[writeBuffer];
 
-        // Read accelerometer (handles uninitialized state internally)
-        sensors_event_t* event = ctrl->accelerometer.getSensorEvent();
-        data.accelX = event->acceleration.x;
-        data.accelY = event->acceleration.y;
-        data.accelZ = event->acceleration.z;
+        // Update IMU sensor (reads accel + gyro, updates fusion filter)
+        #if ACCEL_TYPE_MPU6050
+        if (ctrl->accelerometerInitialized) {
+            ctrl->accelerometer.update();  // MPU6050: read both sensors + update fusion
+        }
+        #endif
+
+        // Read accelerometer data (handles uninitialized state internally)
+        sensors_event_t* accelEvent = ctrl->accelerometer.getSensorEvent();
+        data.accelX = accelEvent->acceleration.x;
+        data.accelY = accelEvent->acceleration.y;
+        data.accelZ = accelEvent->acceleration.z;
 
         // Calculate magnitude using ESP-DSP (hardware-accelerated)
         float accelVec[3] = {data.accelX, data.accelY, data.accelZ};
         float dotProduct;
         dsps_dotprod_f32(accelVec, accelVec, &dotProduct, 3);
         data.accelMagnitude = sqrtf(dotProduct);
+
+        // Read gyroscope and fusion data (MPU6050 only)
+        #if ACCEL_TYPE_MPU6050
+        if (ctrl->accelerometerInitialized) {
+            sensors_event_t* gyroEvent = ctrl->accelerometer.getGyroEvent();
+            data.gyroX = gyroEvent->gyro.x;
+            data.gyroY = gyroEvent->gyro.y;
+            data.gyroZ = gyroEvent->gyro.z;
+
+            // Calculate gyro magnitude
+            float gyroVec[3] = {data.gyroX, data.gyroY, data.gyroZ};
+            dsps_dotprod_f32(gyroVec, gyroVec, &dotProduct, 3);
+            data.gyroMagnitude = sqrtf(dotProduct);
+
+            // Get fused orientation angles
+            ctrl->accelerometer.getFusedOrientation(data.pitch, data.roll, data.yaw);
+        }
+        #endif
 
         // Read proximity (handles nullptr internally)
         data.proximity = ctrl->proximitySensor ? (ctrl->proximitySensor->read(&data.proximity), data.proximity) : 0;

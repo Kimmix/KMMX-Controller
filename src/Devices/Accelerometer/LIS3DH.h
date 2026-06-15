@@ -25,6 +25,5 @@ class LIS3DH : public IAccelerometer {
     LIS3DH();
     bool setUp() override;
     sensors_event_t* getSensorEvent() override;
-    void setDataRate(uint8_t rate) override;
     bool isInitialized() const override { return sensorInitialized; }
 };
