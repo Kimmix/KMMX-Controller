@@ -1,7 +1,8 @@
 {
     "build": {
         "arduino": {
-            "ldscript": "esp32s3_out.ld"
+            "ldscript": "esp32s3_out.ld",
+            "memory_type": "qio_opi"
         },
         "core": "esp32",
         "extra_flags": [
@@ -9,7 +10,8 @@
             "-DARDUINO_USB_MODE=1",
             "-DARDUINO_RUNNING_CORE=1",
             "-DARDUINO_EVENT_RUNNING_CORE=1",
-            "-DBOARD_KMMX_V2=1"
+            "-DBOARD_HAS_PSRAM",
+            "-DBOARD_KMMX_V4=1"
         ],
         "f_cpu": "240000000L",
         "f_flash": "80000000L",
@@ -21,10 +23,12 @@
             ]
         ],
         "mcu": "esp32s3",
-        "variant": "esp32s3"
+        "variant": "esp32s3",
+        "psram_type": "opi"
     },
     "connectivity": [
-        "wifi"
+        "wifi",
+        "bluetooth"
     ],
     "debug": {
         "default_tool": "esp-builtin",
@@ -37,13 +41,15 @@
         "arduino",
         "espidf"
     ],
-    "name": "Espressif ESP32-S3-DevKitC-1-N16R8V (16 MB QD, No PSRAM)",
+    "name": "Espressif ESP32-S3-DevKitC-1-N16R8 (16 MB QD, 8MB PSRAM)",
     "upload": {
         "flash_size": "16MB",
-        "maximum_ram_size": 327680,
+        "maximum_ram_size": 8519680,
         "maximum_size": 16777216,
         "require_upload_port": true,
-        "speed": 1500000
+        "speed": 1500000,
+        "use_1200bps_touch": true,
+        "wait_for_upload_port": true
     },
     "url": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/hw-reference/esp32s3/user-guide-devkitc-1.html",
     "vendor": "Espressif"

@@ -17,39 +17,20 @@
 // ============================================================================
 
 // ============================================================================
-// SECTION 1: Hardware Pin Assignments (ESP32-S3)
+// SECTION 1: Board Selection & Hardware Capabilities
 // ============================================================================
 
-// --- I2C Pins ---
-#define S3_SDA 9
-#define S3_SCL 3
+#if defined(BOARD_KMMX_V2)
+    #include "../boards/kmmx-protogen-v2pins.h"
+#elif defined(BOARD_KMMX_V4)
+    #include "../boards/kmmx-protogen-v4pins.h"
+#else
+    #error "Unknown board! Define BOARD_KMMX_V2 or BOARD_KMMX_V4"
+#endif
 
-// --- I2S Audio Pins ---
-#define I2S_WS 10                   // Word Select (LRCLK)
-#define I2S_SD 12                   // Serial Data
-#define I2S_SCK 11                  // Serial Clock (BCLK)
-#define I2S_PORT I2S_NUM_0          // I2S peripheral number
-
-// --- HUB75 LED Matrix Pins (avoid QSPI pins) ---
-#define R1 4
-#define G1 5
-#define BL1 6
-#define R2 7
-#define G2 15
-#define BL2 16
-#define CH_A 18
-#define CH_B 8
-#define CH_C 19
-#define CH_D 20
-#define CH_E 17                     // Required for two panels or 64x64 panels with 1/32 scan
-#define CLK 41
-#define LAT 40
-#define OE 39
-
-// --- Other Pins ---
-#define LED_PWM_PIN 21              // Horn LED (PWM controlled)
-#define RGB_STATUS_PIN 45           // RGB status LED (onboard)
-#define ARGB_PIN 14                 // Side ARGB LED strip (WS2812)
+#ifndef BOARD_NAME
+    #error "Board config missing BOARD_NAME"
+#endif
 
 // ============================================================================
 // SECTION 2: BLE Device Names (can be overridden by platformio.ini)
@@ -118,13 +99,13 @@ const uint32_t sideColor1RGB = 0xFF446C;        // Base color: #FF446C Reddish P
 const uint32_t sideColor2RGB = 0xF9826C;        // Wave color: #F9826C Coral
 const uint16_t sideLEDFadeInterval = 100;       // Wave update interval (ms) - slow, relaxed animation
 
-// --- Horn LED (PWM) ---
+// --- Horn LED ---
 const uint8_t hornBrightness = 20;              // Horn brightness (0-100)
-const uint8_t hornPwmChannel = 0;               // PWM channel number
-const uint16_t hornFrequency = 20000;           // PWM frequency in Hz
-const uint8_t hornResolution = 8;               // PWM resolution in bits
-const uint8_t hornMinBrightness = 2;            // Minimum safe brightness
-const uint8_t hornMaxBrightness = 200;          // Maximum safe brightness (255 can cause overheating!)
+
+// --- Fan Control ---
+#if HAS_FAN_CONTROL
+const uint8_t fanDefaultSpeed = 0;              // Default fan speed on startup (0-100, 0 = off for safety)
+#endif
 
 // ============================================================================
 // SECTION 5: Sensor and Interaction Configuration

@@ -14,7 +14,22 @@
 
 #include "Devices/LEDMatrixDisplay/Hub75DMA.h"
 #include "Devices/HornLED/HornLED.h"
-#include "Devices/Accelerometer/LIS3DH.h"
+
+// Conditional accelerometer based on board capabilities
+#if ACCEL_TYPE_MPU6050
+    #include "Devices/Accelerometer/MPU6050.h"
+    typedef MPU6050 AccelerometerType;
+#elif ACCEL_TYPE_LIS3DH
+    #include "Devices/Accelerometer/LIS3DH.h"
+    typedef LIS3DH AccelerometerType;
+#else
+    #error "No accelerometer type defined! Check board pin configuration."
+#endif
+
+#if HAS_FAN_CONTROL
+    #include "Devices/Fan/Fan.h"
+#endif
+
 #include "Devices/Proximity/IProximitySensor.h"
 #include "Devices/Ws2812/RGBStatus.h"
 #include "Devices/Ws2812/CheekPanel.h"
@@ -69,15 +84,28 @@ class KMMXController {
     float getFPS() const;
     int getTargetFPS() const;
 
+    // Fan Control
+    #if HAS_FAN_CONTROL
+    void setFanSpeed(int speed);                                    // Set fan speed 0-100
+    int getFanSpeed();                                              // Get current fan speed
+    void setFanEnabled(bool enabled);                               // Enable/disable fan
+    bool getFanEnabled();                                           // Get fan enabled state
+    uint16_t getFanRPM();                                           // Get fan RPM reading
+    bool getFanConnected();                                         // Get fan connection status
+    #endif
+
    private:
     // Devices
     Hub75DMA display;
     RGBStatus statusLED = RGBStatus(RGB_STATUS_PIN);
     CheekPanel cheekPanel = CheekPanel(argbCount, ARGB_PIN);
     HornLED hornLED;
-    LIS3DH accelerometer;
+    AccelerometerType accelerometer;  // LIS3DH or MPU6050 based on board capabilities
     std::unique_ptr<IProximitySensor> proximitySensor;  // Auto-detected proximity sensor (VL6180X or APDS9930)
     SSD1306 oledDisplay;
+    #if HAS_FAN_CONTROL
+    Fan fan;  // Fan controller
+    #endif
     // Double-buffer for thread-safe sensor access
     SensorData sensorBuffer[2];
     volatile uint8_t activeBuffer = 0;

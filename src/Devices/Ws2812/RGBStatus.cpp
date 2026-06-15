@@ -2,13 +2,19 @@
 
 #if ENABLE_RGB_STATUS_LED
 // Full implementation when RGB Status LED is enabled
+#ifdef KMMX_CONTROLLER_V4
+// V4 uses SK6812 3535 RGB with RGB color order
+RGBStatus::RGBStatus(int pin, int pixelCount)
+    : pixel(pixelCount, pin, NEO_RGB + NEO_KHZ800), lastChangeTime(0), isOn(false) {}
+#else
+// V2 uses WS2812 with GRB color order
 RGBStatus::RGBStatus(int pin, int pixelCount)
     : pixel(pixelCount, pin, NEO_GRB + NEO_KHZ800), lastChangeTime(0), isOn(false) {}
+#endif
 
 void RGBStatus::init() {
     pixel.begin();
-    pixel.show();  // Initialize all pixels to 'off'
-    pixel.setBrightness(50);
+    pixel.setBrightness(50);  // Reset to normal brightness
 }
 
 void RGBStatus::update() {

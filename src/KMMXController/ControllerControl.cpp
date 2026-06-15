@@ -221,3 +221,30 @@ void KMMXController::reboot() {
     delay(100);  // Give time for serial message to be sent
     ESP.restart();
 }
+
+// Fan Control
+#if HAS_FAN_CONTROL
+void KMMXController::setFanSpeed(int speed) {
+    fan.setSpeed(speed);
+}
+
+int KMMXController::getFanSpeed() {
+    return fan.getSpeed();
+}
+
+void KMMXController::setFanEnabled(bool enabled) {
+    fan.setEnabled(enabled);
+}
+
+bool KMMXController::getFanEnabled() {
+    return fan.isEnabled();
+}
+
+uint16_t KMMXController::getFanRPM() {
+    return fan.getRPM();
+}
+
+bool KMMXController::getFanConnected() {
+    return fan.isConnected();
+}
+#endif
