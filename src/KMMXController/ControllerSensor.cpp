@@ -80,6 +80,11 @@ void KMMXController::readSensorTask(void* parameter) {
         const SensorData& current = ctrl->sensorBuffer[ctrl->activeBuffer];
         ctrl->mouthState.setSensorData(current);
         ctrl->eyeState.setSensorData(current);
+
+        // Update fan controller (Pro board only)
+        #if HAS_FAN_CONTROL
+        ctrl->fan.update();
+        #endif
     }
 }
 
@@ -92,7 +97,14 @@ const SensorData& KMMXController::getSensorData() const {
 // ===========================
 
 bool KMMXController::initializeAccelerometer() {
-    Serial.println("=== Accelerometer (LIS3DH) ===");
+    #if ACCEL_TYPE_MPU6050
+        Serial.println("=== Accelerometer (MPU6050) ===");
+    #elif ACCEL_TYPE_LIS3DH
+        Serial.println("=== Accelerometer (LIS3DH) ===");
+    #else
+        Serial.println("=== Accelerometer (Unknown) ===");
+    #endif
+
     bool success = accelerometer.setUp();
     Serial.println(success ? "✓ OK" : "✗ DISABLED - motion detection off");
     return success;

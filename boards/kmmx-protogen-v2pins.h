@@ -1,15 +1,38 @@
 #pragma once
 
 // ============================================================================
-// KimmixControllerV2 Pin Configuration
+// KimmixControllerV2 - Pin Configuration and Capabilities
 // ============================================================================
 // Board: ESP32-S3-N16R8 (16MB Flash, No PSRAM)
-// Accelerometer: LIS3DH (0x18)
+// Accelerometer: LIS3DH (I2C 0x18)
 // Status LED: WS2812 RGB (IO45)
 // ============================================================================
 
 #define BOARD_NAME "KimmixControllerV2"
-#define PIN_CONFIG_VERSION 2
+
+// ============================================================================
+// Hardware Capability Flags
+// ============================================================================
+
+// Memory capabilities
+#define HAS_PSRAM 0
+#define PSRAM_SIZE_MB 0
+
+// Feature capabilities
+#define HAS_FAN_CONTROL 0
+#define HAS_EXTERNAL_ANTENNA 0
+
+// Sensor capabilities
+#define ACCEL_TYPE_LIS3DH 1
+#define ACCEL_TYPE_MPU6050 0
+
+// LED capabilities
+#define STATUS_LED_TYPE_WS2812 1
+#define STATUS_LED_TYPE_SK6812 0
+
+// ============================================================================
+// Pin Definitions
+// ============================================================================
 
 // --- I2C Pins ---
 #define S3_SDA 9
@@ -41,6 +64,3 @@
 #define LED_PWM_PIN 21              // Horn LED (PWM controlled)
 #define RGB_STATUS_PIN 45           // RGB status LED (WS2812)
 #define ARGB_PIN 14                 // Side ARGB LED strip (WS2812)
-
-// --- Fan Control (Not available on V2) ---
-#define HAS_FAN_CONTROL 0           // Feature flag

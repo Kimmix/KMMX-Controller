@@ -7,6 +7,19 @@ This document defines the Bluetooth Low Energy (BLE) GATT profile for controllin
 **Manufacturer ID:** `0xFFFF` (Custom)
 **Manufacturer Data:** `KMMX` + Version `1.0`
 
+## Hardware Versions
+
+The KMMX controller supports two hardware versions with different capabilities:
+
+| Feature | V2 | V4 |
+|---------|----|----|
+| Accelerometer | LIS3DH (0x18) | MPU6050 (0x68) |
+| Status LED | WS2812 RGB (IO45) | SK6812 RGB (IO38) |
+| Fan Control | ❌ Not available | ✅ Available |
+| PSRAM | None | 8MB |
+
+**Note:** Fan control characteristics (see below) are only available on **V4 hardware**. Clients should gracefully handle these characteristics being absent on V2 devices.
+
 ---
 
 ## GATT Service
@@ -79,6 +92,68 @@ This document defines the Bluetooth Low Energy (BLE) GATT profile for controllin
 
 ---
 
+### Fan Control (V4 Only)
+
+**⚠️ V4 Hardware Only:** These characteristics are only available on KimmixControllerV4 boards. V2 boards do not have fan control hardware.
+
+| Name | UUID | Properties | Data Format | Description |
+|------|------|------------|-------------|-------------|
+| Fan Speed | `f1f2f3f4-a1a2-4b1b-c1c2-d1d2d3d4d5f1` | READ, WRITE | `uint8_t` (0-100) | Controls fan speed. 0 = off, 100 = maximum speed. Smooth transitions are applied automatically. |
+| Fan Enabled | `f1f2f3f4-a1a2-4b1b-c1c2-d1d2d3d4d5f2` | READ, WRITE | `uint8_t` (0/1) | Enable/disable fan control. 0 = disabled (fan forced off), 1 = enabled. |
+| Fan RPM | `f1f2f3f4-a1a2-4b1b-c1c2-d1d2d3d4d5f3` | READ, NOTIFY | `uint16_t` (0-65535) | Current fan speed in RPM (revolutions per minute). Read-only tachometer feedback. Subscribe to NOTIFY for real-time updates. |
+| Fan Connected | `f1f2f3f4-a1a2-4b1b-c1c2-d1d2d3d4d5f4` | READ, NOTIFY | `uint8_t` (0/1) | Fan connection status. 0 = disconnected/not responding, 1 = connected and responding. Subscribe to NOTIFY for connection changes. |
+
+**Fan Behavior Notes:**
+- **Graceful Degradation**: Controller operates normally without fan connected.
+- **Connection Detection**: Monitors tachometer when speed > 0. Fan marked disconnected if RPM < 100 for 3+ seconds.
+- **Safe Defaults**: Fan disabled (speed = 0) on boot.
+- **Smooth Transitions**: Speed changes use automatic fade transitions.
+- **PWM Control**: 4-pin PWM (25kHz, 8-bit) via TXU0202DCUR level shifter.
+- **Update Rate**: RPM updates every 1 second, connection check every 3 seconds.
+
+---
+
 ## Color Behavior
 - **Display Effect Color 1**: Sets gradient top color, dual spiral color, and dual circle color
 - **Display Effect Color 2**: Sets gradient bottom color only; Color 1 is preserved for dual patterns
+
+---
+
+## Characteristic Summary by Hardware Version
+
+### Available on Both V2 and V4
+✅ Display Brightness
+✅ Display Color Mode
+✅ Display Effect Colors (1, 2)
+✅ Display Effect Options (1, 2, 3)
+✅ Eye State
+✅ Mouth State
+✅ Viseme
+✅ Horn Brightness
+✅ Cheek Brightness
+✅ Cheek Background Color
+✅ Cheek Fade Color
+✅ Reboot
+✅ Glitch Trigger
+✅ Motion Enable Flags
+✅ Tap Sensitivity
+✅ Glitch Intensity
+
+### V4 Only
+🆕 Fan Speed
+🆕 Fan Enabled
+🆕 Fan RPM
+🆕 Fan Connected
+
+**Total Characteristics:**
+- V2: 19 characteristics
+- V4: 23 characteristics (19 + 4 fan control)
+
+---
+
+## Revision History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | Initial | Original KMMX-Fursuit BLE specification (V2 hardware) |
+| 2.0 | 2026-06 | Added V4 hardware support, fan control characteristics, hardware version documentation |

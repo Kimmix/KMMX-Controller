@@ -27,6 +27,12 @@ class MotionEnableFlagsCallbacks;
 class TapSensitivityCallbacks;
 class GlitchIntensityCallbacks;
 
+// Fan Control Callbacks (Pro board only)
+#if HAS_FAN_CONTROL
+class FanSpeedCallbacks;
+class FanEnabledCallbacks;
+#endif
+
 class BLEManager {
    public:
     static BLEManager& getInstance(KMMXController& controller);
@@ -56,6 +62,12 @@ class BLEManager {
     friend class MotionEnableFlagsCallbacks;
     friend class TapSensitivityCallbacks;
     friend class GlitchIntensityCallbacks;
+
+    // Fan Control Callbacks (Pro board only)
+    #if HAS_FAN_CONTROL
+    friend class FanSpeedCallbacks;
+    friend class FanEnabledCallbacks;
+    #endif
 
    private:
     BLEManager(KMMXController& controller);
@@ -88,4 +100,12 @@ class BLEManager {
     NimBLECharacteristic* motionEnableFlagsCharacteristic;
     NimBLECharacteristic* tapSensitivityCharacteristic;
     NimBLECharacteristic* glitchIntensityCharacteristic;
+
+    // Fan Control Characteristics (Pro board only)
+    #if HAS_FAN_CONTROL
+    NimBLECharacteristic* fanSpeedCharacteristic;
+    NimBLECharacteristic* fanEnabledCharacteristic;
+    NimBLECharacteristic* fanRpmCharacteristic;
+    NimBLECharacteristic* fanConnectedCharacteristic;
+    #endif
 };

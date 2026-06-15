@@ -17,23 +17,23 @@
 // ============================================================================
 
 // ============================================================================
-// SECTION 1: Hardware Version Detection & Pin Assignments
+// SECTION 1: Board Selection & Hardware Capabilities
 // ============================================================================
 
-// Compile-time hardware version check
-#if defined(KMMX_CONTROLLER_V4) && defined(KMMX_CONTROLLER_V2)
-    #error "Cannot define both KMMX_CONTROLLER_V4 and KMMX_CONTROLLER_V2 simultaneously!"
+// Compile-time board selection check
+#if defined(BOARD_KMMX_PRO) && defined(BOARD_KMMX_BASIC)
+    #error "Cannot define both BOARD_KMMX_PRO and BOARD_KMMX_BASIC simultaneously!"
 #endif
 
-#if !defined(KMMX_CONTROLLER_V4) && !defined(KMMX_CONTROLLER_V2)
-    #error "Must define either KMMX_CONTROLLER_V4 or KMMX_CONTROLLER_V2 in build flags!"
+#if !defined(BOARD_KMMX_PRO) && !defined(BOARD_KMMX_BASIC)
+    #error "Must define either BOARD_KMMX_PRO or BOARD_KMMX_BASIC in build flags!"
 #endif
 
-// Import version-specific pin configuration
-#ifdef KMMX_CONTROLLER_V4
-    #include "../boards/pins_v4.h"
+// Import board-specific pin configuration and capabilities
+#ifdef BOARD_KMMX_PRO
+    #include "../boards/kmmx-protogen-v4pins.h"
 #else
-    #include "../boards/pins_v2.h"
+    #include "../boards/kmmx-protogen-v2pins.h"
 #endif
 
 // ============================================================================
@@ -103,13 +103,13 @@ const uint32_t sideColor1RGB = 0xFF446C;        // Base color: #FF446C Reddish P
 const uint32_t sideColor2RGB = 0xF9826C;        // Wave color: #F9826C Coral
 const uint16_t sideLEDFadeInterval = 100;       // Wave update interval (ms) - slow, relaxed animation
 
-// --- Horn LED (PWM) ---
+// --- Horn LED ---
 const uint8_t hornBrightness = 20;              // Horn brightness (0-100)
-const uint8_t hornPwmChannel = 0;               // PWM channel number
-const uint16_t hornFrequency = 20000;           // PWM frequency in Hz
-const uint8_t hornResolution = 8;               // PWM resolution in bits
-const uint8_t hornMinBrightness = 2;            // Minimum safe brightness
-const uint8_t hornMaxBrightness = 200;          // Maximum safe brightness (255 can cause overheating!)
+
+// --- Fan Control (Pro board only) ---
+#if HAS_FAN_CONTROL
+const uint8_t fanDefaultSpeed = 0;              // Default fan speed on startup (0-100, 0 = off for safety)
+#endif
 
 // ============================================================================
 // SECTION 5: Sensor and Interaction Configuration

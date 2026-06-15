@@ -1,14 +1,20 @@
 #include "HornLED.h"
 #include "Utils/Utils.h"  // Use optimized utility functions
 
+constexpr uint8_t HORN_PWM_CHANNEL = 0;      // PWM channel
+constexpr uint16_t HORN_PWM_FREQ = 20000;    // 20kHz (standard for LED to avoid flicker)
+constexpr uint8_t HORN_PWM_RESOLUTION = 8;   // 8-bit (0-255)
+constexpr uint8_t HORN_MIN_BRIGHTNESS = 2;   // Minimum safe brightness
+constexpr uint8_t HORN_MAX_BRIGHTNESS = 200; // Maximum safe brightness (255 can overheat!)
+
 HornLED::HornLED() {
-    ledcSetup(hornPwmChannel, hornFrequency, hornResolution);
-    ledcAttachPin(LED_PWM_PIN, hornPwmChannel);
+    ledcSetup(HORN_PWM_CHANNEL, HORN_PWM_FREQ, HORN_PWM_RESOLUTION);
+    ledcAttachPin(LED_PWM_PIN, HORN_PWM_CHANNEL);
     // Initialize brightness
     currentBrightness = hornBrightness;
     targetBrightness = hornBrightness;
-    pwmValue = fastMap<int>(currentBrightness, 0, 100, hornMinBrightness, hornMaxBrightness);
-    ledcWrite(hornPwmChannel, pwmValue);
+    pwmValue = fastMap<int>(currentBrightness, 0, 100, HORN_MIN_BRIGHTNESS, HORN_MAX_BRIGHTNESS);
+    ledcWrite(HORN_PWM_CHANNEL, pwmValue);
 }
 
 int HornLED::getBrightness() const {
@@ -40,7 +46,7 @@ void HornLED::update() {
         }
 
         // Map brightness to the target PWM value (optimized fastMap)
-        float targetPwm = fastMap<float>(currentBrightness, 0, 100, hornMinBrightness, hornMaxBrightness);
+        float targetPwm = fastMap<float>(currentBrightness, 0, 100, HORN_MIN_BRIGHTNESS, HORN_MAX_BRIGHTNESS);
 
         // Gradually adjust the actual PWM value
         if (abs(pwmValue - targetPwm) > 0.5) {  // Only update if there's a noticeable difference
@@ -51,7 +57,7 @@ void HornLED::update() {
             if (abs(pwmValue - targetPwm) < 1.0f) {
                 pwmValue = targetPwm;
             }
-            ledcWrite(hornPwmChannel, round(pwmValue));  // Write the new PWM value
+            ledcWrite(HORN_PWM_CHANNEL, round(pwmValue));  // Write the new PWM value
         }
     }
 }
