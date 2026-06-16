@@ -1,6 +1,5 @@
 #include "Viseme.h"
 #include "VisemeConfig.h"
-#include <vector>
 #include <cmath>
 
 void Viseme::initMic() {
@@ -16,11 +15,11 @@ void Viseme::initMic() {
 }
 
 float Viseme::getNoiseThreshold() {
-    return noiseThreshold;
+    return adaptiveNoiseFloor;
 }
 
 void Viseme::setNoiseThreshold(float value) {
-    noiseThreshold = value;
+    adaptiveNoiseFloor = value;
 }
 
 // =============================================================================
@@ -91,6 +90,10 @@ void Viseme::readAndPrepareSamples() {
         fftBuffer[2 * i] = tempSamples[i];      // Real part
         fftBuffer[2 * i + 1] = 0.0f;            // Imaginary part = 0
     }
+
+    // Update envelope tracker (uses tempSamples before windowing would be better,
+    // but this is acceptable since we just need overall amplitude)
+    updateEnvelope();
 }
 
 /**
@@ -158,80 +161,141 @@ void Viseme::analyzeVisemes() {
 }
 
 // =============================================================================
+// ENVELOPE TRACKING
+// =============================================================================
+
+/**
+ * Calculate RMS (Root Mean Square) amplitude from current audio samples.
+ * This provides a smoothed amplitude measurement of the audio signal.
+ */
+float Viseme::calculateRMS() {
+    float sum = 0;
+    for (int i = 0; i < i2sSamples; i++) {
+        float sample = tempSamples[i];
+        sum += sample * sample;
+    }
+    return sqrtf(sum / i2sSamples);
+}
+
+/**
+ * Update envelope tracker with attack/release characteristics.
+ * Fast attack (quick response to increases) and slow release (gradual decay).
+ */
+void Viseme::updateEnvelope() {
+    float rms = calculateRMS();
+
+    // Use attack coefficient for increases, release for decreases
+    if (rms > currentEnvelope) {
+        currentEnvelope = envelopeAttack * rms + (1.0f - envelopeAttack) * currentEnvelope;
+    } else {
+        currentEnvelope = envelopeRelease * rms + (1.0f - envelopeRelease) * currentEnvelope;
+    }
+}
+
+// =============================================================================
+// ADAPTIVE NOISE FLOOR
+// =============================================================================
+
+/**
+ * Adaptive noise floor that automatically adjusts to ambient sound levels.
+ * Adapts down during silence, adapts up during sustained noise.
+ */
+void Viseme::updateNoiseFloor() {
+    // Check if currently speaking (envelope above threshold)
+    bool isSpeaking = currentEnvelope > adaptiveNoiseFloor * 1.2f;
+
+    if (isSpeaking) {
+        // During speech, very slowly adapt upward if needed
+        // This prevents brief loud sounds from permanently raising the floor
+        if (currentEnvelope < adaptiveNoiseFloor * 0.8f) {
+            adaptiveNoiseFloor -= noiseAdaptSpeed * 10.0f;
+        }
+    } else {
+        // During silence, track the minimum amplitude
+        if (currentEnvelope < adaptiveNoiseFloor) {
+            // Quick adaptation down to new quiet level
+            adaptiveNoiseFloor -= noiseAdaptSpeed * 50.0f;
+        } else {
+            // Slow adaptation up toward current noise level
+            adaptiveNoiseFloor += noiseAdaptSpeed;
+        }
+    }
+
+    // Clamp to min/max range
+    if (adaptiveNoiseFloor < noiseFloorMin) {
+        adaptiveNoiseFloor = noiseFloorMin;
+    }
+    if (adaptiveNoiseFloor > noiseFloorMax) {
+        adaptiveNoiseFloor = noiseFloorMax;
+    }
+}
+
+// =============================================================================
+// ATTACK DETECTION
+// =============================================================================
+
+/**
+ * Detect attack (rapid envelope increase) indicating syllable boundaries.
+ * Returns true when a valid attack is detected.
+ */
+bool Viseme::detectAttack() {
+    unsigned long currentTime = millis();
+    attackDetected = false;
+
+    // Check for rapid increase in envelope
+    if (previousEnvelope > 0 && currentEnvelope > previousEnvelope * attackThreshold) {
+        // Check if enough time has passed since last attack
+        if (currentTime - lastAttackTime >= minAttackInterval) {
+            attackDetected = true;
+            lastAttackTime = currentTime;
+        }
+    }
+
+    // Update previous envelope
+    previousEnvelope = currentEnvelope;
+
+    return attackDetected;
+}
+
+// =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================
 
-void Viseme::calculateAmplitude(float ah, float ee, float oh, float oo, float th, float& minAmp, float& maxAmp, float& avgAmp) {
-    minAmp = min(min(ah, ee), min(min(oh, oo), th));
+void Viseme::calculateAmplitude(float ah, float ee, float oh, float oo, float th, float& maxAmp, float& avgAmp) {
     maxAmp = max(max(ah, ee), max(max(oh, oo), th));
     avgAmp = (ah + ee + oh + oo + th) / 5.0f;
 }
 
 void Viseme::normalizeViseme(float& ah_amplitude, float& ee_amplitude, float& oh_amplitude, float& oo_amplitude, float& th_amplitude) {
-    // Updated normalization factors from tested implementation
-    ah_amplitude *= visemeAhScale;
-    ee_amplitude *= visemeEeScale;
-    oh_amplitude *= visemeOhScale;
-    oo_amplitude *= visemeOoScale;
-    th_amplitude *= visemeThScale;
+    // Apply normalization scale factors (now BLE-controllable)
+    ah_amplitude *= ahScale;
+    ee_amplitude *= eeScale;
+    oh_amplitude *= ohScale;
+    oo_amplitude *= ooScale;
+    th_amplitude *= thScale;
 }
 
-void Viseme::levelBoost(Viseme::VisemeType viseme, float& maxAmp) {
-    if (viseme != AH) {
-        maxAmp *= 1.5f;
-    }
-}
-
-unsigned int Viseme::calculateLoudness(float max, float avg) {
+unsigned int Viseme::calculateFFTLoudnessDif(float max, float avg) {
     if (avg <= 0) return 0;
     float loudnessRatio = max / avg;
-    return mapFloat(loudnessRatio, 0.6f, 2.8f, 1, visemeFramelength);
+    // Map loudness ratio to frame range (configurable via VisemeConfig.h)
+    return mapFloat(loudnessRatio, visemeLoudnessMinRatio, visemeLoudnessMaxRatio, 1, visemeFramelength);
 }
 
-unsigned int Viseme::smoothedLoudness(unsigned int input) {
-    unsigned long currentTime = millis();
-    unsigned long decayElapsedTime = currentTime - decayStartTime;
 
-    if (input >= currentLoudness) {
-        // Increment limit
-        if (input - currentLoudness > 5) {
-            input = currentLoudness + 5;
-            input = input > visemeFramelength ? visemeFramelength : input;
-        }
-        currentLoudness = input;
-        decayStartTime = 0;
-    } else {
-        if (decayStartTime == 0) {
-            decayStartTime = currentTime;
-        } else {
-            if (decayElapsedTime >= decayElapsedThreshold && currentLoudness <= 5) {
-                currentLoudness = 0;
-                decayStartTime = 0;
-            } else {
-                unsigned int decayedInput = static_cast<unsigned int>(currentLoudness - (decayRate * decayElapsedTime));
-                if (decayedInput < input) {
-                    currentLoudness = input;
-                    decayStartTime = 0;
-                } else {
-                    currentLoudness = decayedInput;
-                }
-            }
-        }
-    }
-    return currentLoudness;
-}
 
 /**
  * Determine the dominant viseme based on highest amplitude.
  * Requires the dominant viseme to be clearly separated from second place.
+ * Implements confidence tracking for stability.
  */
-Viseme::VisemeType Viseme::getDominantViseme(float& maxAmp) {
+Viseme::VisemeType Viseme::getDominantViseme() {
     // Find max and second max
     float amps[5] = {ahAmplitude, eeAmplitude, ohAmplitude, ooAmplitude, thAmplitude};
     VisemeType names[5] = {AH, EE, OH, OO, TH};
 
     int maxIdx = 0;
-    maxAmp = amps[0];
+    float maxAmp = amps[0];
     for (int i = 1; i < 5; i++) {
         if (amps[i] > maxAmp) {
             maxAmp = amps[i];
@@ -247,49 +311,49 @@ Viseme::VisemeType Viseme::getDominantViseme(float& maxAmp) {
         }
     }
 
-    // Require at least 5% separation for clear detection
-    const float MIN_SEPARATION = 1.05f;
-    if (maxAmp < noiseThreshold || maxAmp < secondMax * MIN_SEPARATION) {
-        // No clear dominant viseme - return previous or default
+    // Check if amplitude is above adaptive noise floor
+    if (maxAmp < adaptiveNoiseFloor) {
         return previousViseme;
     }
 
+    // Check if there's sufficient separation (e.g. 10% stronger than 2nd place)
+    if (maxAmp < secondMax * minSeparation) {
+        return previousViseme;
+    }
+
+    // Return the dominant viseme
     return names[maxIdx];
 }
 
 Viseme::VisemeType Viseme::holdViseme(VisemeType input) {
+    unsigned long currentTime = millis();
+
+    // Check if we can switch visemes (minimum hold time)
+    bool canSwitch = (currentTime - lastVisemeSwitchTime) >= minVisemeHoldTime;
+
+    // Allow switch if: hold time passed AND (attack detected OR timeout expired)
+    bool allowSwitch = canSwitch && (attackDetected || (currentTime - lastAttackTime) > visemeAttackTimeout);
+
     VisemeType held_viseme = previousViseme;
-    if (input != 0) {
+
+    if (input != previousViseme && allowSwitch) {
+        // Switching to new viseme
         held_viseme = input;
+        lastVisemeSwitchTime = currentTime;
     }
+
     previousViseme = held_viseme;
     return held_viseme;
 }
 
 const uint8_t* Viseme::visemeOutput(VisemeType viseme, unsigned int level) {
-    static int previousLevel = -1;  // Initialize with an invalid value
     if (level == 0) {
-        previousLevel = level;
         return mouthDefault;
     }
-    if (level < previousLevel) {  // Hold viseme when level decreasing
-        viseme = previousViseme;
-    } else {
-        previousViseme = viseme;
-    }
-    previousLevel = level;
+
+    // Convert to 0-based index
     level -= 1;
-    // Serial.print("Base:");
-    // Serial.print(4);
-    // Serial.print(",Level:");
-    // Serial.print(level);
-    // Serial.print(",viseme:");
-    // Serial.print(viseme);
-    // Serial.print(",previousViseme:");
-    // Serial.println(previousViseme);
-    // auto combination = visemeCombination.find(std::make_pair(viseme, previousViseme));
-    // Serial.print(",combination:");
-    // Serial.println(combination->second);
+
     switch (viseme) {
         case AH:
             return ahViseme[level];
@@ -305,52 +369,76 @@ const uint8_t* Viseme::visemeOutput(VisemeType viseme, unsigned int level) {
     return nullptr;
 }
 
+/**
+ * Serial Plotter debug output.
+ * Formatted for Arduino Serial Plotter with all key metrics.
+ */
+void Viseme::printDebugPlotter() {
+#if VISEME_DEBUG_PLOTTER
+    Serial.print("Envelope:");
+    Serial.print(currentEnvelope);
+    Serial.print(",NoiseFloor:");
+    Serial.print(adaptiveNoiseFloor);
+    Serial.print(",AH:");
+    Serial.print(ahAmplitude);
+    Serial.print(",EE:");
+    Serial.print(eeAmplitude);
+    Serial.print(",OH:");
+    Serial.print(ohAmplitude);
+    Serial.print(",OO:");
+    Serial.print(ooAmplitude);
+    Serial.print(",TH:");
+    Serial.print(thAmplitude);
+    Serial.print(",Attack:");
+    Serial.print(attackDetected ? 500 : 0);
+    Serial.print(",Viseme:");
+    Serial.println(previousViseme * 100);
+#endif
+}
+
 const uint8_t* Viseme::renderViseme() {
     // Audio processing pipeline using ESP-DSP
-    readAndPrepareSamples();
+    readAndPrepareSamples();  // Also updates envelope
+
+    // Update adaptive noise floor based on envelope
+    updateNoiseFloor();
+
+    // Detect attack (syllable boundaries)
+    detectAttack();
+
     performFFT();
     calculateMagnitudes();
     analyzeVisemes();
 
     // Calculate statistics
-    float min_amplitude, max_amplitude, avg_amplitude;
+    float max_amplitude, avg_amplitude;
     calculateAmplitude(ahAmplitude, eeAmplitude, ohAmplitude, ooAmplitude, thAmplitude,
-                      min_amplitude, max_amplitude, avg_amplitude);
+                      max_amplitude, avg_amplitude);
 
-    // Find dominant viseme
-    float dominantMaxAmp;
-    VisemeType dominantViseme = getDominantViseme(dominantMaxAmp);
+    // Find dominant viseme (with confidence checking)
+    VisemeType dominantViseme = getDominantViseme();
 
-    // Apply level boost
-    levelBoost(dominantViseme, max_amplitude);
+    // Calculate loudness level (mix envelope with FFT amplitude for stability)
+    // Weights configured in VisemeConfig.h
 
-    // Calculate loudness level
-    unsigned int loudness_level = calculateLoudness(max_amplitude, avg_amplitude);
-    loudness_level = max_amplitude > noiseThreshold ? loudness_level : 0;
-    loudness_level = smoothedLoudness(loudness_level);
+    // Envelope-based loudness (normalized to 0-20 range)
+    float envelopeLoudness = mapFloat(currentEnvelope, adaptiveNoiseFloor, adaptiveNoiseFloor * 3.0f, 0, visemeFramelength);
+    envelopeLoudness = constrain(envelopeLoudness, 0, visemeFramelength);
 
-    // Debugging output
-    int max_threshold = 2000;
-    Serial.print("Max_THRESHOLD:");
-    Serial.print(max_threshold);
-    Serial.print(",noiseThreshold:");
-    Serial.print(noiseThreshold);
-    Serial.print(",AH:");
-    Serial.print(ahAmplitude > max_threshold ? max_threshold : ahAmplitude);
-    Serial.print(",EE:");
-    Serial.print(eeAmplitude > max_threshold ? max_threshold : eeAmplitude);
-    Serial.print(",OH:");
-    Serial.print(ohAmplitude > max_threshold ? max_threshold : ohAmplitude);
-    Serial.print(",OO:");
-    Serial.print(ooAmplitude > max_threshold ? max_threshold : ooAmplitude);
-    Serial.print(",TH:");
-    Serial.println(thAmplitude > max_threshold ? max_threshold : thAmplitude);
-    Serial.print(",Level:");
-    Serial.print(loudness_level * 100);
-    Serial.print(",Max:");
-    Serial.print(max_amplitude > max_threshold ? max_threshold : max_amplitude);
-    Serial.print(",AVG_AMP:");
-    Serial.println(avg_amplitude > max_threshold ? max_threshold : avg_amplitude);
+    // FFT-based loudness (existing ratio method)
+    unsigned int fftLoudness = calculateFFTLoudnessDif(max_amplitude, avg_amplitude);
+
+    // Blend both methods using config weights (envelope already provides smoothing)
+    unsigned int loudness_level = (unsigned int)((visemeEnvelopeWeight * envelopeLoudness) + (visemeFftWeight * fftLoudness));
+    loudness_level = max_amplitude > adaptiveNoiseFloor ? loudness_level : 0;
+
+    // Clamp to valid range
+    if (loudness_level > visemeFramelength) {
+        loudness_level = visemeFramelength;
+    }
+
+    // Debug output (Serial Plotter format)
+    printDebugPlotter();
 
     // Final render
     return visemeOutput(dominantViseme, loudness_level);

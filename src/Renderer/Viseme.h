@@ -19,10 +19,60 @@ class Viseme {
 
     void initMic();
     const uint8_t* renderViseme();
+
+    // Noise threshold (adaptive)
     float getNoiseThreshold();
     void setNoiseThreshold(float value);
+
+    // Current state
     VisemeType getCurrentViseme() const { return previousViseme; }
-    uint16_t getLoudness() const { return currentLoudness; }
+    float getEnvelope() const { return currentEnvelope; }
+
+    // Get loudness level for display (0-20 range, based on envelope)
+    uint16_t getLoudness() const {
+        float loudness = mapFloat(currentEnvelope, adaptiveNoiseFloor, adaptiveNoiseFloor * 3.0f, 0, 20);
+        return (uint16_t)constrain(loudness, 0, 20);
+    }
+
+    // Envelope parameters (BLE controllable)
+    float getEnvelopeAttack() const { return envelopeAttack; }
+    void setEnvelopeAttack(float value) { envelopeAttack = value; }
+    float getEnvelopeRelease() const { return envelopeRelease; }
+    void setEnvelopeRelease(float value) { envelopeRelease = value; }
+
+    // Noise floor parameters (BLE controllable)
+    float getNoiseFloorMin() const { return noiseFloorMin; }
+    void setNoiseFloorMin(float value) { noiseFloorMin = value; }
+    float getNoiseFloorMax() const { return noiseFloorMax; }
+    void setNoiseFloorMax(float value) { noiseFloorMax = value; }
+    float getNoiseAdaptSpeed() const { return noiseAdaptSpeed; }
+    void setNoiseAdaptSpeed(float value) { noiseAdaptSpeed = value; }
+
+    // Attack detection parameters (BLE controllable)
+    float getAttackThreshold() const { return attackThreshold; }
+    void setAttackThreshold(float value) { attackThreshold = value; }
+    uint16_t getMinAttackInterval() const { return minAttackInterval; }
+    void setMinAttackInterval(uint16_t value) { minAttackInterval = value; }
+
+    // Confidence parameters (BLE controllable)
+    float getMinSeparation() const { return minSeparation; }
+    void setMinSeparation(float value) { minSeparation = value; }
+
+    // Hold time (BLE controllable)
+    uint16_t getMinVisemeHoldTime() const { return minVisemeHoldTime; }
+    void setMinVisemeHoldTime(uint16_t value) { minVisemeHoldTime = value; }
+
+    // Viseme scale factors (BLE controllable)
+    float getAhScale() const { return ahScale; }
+    void setAhScale(float value) { ahScale = value; }
+    float getEeScale() const { return eeScale; }
+    void setEeScale(float value) { eeScale = value; }
+    float getOhScale() const { return ohScale; }
+    void setOhScale(float value) { ohScale = value; }
+    float getOoScale() const { return ooScale; }
+    void setOoScale(float value) { ooScale = value; }
+    float getThScale() const { return thScale; }
+    void setThScale(float value) { thScale = value; }
 
    private:
     I2SMicrophone mic;
@@ -38,14 +88,41 @@ class Viseme {
     float ahAmplitude = 0, eeAmplitude = 0, ohAmplitude = 0;
     float ooAmplitude = 0, thAmplitude = 0;
 
-    float noiseThreshold = visemeNoiseThreshold;
     const float alpha = visemeSmoothingAlpha;
-    const float decayRate = visemeDecayRate;
-    uint16_t currentLoudness = 0;
-    unsigned long decayStartTime = 0;
-    const uint16_t decayElapsedThreshold = 1000;
-    static const uint8_t visemeFramelength = 20;
+    static const uint8_t visemeFramelength = 20;  // Frame count (to expand, change this and add more frames to arrays)
     VisemeType previousViseme;
+
+    // Envelope Tracker
+    float currentEnvelope = 0;
+    float envelopeAttack = visemeEnvelopeAttack;
+    float envelopeRelease = visemeEnvelopeRelease;
+
+    // Adaptive Noise Floor
+    float adaptiveNoiseFloor = visemeNoiseThreshold;
+    float noiseFloorMin = visemeNoiseFloorMin;
+    float noiseFloorMax = visemeNoiseFloorMax;
+    float noiseAdaptSpeed = visemeNoiseAdaptSpeed;
+
+    // Attack Detection
+    float previousEnvelope = 0;
+    float attackThreshold = visemeAttackThreshold;
+    unsigned long lastAttackTime = 0;
+    uint16_t minAttackInterval = visemeMinAttackInterval;
+    bool attackDetected = false;
+
+    // Confidence
+    float minSeparation = visemeMinSeparation;
+
+    // Viseme Hold Time
+    unsigned long lastVisemeSwitchTime = 0;
+    uint16_t minVisemeHoldTime = visemeMinHoldTime;
+
+    // Viseme Scale Factors (normalization)
+    float ahScale = visemeAhScale;
+    float eeScale = visemeEeScale;
+    float ohScale = visemeOhScale;
+    float ooScale = visemeOoScale;
+    float thScale = visemeThScale;
 
     const uint8_t* ahViseme[visemeFramelength] = {
         mouthAH1, mouthAH2, mouthAH3, mouthAH4, mouthAH5, mouthAH6, mouthAH7, mouthAH8, mouthAH9, mouthAH10,
@@ -73,14 +150,23 @@ class Viseme {
     void calculateMagnitudes();
     void analyzeVisemes();
 
+    // Envelope tracking
+    void updateEnvelope();
+    float calculateRMS();
+
+    // Adaptive noise floor
+    void updateNoiseFloor();
+
+    // Attack detection
+    bool detectAttack();
+
     // Helper functions
     inline float binToFrequency(int bin);
-    void calculateAmplitude(float ah, float ee, float oh, float oo, float th, float& minAmp, float& maxAmp, float& avgAmp);
+    void calculateAmplitude(float ah, float ee, float oh, float oo, float th, float& maxAmp, float& avgAmp);
     void normalizeViseme(float& ah_amplitude, float& ee_amplitude, float& oh_amplitude, float& oo_amplitude, float& th_amplitude);
-    void levelBoost(VisemeType viseme, float& maxAmp);
-    unsigned int calculateLoudness(float max, float avg);
-    unsigned int smoothedLoudness(unsigned int input);
-    VisemeType getDominantViseme(float& maxAmp);
+    unsigned int calculateFFTLoudnessDif(float max, float avg);
+    VisemeType getDominantViseme();
     VisemeType holdViseme(VisemeType input);
     const uint8_t* visemeOutput(VisemeType viseme, unsigned int level);
+    void printDebugPlotter();
 };

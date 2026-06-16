@@ -299,8 +299,19 @@ void KMMXController::drawOLEDSensorBars(const SensorData& sensors) {
     if (mouthState.getState() == MouthStateEnum::TALKING) {
         // Microphone is active - show VU meter based on loudness (0-20 range from viseme)
         uint16_t loudness = mouthState.viseme.getLoudness();
+        float noiseFloor = mouthState.viseme.getNoiseThreshold();
+
+        // Calculate threshold position (noise floor is the baseline, typically ~33% of max)
+        // Envelope range is noiseFloor to noiseFloor*3, so threshold is at 0 on that scale
+        int thresholdPos = BAR_START_X + (BAR_WIDTH / 3);
+
+        // Draw VU bar
         int vuLevel = fastMap<int>(loudness, 0, 20, 0, BAR_WIDTH);
         drawHorizontalBar(oledDisplay, BAR_START_X, VU_BAR_Y, BAR_WIDTH, BAR_HEIGHT, vuLevel);
+
+        // Draw threshold line to show minimum level needed for viseme detection
+        auto* u8g2 = oledDisplay.getU8g2();
+        u8g2->drawLine(thresholdPos, VU_BAR_Y, thresholdPos, VU_BAR_Y + BAR_HEIGHT);
     } else {
         // Microphone not active - show "n/a"
         oledDisplay.drawText(BAR_START_X, VU_LABEL_Y, "n/a");
