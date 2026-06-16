@@ -1,4 +1,5 @@
 #include "MPU6050.h"
+#include "KMMXController/MotionDetectionConfig.h"
 #include <Arduino.h>
 
 MPU6050::MPU6050() : mpu(Adafruit_MPU6050()) {}
@@ -12,10 +13,14 @@ bool MPU6050::setUp() {
         mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
         Serial.println("MPU6050 configured: ±2G accel, ±250°/s gyro, ~50Hz rate");
 
-        // Calibrate gyroscope offsets
-        Serial.print("Calibrating gyroscope");
-        calibrateGyro();
-        Serial.println(" - Done!");
+        // Calibrate gyroscope offsets (if enabled in config)
+        if (enableGyroCalibration) {
+            Serial.print("Calibrating gyroscope");
+            calibrateGyro();
+            Serial.println(" - Done!");
+        } else {
+            Serial.println("Gyroscope calibration disabled (using zero offsets)");
+        }
 
         // Initialize timing for sensor fusion
         lastUpdateTime = millis();

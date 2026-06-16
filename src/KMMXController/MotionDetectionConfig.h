@@ -8,6 +8,14 @@ const bool enableMotionDebug = false;
 const bool enableMotionDebug = true;
 #endif
 
+// ============================================================================
+// MPU6050 Gyroscope Calibration (MPU6050 only)
+// ============================================================================
+// Enable/disable automatic gyroscope calibration on startup
+// When enabled, the MPU6050 will calibrate gyroscope offsets during setUp()
+// This takes ~4 seconds and requires the device to be stationary
+inline bool enableGyroCalibration = false;
+
 // Tilt Detection
 inline bool enableTiltDetection = false;
 inline float tiltThreshold = 4.0f;
