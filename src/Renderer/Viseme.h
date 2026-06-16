@@ -1,7 +1,7 @@
 #pragma once
 
 #include <map>
-#include <arduinoFFT.h>
+#include "esp_dsp.h"
 #include "Utils/Utils.h"
 #include "VisemeConfig.h"
 #include "Devices/Microphone/I2SMicrophone.h"
@@ -26,8 +26,18 @@ class Viseme {
 
    private:
     I2SMicrophone mic;
-    ArduinoFFT<double> FFT = ArduinoFFT<double>(real, imaginary, i2sSamples, i2sSampleRate);
-    double real[i2sSamples], imaginary[i2sSamples];  // ArduinoFFT requires double
+
+    // ESP-DSP FFT buffers (using float for better performance)
+    int16_t i2sBuffer[i2sSamples];              // Raw I2S samples
+    float tempSamples[i2sSamples];              // Smoothed + windowed samples
+    float fftBuffer[2 * i2sSamples];            // Interleaved complex: [re0,im0,re1,im1,...]
+    float hannWindow[i2sSamples];               // Pre-computed Hann window
+    float magnitudes[i2sSamples / 2];           // Magnitude spectrum
+
+    // Viseme amplitudes
+    float ahAmplitude = 0, eeAmplitude = 0, ohAmplitude = 0;
+    float ooAmplitude = 0, thAmplitude = 0;
+
     float noiseThreshold = visemeNoiseThreshold;
     const float alpha = visemeSmoothingAlpha;
     const float decayRate = visemeDecayRate;
@@ -53,15 +63,24 @@ class Viseme {
         mouthTH1, mouthTH2, mouthTH3, mouthTH4, mouthTH5, mouthTH6, mouthTH7, mouthTH8, mouthTH9, mouthTH10,
         mouthTH11, mouthTH12, mouthTH13, mouthTH14, mouthTH15, mouthTH16, mouthTH17, mouthTH18, mouthTH19, mouthTH20};
 
-    void getAnalogSample(double* vReal, double* vImagine, bool isSmooth);
-    void getDigtalSample(double* vReal, double* vImagine, bool isSmooth);
-    void calcFFT();
-    void calculateAmplitude(double ah, double ee, double oh, double oo, double th, double& minAmp, double& maxAmp, double& avgAmp);
-    void normalizeViseme(double& ah_amplitude, double& ee_amplitude, double& oh_amplitude, double& oo_amplitude, double& th_amplitude);
-    void levelBoost(VisemeType viseme, double& maxAmp);
-    unsigned int calculateLoudness(double max, double avg);
+    // Initialization
+    void initHannWindow();
+    bool initFFT();
+
+    // Audio processing pipeline
+    void readAndPrepareSamples();
+    void performFFT();
+    void calculateMagnitudes();
+    void analyzeVisemes();
+
+    // Helper functions
+    inline float binToFrequency(int bin);
+    void calculateAmplitude(float ah, float ee, float oh, float oo, float th, float& minAmp, float& maxAmp, float& avgAmp);
+    void normalizeViseme(float& ah_amplitude, float& ee_amplitude, float& oh_amplitude, float& oo_amplitude, float& th_amplitude);
+    void levelBoost(VisemeType viseme, float& maxAmp);
+    unsigned int calculateLoudness(float max, float avg);
     unsigned int smoothedLoudness(unsigned int input);
-    VisemeType getDominantViseme(double ah_amplitude, double ee_amplitude, double oh_amplitude, double oo_amplitude, double th_amplitude);
+    VisemeType getDominantViseme(float& maxAmp);
     VisemeType holdViseme(VisemeType input);
     const uint8_t* visemeOutput(VisemeType viseme, unsigned int level);
 };

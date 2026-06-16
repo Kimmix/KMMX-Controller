@@ -36,5 +36,14 @@ const uint16_t visemeThFreqMax = 4000;                          // End frequency
 
 // Signal Processing Parameters
 const float visemeNoiseThreshold = 400.0f;                      // Minimum noise threshold for viseme to activate (lower = more sensitive)
-const float visemeSmoothingAlpha = 0.2f;                        // Exponential smoothing factor (0-1, lower = smoother but slower)
+const float visemeSmoothingAlpha = 0.10f;                       // Exponential smoothing factor (0-1, lower = smoother but slower)
 const float visemeDecayRate = 0.0003f;                          // Decay rate for viseme intensity (units per millisecond)
+
+// Normalization Scale Factors
+// These multipliers balance the sensitivity across different visemes
+// Lower values = less sensitive, Higher values = more sensitive
+const float visemeAhScale = 0.4f;                               // AH viseme scale factor
+const float visemeEeScale = 0.3f;                               // EE viseme scale factor
+const float visemeOhScale = 2.5f;                               // OH viseme scale factor
+const float visemeOoScale = 1.4f;                               // OO viseme scale factor
+const float visemeThScale = 6.0f;                               // TH viseme scale factor

@@ -26,6 +26,9 @@ void KMMXController::setupSensors() {
     eyeState.setState(EyeStateEnum::IDLE, true, 0);      // Persistent, no timeout (initial state)
     mouthState.setState(MouthStateEnum::IDLE, true, 0);  // Persistent, no timeout (initial state)
 
+    // Initialize microphone and start viseme processing task
+    mouthState.startMic();
+
     // Connect FXState to EyeState for automatic blushingFX rendering
     fxState.setEyeStatePtr(&eyeState);
 
