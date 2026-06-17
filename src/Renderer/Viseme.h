@@ -27,6 +27,8 @@ class Viseme {
     // Current state
     VisemeType getCurrentViseme() const { return previousViseme; }
     float getEnvelope() const { return currentEnvelope; }
+    float getGateThreshold() const { return adaptiveNoiseFloor; }
+    bool isLoudEnough() const { return currentEnvelope > getGateThreshold(); }
 
     // Get loudness level for display (0-20 range, based on envelope)
     uint16_t getLoudness() const {
@@ -78,17 +80,16 @@ class Viseme {
     I2SMicrophone mic;
 
     // ESP-DSP FFT buffers (using float for better performance)
-    int16_t i2sBuffer[i2sSamples];              // Raw I2S samples
-    float tempSamples[i2sSamples];              // Smoothed + windowed samples
-    float fftBuffer[2 * i2sSamples];            // Interleaved complex: [re0,im0,re1,im1,...]
-    float hannWindow[i2sSamples];               // Pre-computed Hann window
-    float magnitudes[i2sSamples / 2];           // Magnitude spectrum
+    int16_t i2sBuffer[i2sSamples];     // Raw I2S samples
+    float tempSamples[i2sSamples];     // Windowed samples (after DC removal + Hann window)
+    float fftBuffer[2 * i2sSamples];   // Interleaved complex: [re0,im0,re1,im1,...]
+    float hannWindow[i2sSamples];      // Pre-computed Hann window
+    float magnitudes[i2sSamples / 2];  // Magnitude spectrum
 
     // Viseme amplitudes
     float ahAmplitude = 0, eeAmplitude = 0, ohAmplitude = 0;
     float ooAmplitude = 0, thAmplitude = 0;
 
-    const float alpha = visemeSmoothingAlpha;
     static const uint8_t visemeFramelength = 20;  // Frame count (to expand, change this and add more frames to arrays)
     VisemeType previousViseme;
 
@@ -162,11 +163,10 @@ class Viseme {
 
     // Helper functions
     inline float binToFrequency(int bin);
-    void calculateAmplitude(float ah, float ee, float oh, float oo, float th, float& maxAmp, float& avgAmp);
+    void calculateAmplitude(float ah, float ee, float oh, float oo, float th, float& maxAmp, float& avgAmp, float& minAmp);
     void normalizeViseme(float& ah_amplitude, float& ee_amplitude, float& oh_amplitude, float& oo_amplitude, float& th_amplitude);
-    unsigned int calculateFFTLoudnessDif(float max, float avg);
     VisemeType getDominantViseme();
     VisemeType holdViseme(VisemeType input);
     const uint8_t* visemeOutput(VisemeType viseme, unsigned int level);
-    void printDebugPlotter();
+    void printDebugPlotter(float distinctiveness = 0, unsigned int loudnessLevel = 0, bool canChange = false);
 };

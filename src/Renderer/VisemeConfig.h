@@ -35,16 +35,15 @@ const uint16_t visemeThFreqMin = 2800;                          // Start frequen
 const uint16_t visemeThFreqMax = 4000;                          // End frequency of TH viseme
 
 // Signal Processing Parameters
-const float visemeNoiseThreshold = 400.0f;                      // Initial noise threshold for viseme to activate (lower = more sensitive)
-const float visemeSmoothingAlpha = 0.10f;                       // Exponential smoothing factor for DC removal (0-1, lower = smoother but slower)
+const float visemeNoiseThreshold = 10.0f;                       // Initial noise threshold for viseme to activate (RMS-based envelope scale)
 
 // Envelope Tracking Parameters
 const float visemeEnvelopeAttack = 0.3f;                        // Attack time constant (0-1, higher = faster response to increases)
 const float visemeEnvelopeRelease = 0.1f;                       // Release time constant (0-1, lower = slower decay)
 
 // Adaptive Noise Floor Parameters
-const float visemeNoiseFloorMin = 200.0f;                       // Minimum adaptive noise floor
-const float visemeNoiseFloorMax = 1000.0f;                      // Maximum adaptive noise floor
+const float visemeNoiseFloorMin = 5.0f;                         // Minimum adaptive noise floor (scaled for RMS envelope)
+const float visemeNoiseFloorMax = 50.0f;                        // Maximum adaptive noise floor (scaled for RMS envelope)
 const float visemeNoiseAdaptSpeed = 0.001f;                     // Speed of noise floor adaptation
 
 // Attack Detection Parameters
@@ -66,10 +65,8 @@ const float visemeOoScale = 1.4f;                               // OO viseme sca
 const float visemeThScale = 3.0f;                               // TH viseme scale factor
 
 // Loudness Calculation Parameters
-const float visemeLoudnessMinRatio = 0.8f;                      // Minimum ratio for loudness mapping (lower = more sensitive to quiet sounds)
-const float visemeLoudnessMaxRatio = 5.0f;                      // Maximum ratio for loudness mapping (higher = less likely to max out)
-const float visemeEnvelopeWeight = 0.4f;                        // Weight of envelope in loudness calculation (0.0-1.0, higher = more stable)
-const float visemeFftWeight = 0.6f;                             // Weight of FFT ratio in loudness calculation (0.0-1.0, higher = more responsive)
+const float visemeDistinctivenessMin = 50.0f;                  // Minimum distinctiveness spread (max-min) for level 1
+const float visemeDistinctivenessMax = 500.0f;                 // Maximum distinctiveness spread for level 20 (higher = clearer phonemes get higher levels)
 
 // Debug Configuration
 #define VISEME_DEBUG_PLOTTER 1

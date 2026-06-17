@@ -55,7 +55,7 @@ bool Viseme::initFFT() {
 
 /**
  * Read samples from I2S microphone and prepare for FFT.
- * Applies: DC removal -> smoothing -> Hann window
+ * Applies: DC removal -> Hann window
  *
  * IMPORTANT: Window is applied BEFORE copying to interleaved FFT buffer.
  * This fixes the bug in the original implementation where windowing was
@@ -72,28 +72,20 @@ void Viseme::readAndPrepareSamples() {
     }
     float dcOffset = (float)dcSum / i2sSamples;
 
-    // Apply DC removal, exponential smoothing, and Hann window
-    float smoothedValue = 0;
+    // Apply DC removal, store in tempSamples for RMS calculation
     for (int i = 0; i < i2sSamples; i++) {
-        // Remove DC offset
-        float sample = (float)i2sBuffer[i] - dcOffset;
-
-        // Apply exponential smoothing (low-pass filter)
-        smoothedValue = alpha * sample + (1.0f - alpha) * smoothedValue;
-
-        // Apply pre-computed Hann window
-        tempSamples[i] = smoothedValue * hannWindow[i];
+        tempSamples[i] = (float)i2sBuffer[i] - dcOffset;
     }
 
-    // Copy windowed samples to interleaved FFT buffer
-    for (int i = 0; i < i2sSamples; i++) {
-        fftBuffer[2 * i] = tempSamples[i];      // Real part
-        fftBuffer[2 * i + 1] = 0.0f;            // Imaginary part = 0
-    }
-
-    // Update envelope tracker (uses tempSamples before windowing would be better,
-    // but this is acceptable since we just need overall amplitude)
+    // Update envelope tracker BEFORE windowing (more accurate amplitude)
     updateEnvelope();
+
+    // Apply Hann window and copy to interleaved FFT buffer
+    for (int i = 0; i < i2sSamples; i++) {
+        float windowed = tempSamples[i] * hannWindow[i];
+        fftBuffer[2 * i] = windowed;        // Real part
+        fftBuffer[2 * i + 1] = 0.0f;        // Imaginary part = 0
+    }
 }
 
 /**
@@ -167,6 +159,12 @@ void Viseme::analyzeVisemes() {
 /**
  * Calculate RMS (Root Mean Square) amplitude from current audio samples.
  * This provides a smoothed amplitude measurement of the audio signal.
+ *
+ * Note: RMS of DC-removed int16 samples typically ranges from:
+ * - Silence: 1-5
+ * - Quiet room: 5-15
+ * - Normal speech: 20-100
+ * The noise floor thresholds are calibrated to this scale.
  */
 float Viseme::calculateRMS() {
     float sum = 0;
@@ -261,8 +259,9 @@ bool Viseme::detectAttack() {
 // HELPER FUNCTIONS
 // =============================================================================
 
-void Viseme::calculateAmplitude(float ah, float ee, float oh, float oo, float th, float& maxAmp, float& avgAmp) {
+void Viseme::calculateAmplitude(float ah, float ee, float oh, float oo, float th, float& maxAmp, float& avgAmp, float& minAmp) {
     maxAmp = max(max(ah, ee), max(max(oh, oo), th));
+    minAmp = min(min(ah, ee), min(min(oh, oo), th));
     avgAmp = (ah + ee + oh + oo + th) / 5.0f;
 }
 
@@ -274,15 +273,6 @@ void Viseme::normalizeViseme(float& ah_amplitude, float& ee_amplitude, float& oh
     oo_amplitude *= ooScale;
     th_amplitude *= thScale;
 }
-
-unsigned int Viseme::calculateFFTLoudnessDif(float max, float avg) {
-    if (avg <= 0) return 0;
-    float loudnessRatio = max / avg;
-    // Map loudness ratio to frame range (configurable via VisemeConfig.h)
-    return mapFloat(loudnessRatio, visemeLoudnessMinRatio, visemeLoudnessMaxRatio, 1, visemeFramelength);
-}
-
-
 
 /**
  * Determine the dominant viseme based on highest amplitude.
@@ -373,12 +363,13 @@ const uint8_t* Viseme::visemeOutput(VisemeType viseme, unsigned int level) {
  * Serial Plotter debug output.
  * Formatted for Arduino Serial Plotter with all key metrics.
  */
-void Viseme::printDebugPlotter() {
+void Viseme::printDebugPlotter(float distinctiveness, unsigned int loudnessLevel, bool canChange) {
 #if VISEME_DEBUG_PLOTTER
+    int mutiplier = 500;
     Serial.print("Envelope:");
-    Serial.print(currentEnvelope);
+    Serial.print(currentEnvelope * mutiplier);
     Serial.print(",NoiseFloor:");
-    Serial.print(adaptiveNoiseFloor);
+    Serial.print(adaptiveNoiseFloor * mutiplier);
     Serial.print(",AH:");
     Serial.print(ahAmplitude);
     Serial.print(",EE:");
@@ -389,10 +380,12 @@ void Viseme::printDebugPlotter() {
     Serial.print(ooAmplitude);
     Serial.print(",TH:");
     Serial.print(thAmplitude);
-    Serial.print(",Attack:");
-    Serial.print(attackDetected ? 500 : 0);
-    Serial.print(",Viseme:");
-    Serial.println(previousViseme * 100);
+    Serial.print(",Distinctiveness:");
+    Serial.print(distinctiveness);
+    Serial.print(",LoudnessLevel:");
+    Serial.print(loudnessLevel * 500);  // Scale up for visibility
+    Serial.print(",CanChange:");
+    Serial.println(canChange ? 5000 : 0);  // High when unlocked, low when locked
 #endif
 }
 
@@ -411,34 +404,36 @@ const uint8_t* Viseme::renderViseme() {
     analyzeVisemes();
 
     // Calculate statistics
-    float max_amplitude, avg_amplitude;
-    calculateAmplitude(ahAmplitude, eeAmplitude, ohAmplitude, ooAmplitude, thAmplitude,
-                      max_amplitude, avg_amplitude);
+    float max_amplitude, avg_amplitude, min_amplitude;
+    calculateAmplitude(ahAmplitude, eeAmplitude, ohAmplitude, ooAmplitude, thAmplitude, max_amplitude, avg_amplitude, min_amplitude);
 
     // Find dominant viseme (with confidence checking)
     VisemeType dominantViseme = getDominantViseme();
 
-    // Calculate loudness level (mix envelope with FFT amplitude for stability)
-    // Weights configured in VisemeConfig.h
+    // Calculate mouth opening level based on envelope (volume)
+    unsigned int loudness_level = 0;
+    float distinctiveness = max_amplitude - min_amplitude;  // Keep for debug plotting
 
-    // Envelope-based loudness (normalized to 0-20 range)
-    float envelopeLoudness = mapFloat(currentEnvelope, adaptiveNoiseFloor, adaptiveNoiseFloor * 3.0f, 0, visemeFramelength);
-    envelopeLoudness = constrain(envelopeLoudness, 0, visemeFramelength);
+    if (currentEnvelope > adaptiveNoiseFloor) {
+        // Map envelope to mouth opening level (1-20)
+        // Louder speech = bigger mouth opening
+        loudness_level = (unsigned int)mapFloat(currentEnvelope, adaptiveNoiseFloor, adaptiveNoiseFloor * 3.0f, 1, visemeFramelength);
+        loudness_level = constrain(loudness_level, 1, visemeFramelength);
+    }
 
-    // FFT-based loudness (existing ratio method)
-    unsigned int fftLoudness = calculateFFTLoudnessDif(max_amplitude, avg_amplitude);
+    // Lock viseme during release phase (envelope falling) or when mouth is closing
+    // Only allow viseme change if: attack detected OR envelope rising AND mouth sufficiently open
+    bool envelopeRising = (currentEnvelope >= previousEnvelope);
+    bool mouthIsOpen = (loudness_level >= 5);  // At least 25% open (5 out of 20 frames)
+    bool canChangeViseme = (attackDetected || envelopeRising) && mouthIsOpen;
 
-    // Blend both methods using config weights (envelope already provides smoothing)
-    unsigned int loudness_level = (unsigned int)((visemeEnvelopeWeight * envelopeLoudness) + (visemeFftWeight * fftLoudness));
-    loudness_level = max_amplitude > adaptiveNoiseFloor ? loudness_level : 0;
-
-    // Clamp to valid range
-    if (loudness_level > visemeFramelength) {
-        loudness_level = visemeFramelength;
+    if (!canChangeViseme && dominantViseme != previousViseme) {
+        // Lock to previous viseme during release/closing
+        dominantViseme = previousViseme;
     }
 
     // Debug output (Serial Plotter format)
-    printDebugPlotter();
+    printDebugPlotter(distinctiveness, loudness_level, canChangeViseme);
 
     // Final render
     return visemeOutput(dominantViseme, loudness_level);
