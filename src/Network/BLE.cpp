@@ -497,9 +497,9 @@ void BLEManager::setup() {
 
     // Initialize NimBLE with device name
     NimBLEDevice::init(BLE_DEVICE_NAME);
-    NimBLEDevice::setSecurityAuth(true, true, true);
     NimBLEDevice::setSecurityIOCap(BLE_HS_IO_DISPLAY_ONLY);
-    NimBLEDevice::setSecurityPasskey(BLE_PASSKEY);
+    // NimBLEDevice::setSecurityAuth(false, true, true);
+    // NimBLEDevice::setSecurityPasskey(BLE_PASSKEY);
 
     // Set power level for better range
     NimBLEDevice::setPower(ESP_PWR_LVL_P9);  // +9dBm

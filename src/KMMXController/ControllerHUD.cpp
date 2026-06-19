@@ -311,7 +311,7 @@ void KMMXController::drawOLEDSensorBars(const SensorData& sensors) {
 
     // Draw VU bar - map full envelope range (0 to noiseFloor*3) to bar width
     // This shows the complete audio level
-    constexpr float VU_MAX_ENVELOPE = 1200.0f;  // Maximum expected envelope (noiseFloorMax * 3 = 1000 * 1.2)
+    constexpr float VU_MAX_ENVELOPE = 100.0f;  // Maximum expected envelope
     int vuLevel = 0;
     if (envelope > 1.0f) {  // Ignore very small noise
         vuLevel = (int)mapFloat(envelope, 0, VU_MAX_ENVELOPE, 3, BAR_WIDTH);  // Start at 3 for visibility
