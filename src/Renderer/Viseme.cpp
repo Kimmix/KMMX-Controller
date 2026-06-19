@@ -381,7 +381,7 @@ const uint8_t* Viseme::renderViseme() {
     float distinctiveness = maxAmplitude - minAmplitude;
 
     if (currentEnvelope > adaptiveNoiseFloor) {
-        // Map envelope to mouth opening level (1-20)
+        // Map envelope to mouth opening level (1-60)
         // Louder speech = bigger mouth opening
         loudness_level = (unsigned int)mapFloat(currentEnvelope, adaptiveNoiseFloor, adaptiveNoiseFloor * 3.0f, 1, visemeFramelength);
         loudness_level = constrain(loudness_level, 1, visemeFramelength);
@@ -390,7 +390,7 @@ const uint8_t* Viseme::renderViseme() {
     // Lock viseme during release phase (envelope falling) or when mouth is closing
     // Only allow viseme change if: attack detected OR envelope rising AND mouth sufficiently open
     bool envelopeRising = (currentEnvelope >= previousEnvelope);
-    bool mouthIsOpen = (loudness_level >= 5);  // At least 25% open (5 out of 20 frames)
+    bool mouthIsOpen = (loudness_level >= 15);  // At least 25% open (15 out of 60 frames)
     bool canChangeViseme = (attackDetected || envelopeRising) && mouthIsOpen;
 
     if (!canChangeViseme && dominantViseme != previousViseme) {
