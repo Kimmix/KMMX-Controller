@@ -192,7 +192,7 @@ class Viseme {
     inline float binToFrequency(int bin);
     VisemeType getDominantViseme();
     const uint8_t* visemeOutput(VisemeType viseme, unsigned int level);
-    void printDebugPlotter(float distinctiveness = 0, unsigned int loudnessLevel = 0, bool canChange = false);
+    void printDebugPlotter(unsigned int loudnessLevel = 0);
 
     // Loudness processing
     unsigned int calculateLoudnessLevel();

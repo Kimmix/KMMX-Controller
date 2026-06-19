@@ -393,7 +393,7 @@ const uint8_t* Viseme::visemeOutput(VisemeType viseme, unsigned int level) {
  * Serial Plotter debug output.
  * Formatted for Arduino Serial Plotter with all key metrics.
  */
-void Viseme::printDebugPlotter(float distinctiveness, unsigned int loudnessLevel, bool canChange) {
+void Viseme::printDebugPlotter(unsigned int loudnessLevel) {
 #if VISEME_DEBUG_PLOTTER
     int mutiplier = 500;
     Serial.print("Envelope:");
@@ -410,12 +410,8 @@ void Viseme::printDebugPlotter(float distinctiveness, unsigned int loudnessLevel
     Serial.print(ooAmplitude);
     Serial.print(",TH:");
     Serial.print(thAmplitude);
-    Serial.print(",Distinctiveness:");
-    Serial.print(distinctiveness);
     Serial.print(",LoudnessLevel:");
-    Serial.print(loudnessLevel * 500);  // Scale up for visibility
-    Serial.print(",CanChange:");
-    Serial.println(canChange ? 5000 : 0);  // High when unlocked, low when locked
+    Serial.println(loudnessLevel * mutiplier);
 #endif
 }
 
@@ -441,7 +437,6 @@ const uint8_t* Viseme::renderViseme() {
 
     // Calculate mouth opening level with improved perceptual scaling and smoothing
     unsigned int loudness_level = calculateLoudnessLevel();
-    float distinctiveness = maxAmplitude - minAmplitude;
 
     // Lock viseme during release phase (envelope falling) or when mouth is closing
     // Only allow viseme change if: attack detected OR envelope rising AND mouth sufficiently open
@@ -455,7 +450,7 @@ const uint8_t* Viseme::renderViseme() {
     }
 
     // Debug output (Serial Plotter format)
-    printDebugPlotter(distinctiveness, loudness_level, canChangeViseme);
+    printDebugPlotter(loudness_level);
 
     // Final render
     return visemeOutput(dominantViseme, loudness_level);
