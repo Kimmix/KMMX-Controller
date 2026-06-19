@@ -9,9 +9,8 @@ BLEManager* BLEManager::instance = nullptr;
 static constexpr uint16_t BLE_ADV_MIN_INTERVAL = 0x20;      // 20ms (0x20 * 0.625ms)
 static constexpr uint16_t BLE_ADV_MAX_INTERVAL = 0x40;      // 40ms (0x40 * 0.625ms)
 static constexpr uint16_t BLE_APPEARANCE_DISPLAY = 0x03C0;  // Generic Display
-static constexpr uint32_t BLE_RW = NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_AUTHEN;
-static constexpr uint32_t BLE_WRITE = NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_AUTHEN;
-static_assert(BLE_PASSKEY >= 100000 && BLE_PASSKEY <= 999999, "BLE_PASSKEY must be six digits");
+static constexpr uint32_t BLE_RW = NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE;
+static constexpr uint32_t BLE_WRITE = NIMBLE_PROPERTY::WRITE;
 
 // Manufacturer data stored in flash memory (PROGMEM)
 static const uint8_t BLE_MFG_DATA[] PROGMEM = {
@@ -23,6 +22,7 @@ static const uint8_t BLE_MFG_DATA[] PROGMEM = {
 // Simplified Server Callbacks - directly implement logic
 class ServerCallbacks : public NimBLEServerCallbacks {
     void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) {
+        pServer->updateConnParams(connInfo.getConnHandle(), 12, 24, 0, 100);
         if (BLEManager::instance && BLEManager::instance->debugEnabled) {
             Serial.println(F("[BLE] Client connected"));
         }
@@ -33,14 +33,6 @@ class ServerCallbacks : public NimBLEServerCallbacks {
             Serial.print(F("[BLE] Client disconnected, reason: "));
             Serial.println(reason);
         }
-    }
-
-    uint32_t onPassKeyDisplay() override {
-        if (BLEManager::instance && BLEManager::instance->debugEnabled) {
-            Serial.print(F("[BLE] Pairing passkey: "));
-            Serial.println(BLE_PASSKEY);
-        }
-        return BLE_PASSKEY;
     }
 };
 
@@ -497,9 +489,6 @@ void BLEManager::setup() {
 
     // Initialize NimBLE with device name
     NimBLEDevice::init(BLE_DEVICE_NAME);
-    NimBLEDevice::setSecurityIOCap(BLE_HS_IO_DISPLAY_ONLY);
-    // NimBLEDevice::setSecurityAuth(false, true, true);
-    // NimBLEDevice::setSecurityPasskey(BLE_PASSKEY);
 
     // Set power level for better range
     NimBLEDevice::setPower(ESP_PWR_LVL_P9);  // +9dBm

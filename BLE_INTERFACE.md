@@ -11,8 +11,6 @@ This document defines the Bluetooth Low Energy (BLE) GATT profile for controllin
 
 The KMMX controller supports two hardware versions with different capabilities:
 
-Writes require authenticated BLE pairing. The default passkey is `739241`; override `BLE_PASSKEY` in the build environment for deployed devices.
-
 | Feature | V2 | V4 |
 |---------|----|----|
 | Accelerometer | LIS3DH (0x18) | MPU6050 (0x68) |
