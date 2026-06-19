@@ -33,10 +33,13 @@ class FanSpeedCallbacks;
 class FanEnabledCallbacks;
 #endif
 
+class VisemeParameterCallbacks;
+
 class BLEManager {
    public:
     static BLEManager& getInstance(KMMXController& controller);
     void setup();
+    void update();
     bool isConnected() const;
 
     static BLEManager* instance;  // Made public for callbacks to access
@@ -68,6 +71,8 @@ class BLEManager {
     friend class FanSpeedCallbacks;
     friend class FanEnabledCallbacks;
     #endif
+
+    friend class VisemeParameterCallbacks;
 
    private:
     BLEManager(KMMXController& controller);
@@ -108,4 +113,18 @@ class BLEManager {
     NimBLECharacteristic* fanRpmCharacteristic;
     NimBLECharacteristic* fanConnectedCharacteristic;
     #endif
+
+    // Viseme Advanced Parameter Characteristics
+    NimBLECharacteristic* visemeEnvelopeAttackCharacteristic;
+    NimBLECharacteristic* visemeEnvelopeReleaseCharacteristic;
+    NimBLECharacteristic* visemeAttackThresholdCharacteristic;
+    NimBLECharacteristic* visemeMinSeparationCharacteristic;
+    NimBLECharacteristic* visemeNoiseFloorMinCharacteristic;
+    NimBLECharacteristic* visemeNoiseFloorMaxCharacteristic;
+    NimBLECharacteristic* visemeNoiseAdaptSpeedCharacteristic;
+    NimBLECharacteristic* visemeAhScaleCharacteristic;
+    NimBLECharacteristic* visemeEeScaleCharacteristic;
+    NimBLECharacteristic* visemeOhScaleCharacteristic;
+    NimBLECharacteristic* visemeOoScaleCharacteristic;
+    NimBLECharacteristic* visemeThScaleCharacteristic;
 };

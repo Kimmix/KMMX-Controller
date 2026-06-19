@@ -215,6 +215,103 @@ int KMMXController::getViseme() {
     return mouthState.getState() == MouthStateEnum::TALKING;
 }
 
+// Viseme Advanced Parameters (pass-through to mouthState.viseme)
+float KMMXController::getVisemeEnvelopeAttack() {
+    return mouthState.viseme.getEnvelopeAttack();
+}
+
+void KMMXController::setVisemeEnvelopeAttack(float value) {
+    mouthState.viseme.setEnvelopeAttack(value);
+}
+
+float KMMXController::getVisemeEnvelopeRelease() {
+    return mouthState.viseme.getEnvelopeRelease();
+}
+
+void KMMXController::setVisemeEnvelopeRelease(float value) {
+    mouthState.viseme.setEnvelopeRelease(value);
+}
+
+float KMMXController::getVisemeAttackThreshold() {
+    return mouthState.viseme.getAttackThreshold();
+}
+
+void KMMXController::setVisemeAttackThreshold(float value) {
+    mouthState.viseme.setAttackThreshold(value);
+}
+
+float KMMXController::getVisemeMinSeparation() {
+    return mouthState.viseme.getMinSeparation();
+}
+
+void KMMXController::setVisemeMinSeparation(float value) {
+    mouthState.viseme.setMinSeparation(value);
+}
+
+float KMMXController::getVisemeNoiseFloorMin() {
+    return mouthState.viseme.getNoiseFloorMin();
+}
+
+void KMMXController::setVisemeNoiseFloorMin(float value) {
+    mouthState.viseme.setNoiseFloorMin(value);
+}
+
+float KMMXController::getVisemeNoiseFloorMax() {
+    return mouthState.viseme.getNoiseFloorMax();
+}
+
+void KMMXController::setVisemeNoiseFloorMax(float value) {
+    mouthState.viseme.setNoiseFloorMax(value);
+}
+
+float KMMXController::getVisemeNoiseAdaptSpeed() {
+    return mouthState.viseme.getNoiseAdaptSpeed();
+}
+
+void KMMXController::setVisemeNoiseAdaptSpeed(float value) {
+    mouthState.viseme.setNoiseAdaptSpeed(value);
+}
+
+float KMMXController::getVisemeAhScale() {
+    return mouthState.viseme.getAhScale();
+}
+
+void KMMXController::setVisemeAhScale(float value) {
+    mouthState.viseme.setAhScale(value);
+}
+
+float KMMXController::getVisemeEeScale() {
+    return mouthState.viseme.getEeScale();
+}
+
+void KMMXController::setVisemeEeScale(float value) {
+    mouthState.viseme.setEeScale(value);
+}
+
+float KMMXController::getVisemeOhScale() {
+    return mouthState.viseme.getOhScale();
+}
+
+void KMMXController::setVisemeOhScale(float value) {
+    mouthState.viseme.setOhScale(value);
+}
+
+float KMMXController::getVisemeOoScale() {
+    return mouthState.viseme.getOoScale();
+}
+
+void KMMXController::setVisemeOoScale(float value) {
+    mouthState.viseme.setOoScale(value);
+}
+
+float KMMXController::getVisemeThScale() {
+    return mouthState.viseme.getThScale();
+}
+
+void KMMXController::setVisemeThScale(float value) {
+    mouthState.viseme.setThScale(value);
+}
+
 // System Control
 void KMMXController::reboot() {
     Serial.println("Rebooting device...");

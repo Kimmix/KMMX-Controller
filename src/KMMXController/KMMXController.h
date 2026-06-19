@@ -44,6 +44,32 @@ class KMMXController {
     void setMouth(int i);
     void setViseme(int b);
     int getViseme();
+
+    // Viseme Advanced Parameters (BLE controllable)
+    float getVisemeEnvelopeAttack();
+    void setVisemeEnvelopeAttack(float value);
+    float getVisemeEnvelopeRelease();
+    void setVisemeEnvelopeRelease(float value);
+    float getVisemeAttackThreshold();
+    void setVisemeAttackThreshold(float value);
+    float getVisemeMinSeparation();
+    void setVisemeMinSeparation(float value);
+    float getVisemeNoiseFloorMin();
+    void setVisemeNoiseFloorMin(float value);
+    float getVisemeNoiseFloorMax();
+    void setVisemeNoiseFloorMax(float value);
+    float getVisemeNoiseAdaptSpeed();
+    void setVisemeNoiseAdaptSpeed(float value);
+    float getVisemeAhScale();
+    void setVisemeAhScale(float value);
+    float getVisemeEeScale();
+    void setVisemeEeScale(float value);
+    float getVisemeOhScale();
+    void setVisemeOhScale(float value);
+    float getVisemeOoScale();
+    void setVisemeOoScale(float value);
+    float getVisemeThScale();
+    void setVisemeThScale(float value);
     int getDisplayBrightness();
     void setDisplayBrightness(int i);
     int getHornBrightness();

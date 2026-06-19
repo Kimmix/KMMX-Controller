@@ -57,6 +57,32 @@ The KMMX controller supports two hardware versions with different capabilities:
 
 *Note: When enabled, the system automatically analyzes microphone input and generates mouth shapes (AH, EE, OH, OO, TH) based on frequency analysis.*
 
+### Viseme Advanced Parameters
+
+**Note:** These characteristics provide fine-grained control over the viseme detection algorithm. Values are sent as little-endian binary (float or uint16_t).
+
+| Name | UUID | Properties | Data Format | Range | Default | Description |
+|------|------|------------|-------------|-------|---------|-------------|
+| Envelope Attack | `d1e2f3a4-b5c6-47d8-9e0f-1a2b3c4d5e6f` | READ, WRITE | `float` | 0.1-0.9 | 0.3 | Attack time constant (higher = faster rise) |
+| Envelope Release | `d2e3f4a5-b6c7-48d9-9f0a-1b2c3d4e5f6a` | READ, WRITE | `float` | 0.01-0.5 | 0.1 | Release time constant (lower = slower decay) |
+| Attack Threshold | `d3e4f5a6-b7c8-49da-a0b1-2c3d4e5f6a7b` | READ, WRITE | `float` | 1.0-3.0 | 1.25 | Envelope ratio to detect syllable start (1.25 = 25% increase) |
+| Min Separation | `d4e5f6a7-b8c9-4adb-a1b2-3d4e5f6a7b8c` | READ, WRITE | `float` | 1.0-2.0 | 1.10 | Required separation between 1st and 2nd viseme (1.10 = 10% stronger) |
+| Noise Floor Min | `d6e7f8a9-bacb-4cdd-a3b4-5f6a7b8c9d0e` | READ, WRITE | `float` | 100-500 | 200 | Minimum adaptive noise floor threshold |
+| Noise Floor Max | `d7e8f9aa-bbcc-4dde-a4b5-6a7b8c9d0e1f` | READ, WRITE | `float` | 500-2000 | 1000 | Maximum adaptive noise floor threshold |
+| Noise Adapt Speed | `d8e9faab-bccd-4edf-a5b6-7b8c9d0e1f2a` | READ, WRITE | `float` | 0.0001-0.01 | 0.001 | Speed of noise floor adaptation |
+| AH Scale | `d9eafbac-bdce-4fe0-a6b7-8c9d0e1f2a3b` | READ, WRITE | `float` | 0.1-5.0 | 0.4 | Sensitivity multiplier for AH viseme |
+| EE Scale | `dafbfcad-becf-4ae1-a7b8-9d0e1f2a3b4c` | READ, WRITE | `float` | 0.1-5.0 | 0.3 | Sensitivity multiplier for EE viseme |
+| OH Scale | `dbfcfdae-bfd0-4be2-a8b9-0e1f2a3b4c5d` | READ, WRITE | `float` | 0.1-5.0 | 1.5 | Sensitivity multiplier for OH viseme |
+| OO Scale | `dcfdfebf-c0d1-4ce3-a9ba-1f2a3b4c5d6e` | READ, WRITE | `float` | 0.1-5.0 | 1.4 | Sensitivity multiplier for OO viseme |
+| TH Scale | `ddfeafc0-c1d2-4de4-aabb-2a3b4c5d6e7f` | READ, WRITE | `float` | 0.1-5.0 | 3.0 | Sensitivity multiplier for TH viseme |
+
+**Tuning Tips:**
+- **Envelope Attack/Release:** Controls how quickly the loudness tracker responds to sound
+- **Attack Threshold:** Lower values detect more syllables, higher values detect only clear syllables
+- **Min Separation:** Increase to reduce flickering between visemes
+- **Noise Floor:** System auto-adjusts between min/max based on ambient noise
+- **Viseme Scales:** Adjust individual viseme sensitivity if certain mouth shapes are under/over-detected
+
 ### LED Brightness Control
 
 | Name | UUID | Properties | Data Format | Description |

@@ -296,22 +296,49 @@ void KMMXController::drawOLEDSensorBars(const SensorData& sensors) {
 
     // VU meter bar (uses loudness from viseme/microphone)
     oledDisplay.drawText(BAR_LABEL_X, VU_LABEL_Y, "VU");
-    if (mouthState.getState() == MouthStateEnum::TALKING) {
-        // Microphone is active - show VU meter based on loudness (0-20 range from viseme)
-        uint16_t loudness = mouthState.viseme.getLoudness();
-        int vuLevel = fastMap<int>(loudness, 0, 20, 0, BAR_WIDTH);
-        drawHorizontalBar(oledDisplay, BAR_START_X, VU_BAR_Y, BAR_WIDTH, BAR_HEIGHT, vuLevel);
+    float envelope = mouthState.viseme.getEnvelope();                    // currentEnvelope
+    float gateThreshold = mouthState.viseme.getGateThreshold();          // adaptiveNoiseFloor * visemeLoudnessGateMultiplier
+    bool isLoudEnough = mouthState.viseme.isLoudEnough();                // envelope > gateThreshold
+    float noiseFloor = mouthState.viseme.getNoiseThreshold();            // For debug output
+
+    // Debug output to Serial
+    // static unsigned long lastDebugPrint = 0;
+    // if (millis() - lastDebugPrint > 500) {  // Print every 500ms
+    //     Serial.printf("VU Debug - Envelope: %.1f, NoiseFloor: %.1f, Gate: %.1f, isLoudEnough: %s\n",
+    //                  envelope, noiseFloor, gateThreshold, isLoudEnough ? "YES" : "NO");
+    //     lastDebugPrint = millis();
+    // }
+
+    // Draw VU bar - map full envelope range (0 to noiseFloor*3) to bar width
+    // This shows the complete audio level
+    constexpr float VU_MAX_ENVELOPE = 100.0f;  // Maximum expected envelope
+    int vuLevel = 0;
+    if (envelope > 1.0f) {  // Ignore very small noise
+        vuLevel = (int)mapFloat(envelope, 0, VU_MAX_ENVELOPE, 3, BAR_WIDTH);  // Start at 3 for visibility
+        vuLevel = constrain(vuLevel, 3, BAR_WIDTH);
+    }
+    drawHorizontalBar(oledDisplay, BAR_START_X, VU_BAR_Y, BAR_WIDTH, BAR_HEIGHT, vuLevel);
+
+    // Draw gate threshold line showing where visemes trigger (when envelope > noiseFloor * 1.5)
+    // Line position shows the trigger point - bar crossing this line = visemes active
+    auto* u8g2 = oledDisplay.getU8g2();
+    int gatePos = BAR_START_X + (int)mapFloat(gateThreshold, 0, VU_MAX_ENVELOPE, 0, BAR_WIDTH);
+    gatePos = constrain(gatePos, BAR_START_X, BAR_START_X + BAR_WIDTH - 1);
+
+    // Draw threshold line (double line if gate is active for better visibility)
+    if (isLoudEnough) {
+        // Active: draw thick line (2 pixels)
+        u8g2->drawLine(gatePos, VU_BAR_Y, gatePos, VU_BAR_Y + BAR_HEIGHT);
+        if (gatePos + 1 < BAR_START_X + BAR_WIDTH) {
+            u8g2->drawLine(gatePos + 1, VU_BAR_Y, gatePos + 1, VU_BAR_Y + BAR_HEIGHT);
+        }
     } else {
-        // Microphone not active - show "n/a"
-        oledDisplay.drawText(BAR_START_X, VU_LABEL_Y, "n/a");
+        // Inactive: draw single line
+        u8g2->drawLine(gatePos, VU_BAR_Y, gatePos, VU_BAR_Y + BAR_HEIGHT);
     }
 
-    // Viseme text
-    const char* visemeText = "n/a";
-    if (mouthState.getState() == MouthStateEnum::TALKING) {
-        visemeText = StateNames::getVisemeName(mouthState.viseme.getCurrentViseme());
-    }
-
+    // Viseme text (always show current viseme)
+    const char* visemeText = StateNames::getVisemeName(mouthState.viseme.getCurrentViseme());
     oledDisplay.drawText(BAR_LABEL_X, VISEME_Y, "V:");
     oledDisplay.drawText(BAR_LABEL_X + 10, VISEME_Y, visemeText);
 }

@@ -3,10 +3,3 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
-node_modules/
-bitmapTool/bitmapConverter/input/*
-bitmapTool/bitmapConverter/output/*
-!bitmapTool/bitmapConverter/input/.gitkeep
-!bitmapTool/bitmapConverter/output/.gitkeep
-bitmapTool/Adobe After Effects Auto-Save/
-bitmapTool/*AME
