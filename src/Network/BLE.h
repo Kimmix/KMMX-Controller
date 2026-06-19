@@ -33,25 +33,13 @@ class FanSpeedCallbacks;
 class FanEnabledCallbacks;
 #endif
 
-// Viseme Advanced Parameter Callbacks
-class VisemeEnvelopeAttackCallbacks;
-class VisemeEnvelopeReleaseCallbacks;
-class VisemeAttackThresholdCallbacks;
-class VisemeMinSeparationCallbacks;
-class VisemeMinHoldTimeCallbacks;
-class VisemeNoiseFloorMinCallbacks;
-class VisemeNoiseFloorMaxCallbacks;
-class VisemeNoiseAdaptSpeedCallbacks;
-class VisemeAhScaleCallbacks;
-class VisemeEeScaleCallbacks;
-class VisemeOhScaleCallbacks;
-class VisemeOoScaleCallbacks;
-class VisemeThScaleCallbacks;
+class VisemeParameterCallbacks;
 
 class BLEManager {
    public:
     static BLEManager& getInstance(KMMXController& controller);
     void setup();
+    void update();
     bool isConnected() const;
 
     static BLEManager* instance;  // Made public for callbacks to access
@@ -84,20 +72,7 @@ class BLEManager {
     friend class FanEnabledCallbacks;
     #endif
 
-    // Viseme Advanced Parameter Callbacks
-    friend class VisemeEnvelopeAttackCallbacks;
-    friend class VisemeEnvelopeReleaseCallbacks;
-    friend class VisemeAttackThresholdCallbacks;
-    friend class VisemeMinSeparationCallbacks;
-    friend class VisemeMinHoldTimeCallbacks;
-    friend class VisemeNoiseFloorMinCallbacks;
-    friend class VisemeNoiseFloorMaxCallbacks;
-    friend class VisemeNoiseAdaptSpeedCallbacks;
-    friend class VisemeAhScaleCallbacks;
-    friend class VisemeEeScaleCallbacks;
-    friend class VisemeOhScaleCallbacks;
-    friend class VisemeOoScaleCallbacks;
-    friend class VisemeThScaleCallbacks;
+    friend class VisemeParameterCallbacks;
 
    private:
     BLEManager(KMMXController& controller);
@@ -144,7 +119,6 @@ class BLEManager {
     NimBLECharacteristic* visemeEnvelopeReleaseCharacteristic;
     NimBLECharacteristic* visemeAttackThresholdCharacteristic;
     NimBLECharacteristic* visemeMinSeparationCharacteristic;
-    NimBLECharacteristic* visemeMinHoldTimeCharacteristic;
     NimBLECharacteristic* visemeNoiseFloorMinCharacteristic;
     NimBLECharacteristic* visemeNoiseFloorMaxCharacteristic;
     NimBLECharacteristic* visemeNoiseAdaptSpeedCharacteristic;

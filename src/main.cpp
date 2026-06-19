@@ -28,4 +28,5 @@ void setup() {
 
 void loop() {
     controller.update();
+    bleManager.update();
 }

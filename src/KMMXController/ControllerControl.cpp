@@ -248,14 +248,6 @@ void KMMXController::setVisemeMinSeparation(float value) {
     mouthState.viseme.setMinSeparation(value);
 }
 
-uint16_t KMMXController::getVisemeMinHoldTime() {
-    return mouthState.viseme.getMinVisemeHoldTime();
-}
-
-void KMMXController::setVisemeMinHoldTime(uint16_t value) {
-    mouthState.viseme.setMinVisemeHoldTime(value);
-}
-
 float KMMXController::getVisemeNoiseFloorMin() {
     return mouthState.viseme.getNoiseFloorMin();
 }

@@ -52,8 +52,6 @@ const uint16_t visemeMinAttackInterval = 50;                    // Minimum time 
 
 // Confidence & Switching Parameters
 const float visemeMinSeparation = 1.10f;                        // Minimum separation ratio between 1st and 2nd viseme (1.10 = 10% stronger)
-const uint16_t visemeMinHoldTime = 60;                          // Minimum time to hold a viseme before switching (ms)
-const uint16_t visemeAttackTimeout = 120;                       // Timeout to allow switching without attack detection (ms)
 
 // Normalization Scale Factors
 // These multipliers balance the sensitivity across different visemes
@@ -63,10 +61,6 @@ const float visemeEeScale = 1.3f;                               // EE viseme sca
 const float visemeOhScale = 1.5f;                               // OH viseme scale factor
 const float visemeOoScale = 1.4f;                               // OO viseme scale factor
 const float visemeThScale = 3.0f;                               // TH viseme scale factor
-
-// Loudness Calculation Parameters
-const float visemeDistinctivenessMin = 50.0f;                  // Minimum distinctiveness spread (max-min) for level 1
-const float visemeDistinctivenessMax = 500.0f;                 // Maximum distinctiveness spread for level 20 (higher = clearer phonemes get higher levels)
 
 // Debug Configuration
 #define VISEME_DEBUG_PLOTTER 1

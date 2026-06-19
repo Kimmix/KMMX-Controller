@@ -1,6 +1,5 @@
 #pragma once
 
-#include <map>
 #include "esp_dsp.h"
 #include "Utils/Utils.h"
 #include "VisemeConfig.h"
@@ -53,16 +52,9 @@ class Viseme {
     // Attack detection parameters (BLE controllable)
     float getAttackThreshold() const { return attackThreshold; }
     void setAttackThreshold(float value) { attackThreshold = value; }
-    uint16_t getMinAttackInterval() const { return minAttackInterval; }
-    void setMinAttackInterval(uint16_t value) { minAttackInterval = value; }
-
     // Confidence parameters (BLE controllable)
     float getMinSeparation() const { return minSeparation; }
     void setMinSeparation(float value) { minSeparation = value; }
-
-    // Hold time (BLE controllable)
-    uint16_t getMinVisemeHoldTime() const { return minVisemeHoldTime; }
-    void setMinVisemeHoldTime(uint16_t value) { minVisemeHoldTime = value; }
 
     // Viseme scale factors (BLE controllable)
     float getAhScale() const { return ahScale; }
@@ -114,10 +106,6 @@ class Viseme {
     // Confidence
     float minSeparation = visemeMinSeparation;
 
-    // Viseme Hold Time
-    unsigned long lastVisemeSwitchTime = 0;
-    uint16_t minVisemeHoldTime = visemeMinHoldTime;
-
     // Viseme Scale Factors (normalization)
     float ahScale = visemeAhScale;
     float eeScale = visemeEeScale;
@@ -163,10 +151,7 @@ class Viseme {
 
     // Helper functions
     inline float binToFrequency(int bin);
-    void calculateAmplitude(float ah, float ee, float oh, float oo, float th, float& maxAmp, float& avgAmp, float& minAmp);
-    void normalizeViseme(float& ah_amplitude, float& ee_amplitude, float& oh_amplitude, float& oo_amplitude, float& th_amplitude);
     VisemeType getDominantViseme();
-    VisemeType holdViseme(VisemeType input);
     const uint8_t* visemeOutput(VisemeType viseme, unsigned int level);
     void printDebugPlotter(float distinctiveness = 0, unsigned int loudnessLevel = 0, bool canChange = false);
 };

@@ -54,8 +54,6 @@ class KMMXController {
     void setVisemeAttackThreshold(float value);
     float getVisemeMinSeparation();
     void setVisemeMinSeparation(float value);
-    uint16_t getVisemeMinHoldTime();
-    void setVisemeMinHoldTime(uint16_t value);
     float getVisemeNoiseFloorMin();
     void setVisemeNoiseFloorMin(float value);
     float getVisemeNoiseFloorMax();

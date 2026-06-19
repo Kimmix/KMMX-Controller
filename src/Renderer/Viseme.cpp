@@ -148,8 +148,11 @@ void Viseme::analyzeVisemes() {
         }
     }
 
-    // Apply normalization to balance sensitivity across visemes
-    normalizeViseme(ahAmplitude, eeAmplitude, ohAmplitude, ooAmplitude, thAmplitude);
+    ahAmplitude *= ahScale;
+    eeAmplitude *= eeScale;
+    ohAmplitude *= ohScale;
+    ooAmplitude *= ooScale;
+    thAmplitude *= thScale;
 }
 
 // =============================================================================
@@ -259,21 +262,6 @@ bool Viseme::detectAttack() {
 // HELPER FUNCTIONS
 // =============================================================================
 
-void Viseme::calculateAmplitude(float ah, float ee, float oh, float oo, float th, float& maxAmp, float& avgAmp, float& minAmp) {
-    maxAmp = max(max(ah, ee), max(max(oh, oo), th));
-    minAmp = min(min(ah, ee), min(min(oh, oo), th));
-    avgAmp = (ah + ee + oh + oo + th) / 5.0f;
-}
-
-void Viseme::normalizeViseme(float& ah_amplitude, float& ee_amplitude, float& oh_amplitude, float& oo_amplitude, float& th_amplitude) {
-    // Apply normalization scale factors (now BLE-controllable)
-    ah_amplitude *= ahScale;
-    ee_amplitude *= eeScale;
-    oh_amplitude *= ohScale;
-    oo_amplitude *= ooScale;
-    th_amplitude *= thScale;
-}
-
 /**
  * Determine the dominant viseme based on highest amplitude.
  * Requires the dominant viseme to be clearly separated from second place.
@@ -313,27 +301,6 @@ Viseme::VisemeType Viseme::getDominantViseme() {
 
     // Return the dominant viseme
     return names[maxIdx];
-}
-
-Viseme::VisemeType Viseme::holdViseme(VisemeType input) {
-    unsigned long currentTime = millis();
-
-    // Check if we can switch visemes (minimum hold time)
-    bool canSwitch = (currentTime - lastVisemeSwitchTime) >= minVisemeHoldTime;
-
-    // Allow switch if: hold time passed AND (attack detected OR timeout expired)
-    bool allowSwitch = canSwitch && (attackDetected || (currentTime - lastAttackTime) > visemeAttackTimeout);
-
-    VisemeType held_viseme = previousViseme;
-
-    if (input != previousViseme && allowSwitch) {
-        // Switching to new viseme
-        held_viseme = input;
-        lastVisemeSwitchTime = currentTime;
-    }
-
-    previousViseme = held_viseme;
-    return held_viseme;
 }
 
 const uint8_t* Viseme::visemeOutput(VisemeType viseme, unsigned int level) {
@@ -403,16 +370,15 @@ const uint8_t* Viseme::renderViseme() {
     calculateMagnitudes();
     analyzeVisemes();
 
-    // Calculate statistics
-    float max_amplitude, avg_amplitude, min_amplitude;
-    calculateAmplitude(ahAmplitude, eeAmplitude, ohAmplitude, ooAmplitude, thAmplitude, max_amplitude, avg_amplitude, min_amplitude);
+    const float maxAmplitude = max(max(ahAmplitude, eeAmplitude), max(max(ohAmplitude, ooAmplitude), thAmplitude));
+    const float minAmplitude = min(min(ahAmplitude, eeAmplitude), min(min(ohAmplitude, ooAmplitude), thAmplitude));
 
     // Find dominant viseme (with confidence checking)
     VisemeType dominantViseme = getDominantViseme();
 
     // Calculate mouth opening level based on envelope (volume)
     unsigned int loudness_level = 0;
-    float distinctiveness = max_amplitude - min_amplitude;  // Keep for debug plotting
+    float distinctiveness = maxAmplitude - minAmplitude;
 
     if (currentEnvelope > adaptiveNoiseFloor) {
         // Map envelope to mouth opening level (1-20)

@@ -9,6 +9,9 @@ BLEManager* BLEManager::instance = nullptr;
 static constexpr uint16_t BLE_ADV_MIN_INTERVAL = 0x20;      // 20ms (0x20 * 0.625ms)
 static constexpr uint16_t BLE_ADV_MAX_INTERVAL = 0x40;      // 40ms (0x40 * 0.625ms)
 static constexpr uint16_t BLE_APPEARANCE_DISPLAY = 0x03C0;  // Generic Display
+static constexpr uint32_t BLE_RW = NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_AUTHEN;
+static constexpr uint32_t BLE_WRITE = NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_AUTHEN;
+static_assert(BLE_PASSKEY >= 100000 && BLE_PASSKEY <= 999999, "BLE_PASSKEY must be six digits");
 
 // Manufacturer data stored in flash memory (PROGMEM)
 static const uint8_t BLE_MFG_DATA[] PROGMEM = {
@@ -31,13 +34,29 @@ class ServerCallbacks : public NimBLEServerCallbacks {
             Serial.println(reason);
         }
     }
+
+    uint32_t onPassKeyDisplay() override {
+        if (BLEManager::instance && BLEManager::instance->debugEnabled) {
+            Serial.print(F("[BLE] Pairing passkey: "));
+            Serial.println(BLE_PASSKEY);
+        }
+        return BLE_PASSKEY;
+    }
 };
+
+static bool readByte(NimBLECharacteristic* characteristic, uint8_t& value) {
+    const auto data = characteristic->getValue();
+    if (data.length() != 1) return false;
+    value = data[0];
+    return true;
+}
 
 // Simplified Characteristic Callbacks - one class per characteristic type
 class DisplayBrightnessCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        uint8_t value = pCharacteristic->getValue()[0];
+        uint8_t value;
+        if (!readByte(pCharacteristic, value)) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Display Brightness: "));
             Serial.println(value);
@@ -49,7 +68,8 @@ class DisplayBrightnessCallbacks : public NimBLECharacteristicCallbacks {
 class EyeStateCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        uint8_t value = pCharacteristic->getValue()[0];
+        uint8_t value;
+        if (!readByte(pCharacteristic, value)) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Eye State: "));
             Serial.println(value);
@@ -61,7 +81,8 @@ class EyeStateCallbacks : public NimBLECharacteristicCallbacks {
 class MouthStateCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        uint8_t value = pCharacteristic->getValue()[0];
+        uint8_t value;
+        if (!readByte(pCharacteristic, value)) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Mouth State: "));
             Serial.println(value);
@@ -73,7 +94,8 @@ class MouthStateCallbacks : public NimBLECharacteristicCallbacks {
 class VisemeCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        uint8_t value = pCharacteristic->getValue()[0];
+        uint8_t value;
+        if (!readByte(pCharacteristic, value)) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Viseme: "));
             Serial.println(value);
@@ -85,7 +107,8 @@ class VisemeCallbacks : public NimBLECharacteristicCallbacks {
 class HornBrightnessCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        uint8_t value = pCharacteristic->getValue()[0];
+        uint8_t value;
+        if (!readByte(pCharacteristic, value)) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Horn Brightness: "));
             Serial.println(value);
@@ -97,7 +120,8 @@ class HornBrightnessCallbacks : public NimBLECharacteristicCallbacks {
 class CheekBrightnessCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        uint8_t value = pCharacteristic->getValue()[0];
+        uint8_t value;
+        if (!readByte(pCharacteristic, value)) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Cheek Brightness: "));
             Serial.println(value);
@@ -145,7 +169,8 @@ class CheekFadeColorCallbacks : public NimBLECharacteristicCallbacks {
 class DisplayColorModeCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        uint8_t value = pCharacteristic->getValue()[0];
+        uint8_t value;
+        if (!readByte(pCharacteristic, value)) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Display Color Mode: "));
             Serial.println(value);
@@ -211,7 +236,8 @@ class DisplayEffectColor2Callbacks : public NimBLECharacteristicCallbacks {
 class DisplayEffectOption1Callbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        uint8_t value = pCharacteristic->getValue()[0];
+        uint8_t value;
+        if (!readByte(pCharacteristic, value)) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Display Effect Option 1 (Thickness): "));
             Serial.println(value);
@@ -223,7 +249,8 @@ class DisplayEffectOption1Callbacks : public NimBLECharacteristicCallbacks {
 class DisplayEffectOption2Callbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        uint8_t value = pCharacteristic->getValue()[0];
+        uint8_t value;
+        if (!readByte(pCharacteristic, value)) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Display Effect Option 2 (Speed): "));
             Serial.println(value);
@@ -235,7 +262,8 @@ class DisplayEffectOption2Callbacks : public NimBLECharacteristicCallbacks {
 class DisplayEffectOption3Callbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        uint8_t value = pCharacteristic->getValue()[0];
+        uint8_t value;
+        if (!readByte(pCharacteristic, value)) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Display Effect Option 3 (Direction Inverted): "));
             Serial.println(value);
@@ -247,7 +275,8 @@ class DisplayEffectOption3Callbacks : public NimBLECharacteristicCallbacks {
 class RebootCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        uint8_t value = pCharacteristic->getValue()[0];
+        uint8_t value;
+        if (!readByte(pCharacteristic, value)) return;
         if (value != 0) {
             if (BLEManager::instance->debugEnabled) {
                 Serial.println(F("[BLE] Reboot requested"));
@@ -260,7 +289,8 @@ class RebootCallbacks : public NimBLECharacteristicCallbacks {
 class GlitchTriggerCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        uint8_t intensity = pCharacteristic->getValue()[0];
+        uint8_t intensity;
+        if (!readByte(pCharacteristic, intensity)) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Glitch Trigger: "));
             Serial.println(intensity);
@@ -272,7 +302,8 @@ class GlitchTriggerCallbacks : public NimBLECharacteristicCallbacks {
 class MotionEnableFlagsCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        uint8_t flags = pCharacteristic->getValue()[0];
+        uint8_t flags;
+        if (!readByte(pCharacteristic, flags)) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Motion Enable Flags: 0x"));
             Serial.println(flags, HEX);
@@ -284,7 +315,8 @@ class MotionEnableFlagsCallbacks : public NimBLECharacteristicCallbacks {
 class TapSensitivityCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        uint8_t sensitivity = pCharacteristic->getValue()[0];
+        uint8_t sensitivity;
+        if (!readByte(pCharacteristic, sensitivity)) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Tap Sensitivity: "));
             Serial.println(sensitivity);
@@ -296,7 +328,8 @@ class TapSensitivityCallbacks : public NimBLECharacteristicCallbacks {
 class GlitchIntensityCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        uint8_t intensity = pCharacteristic->getValue()[0];
+        uint8_t intensity;
+        if (!readByte(pCharacteristic, intensity)) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Glitch Intensity: "));
             Serial.println(intensity);
@@ -310,7 +343,8 @@ class GlitchIntensityCallbacks : public NimBLECharacteristicCallbacks {
 class FanSpeedCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        uint8_t speed = pCharacteristic->getValue()[0];
+        uint8_t speed;
+        if (!readByte(pCharacteristic, speed)) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Fan Speed: "));
             Serial.println(speed);
@@ -322,7 +356,8 @@ class FanSpeedCallbacks : public NimBLECharacteristicCallbacks {
 class FanEnabledCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        uint8_t enabled = pCharacteristic->getValue()[0];
+        uint8_t enabled;
+        if (!readByte(pCharacteristic, enabled)) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Fan Enabled: "));
             Serial.println(enabled ? "ON" : "OFF");
@@ -332,200 +367,79 @@ class FanEnabledCallbacks : public NimBLECharacteristicCallbacks {
 };
 #endif
 
-// Viseme Advanced Parameter Callbacks (for float values)
-class VisemeEnvelopeAttackCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-        if (!BLEManager::instance) return;
-        if (pCharacteristic->getValue().length() >= sizeof(float)) {
-            float value;
-            memcpy(&value, pCharacteristic->getValue().data(), sizeof(float));
-            if (BLEManager::instance->debugEnabled) {
-                Serial.print(F("[BLE] Viseme Envelope Attack: "));
-                Serial.println(value, 2);
-            }
-            BLEManager::instance->controller.setVisemeEnvelopeAttack(value);
-        }
-    }
+enum class VisemeParameter {
+    EnvelopeAttack,
+    EnvelopeRelease,
+    AttackThreshold,
+    MinSeparation,
+    NoiseFloorMin,
+    NoiseFloorMax,
+    NoiseAdaptSpeed,
+    AhScale,
+    EeScale,
+    OhScale,
+    OoScale,
+    ThScale,
 };
 
-class VisemeEnvelopeReleaseCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-        if (!BLEManager::instance) return;
-        if (pCharacteristic->getValue().length() >= sizeof(float)) {
-            float value;
-            memcpy(&value, pCharacteristic->getValue().data(), sizeof(float));
-            if (BLEManager::instance->debugEnabled) {
-                Serial.print(F("[BLE] Viseme Envelope Release: "));
-                Serial.println(value, 2);
-            }
-            BLEManager::instance->controller.setVisemeEnvelopeRelease(value);
-        }
-    }
-};
+class VisemeParameterCallbacks : public NimBLECharacteristicCallbacks {
+   public:
+    explicit VisemeParameterCallbacks(VisemeParameter parameter) : parameter(parameter) {}
 
-class VisemeAttackThresholdCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-        if (!BLEManager::instance) return;
-        if (pCharacteristic->getValue().length() >= sizeof(float)) {
-            float value;
-            memcpy(&value, pCharacteristic->getValue().data(), sizeof(float));
-            if (BLEManager::instance->debugEnabled) {
-                Serial.print(F("[BLE] Viseme Attack Threshold: "));
-                Serial.println(value, 2);
-            }
-            BLEManager::instance->controller.setVisemeAttackThreshold(value);
-        }
-    }
-};
+    void onWrite(NimBLECharacteristic* characteristic, NimBLEConnInfo&) override {
+        if (!BLEManager::instance || characteristic->getValue().length() != sizeof(float)) return;
 
-class VisemeMinSeparationCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-        if (!BLEManager::instance) return;
-        if (pCharacteristic->getValue().length() >= sizeof(float)) {
-            float value;
-            memcpy(&value, pCharacteristic->getValue().data(), sizeof(float));
-            if (BLEManager::instance->debugEnabled) {
-                Serial.print(F("[BLE] Viseme Min Separation: "));
-                Serial.println(value, 2);
-            }
-            BLEManager::instance->controller.setVisemeMinSeparation(value);
-        }
-    }
-};
+        float value;
+        memcpy(&value, characteristic->getValue().data(), sizeof(value));
+        if (!isfinite(value)) return;
 
-class VisemeMinHoldTimeCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-        if (!BLEManager::instance) return;
-        if (pCharacteristic->getValue().length() >= sizeof(uint16_t)) {
-            uint16_t value;
-            memcpy(&value, pCharacteristic->getValue().data(), sizeof(uint16_t));
-            if (BLEManager::instance->debugEnabled) {
-                Serial.print(F("[BLE] Viseme Min Hold Time: "));
-                Serial.println(value);
-            }
-            BLEManager::instance->controller.setVisemeMinHoldTime(value);
+        auto& controller = BLEManager::instance->controller;
+        switch (parameter) {
+            case VisemeParameter::EnvelopeAttack:
+                if (value < 0.1f || value > 0.9f) return;
+                controller.setVisemeEnvelopeAttack(value);
+                break;
+            case VisemeParameter::EnvelopeRelease:
+                if (value < 0.01f || value > 0.5f) return;
+                controller.setVisemeEnvelopeRelease(value);
+                break;
+            case VisemeParameter::AttackThreshold:
+                if (value < 1.0f || value > 3.0f) return;
+                controller.setVisemeAttackThreshold(value);
+                break;
+            case VisemeParameter::MinSeparation:
+                if (value < 1.0f || value > 2.0f) return;
+                controller.setVisemeMinSeparation(value);
+                break;
+            case VisemeParameter::NoiseFloorMin:
+                if (value < 100.0f || value > 500.0f || value > controller.getVisemeNoiseFloorMax()) return;
+                controller.setVisemeNoiseFloorMin(value);
+                break;
+            case VisemeParameter::NoiseFloorMax:
+                if (value < 500.0f || value > 2000.0f || value < controller.getVisemeNoiseFloorMin()) return;
+                controller.setVisemeNoiseFloorMax(value);
+                break;
+            case VisemeParameter::NoiseAdaptSpeed:
+                if (value < 0.0001f || value > 0.01f) return;
+                controller.setVisemeNoiseAdaptSpeed(value);
+                break;
+            case VisemeParameter::AhScale:
+            case VisemeParameter::EeScale:
+            case VisemeParameter::OhScale:
+            case VisemeParameter::OoScale:
+            case VisemeParameter::ThScale:
+                if (value < 0.1f || value > 5.0f) return;
+                if (parameter == VisemeParameter::AhScale) controller.setVisemeAhScale(value);
+                else if (parameter == VisemeParameter::EeScale) controller.setVisemeEeScale(value);
+                else if (parameter == VisemeParameter::OhScale) controller.setVisemeOhScale(value);
+                else if (parameter == VisemeParameter::OoScale) controller.setVisemeOoScale(value);
+                else controller.setVisemeThScale(value);
+                break;
         }
     }
-};
 
-class VisemeNoiseFloorMinCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-        if (!BLEManager::instance) return;
-        if (pCharacteristic->getValue().length() >= sizeof(float)) {
-            float value;
-            memcpy(&value, pCharacteristic->getValue().data(), sizeof(float));
-            if (BLEManager::instance->debugEnabled) {
-                Serial.print(F("[BLE] Viseme Noise Floor Min: "));
-                Serial.println(value, 1);
-            }
-            BLEManager::instance->controller.setVisemeNoiseFloorMin(value);
-        }
-    }
-};
-
-class VisemeNoiseFloorMaxCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-        if (!BLEManager::instance) return;
-        if (pCharacteristic->getValue().length() >= sizeof(float)) {
-            float value;
-            memcpy(&value, pCharacteristic->getValue().data(), sizeof(float));
-            if (BLEManager::instance->debugEnabled) {
-                Serial.print(F("[BLE] Viseme Noise Floor Max: "));
-                Serial.println(value, 1);
-            }
-            BLEManager::instance->controller.setVisemeNoiseFloorMax(value);
-        }
-    }
-};
-
-class VisemeNoiseAdaptSpeedCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-        if (!BLEManager::instance) return;
-        if (pCharacteristic->getValue().length() >= sizeof(float)) {
-            float value;
-            memcpy(&value, pCharacteristic->getValue().data(), sizeof(float));
-            if (BLEManager::instance->debugEnabled) {
-                Serial.print(F("[BLE] Viseme Noise Adapt Speed: "));
-                Serial.println(value, 4);
-            }
-            BLEManager::instance->controller.setVisemeNoiseAdaptSpeed(value);
-        }
-    }
-};
-
-class VisemeAhScaleCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-        if (!BLEManager::instance) return;
-        if (pCharacteristic->getValue().length() >= sizeof(float)) {
-            float value;
-            memcpy(&value, pCharacteristic->getValue().data(), sizeof(float));
-            if (BLEManager::instance->debugEnabled) {
-                Serial.print(F("[BLE] Viseme AH Scale: "));
-                Serial.println(value, 2);
-            }
-            BLEManager::instance->controller.setVisemeAhScale(value);
-        }
-    }
-};
-
-class VisemeEeScaleCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-        if (!BLEManager::instance) return;
-        if (pCharacteristic->getValue().length() >= sizeof(float)) {
-            float value;
-            memcpy(&value, pCharacteristic->getValue().data(), sizeof(float));
-            if (BLEManager::instance->debugEnabled) {
-                Serial.print(F("[BLE] Viseme EE Scale: "));
-                Serial.println(value, 2);
-            }
-            BLEManager::instance->controller.setVisemeEeScale(value);
-        }
-    }
-};
-
-class VisemeOhScaleCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-        if (!BLEManager::instance) return;
-        if (pCharacteristic->getValue().length() >= sizeof(float)) {
-            float value;
-            memcpy(&value, pCharacteristic->getValue().data(), sizeof(float));
-            if (BLEManager::instance->debugEnabled) {
-                Serial.print(F("[BLE] Viseme OH Scale: "));
-                Serial.println(value, 2);
-            }
-            BLEManager::instance->controller.setVisemeOhScale(value);
-        }
-    }
-};
-
-class VisemeOoScaleCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-        if (!BLEManager::instance) return;
-        if (pCharacteristic->getValue().length() >= sizeof(float)) {
-            float value;
-            memcpy(&value, pCharacteristic->getValue().data(), sizeof(float));
-            if (BLEManager::instance->debugEnabled) {
-                Serial.print(F("[BLE] Viseme OO Scale: "));
-                Serial.println(value, 2);
-            }
-            BLEManager::instance->controller.setVisemeOoScale(value);
-        }
-    }
-};
-
-class VisemeThScaleCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-        if (!BLEManager::instance) return;
-        if (pCharacteristic->getValue().length() >= sizeof(float)) {
-            float value;
-            memcpy(&value, pCharacteristic->getValue().data(), sizeof(float));
-            if (BLEManager::instance->debugEnabled) {
-                Serial.print(F("[BLE] Viseme TH Scale: "));
-                Serial.println(value, 2);
-            }
-            BLEManager::instance->controller.setVisemeThScale(value);
-        }
-    }
+   private:
+    VisemeParameter parameter;
 };
 
 BLEManager& BLEManager::getInstance(KMMXController& ctrl) {
@@ -567,7 +481,6 @@ BLEManager::BLEManager(KMMXController& ctrl) : controller(ctrl),
                                                visemeEnvelopeReleaseCharacteristic(nullptr),
                                                visemeAttackThresholdCharacteristic(nullptr),
                                                visemeMinSeparationCharacteristic(nullptr),
-                                               visemeMinHoldTimeCharacteristic(nullptr),
                                                visemeNoiseFloorMinCharacteristic(nullptr),
                                                visemeNoiseFloorMaxCharacteristic(nullptr),
                                                visemeNoiseAdaptSpeedCharacteristic(nullptr),
@@ -584,6 +497,9 @@ void BLEManager::setup() {
 
     // Initialize NimBLE with device name
     NimBLEDevice::init(BLE_DEVICE_NAME);
+    NimBLEDevice::setSecurityAuth(true, true, true);
+    NimBLEDevice::setSecurityIOCap(BLE_HS_IO_DISPLAY_ONLY);
+    NimBLEDevice::setSecurityPasskey(BLE_PASSKEY);
 
     // Set power level for better range
     NimBLEDevice::setPower(ESP_PWR_LVL_P9);  // +9dBm
@@ -599,89 +515,89 @@ void BLEManager::setup() {
     // Create characteristics with Read & Write properties
     displayBrightnessCharacteristic = pService->createCharacteristic(
         BLE_DISPLAY_BRIGHTNESS_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     eyeStateCharacteristic = pService->createCharacteristic(
         BLE_EYE_STATE_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     mouthStateCharacteristic = pService->createCharacteristic(
         BLE_MOUTH_STATE_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     visemeCharacteristic = pService->createCharacteristic(
         BLE_VISEME_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     hornBrightnessCharacteristic = pService->createCharacteristic(
         BLE_HORN_BRIGHTNESS_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     cheekBrightnessCharacteristic = pService->createCharacteristic(
         BLE_CHEEK_BRIGHTNESS_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     cheekBgColorCharacteristic = pService->createCharacteristic(
         BLE_CHEEK_BG_COLOR_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     cheekFadeColorCharacteristic = pService->createCharacteristic(
         BLE_CHEEK_FADE_COLOR_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     displayColorModeCharacteristic = pService->createCharacteristic(
         BLE_DISPLAY_COLOR_MODE_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     displayEffectColor1Characteristic = pService->createCharacteristic(
         BLE_DISPLAY_EFFECT_COLOR1_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     displayEffectColor2Characteristic = pService->createCharacteristic(
         BLE_DISPLAY_EFFECT_COLOR2_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     displayEffectOption1Characteristic = pService->createCharacteristic(
         BLE_DISPLAY_EFFECT_OPTION1_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     displayEffectOption2Characteristic = pService->createCharacteristic(
         BLE_DISPLAY_EFFECT_OPTION2_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     displayEffectOption3Characteristic = pService->createCharacteristic(
         BLE_DISPLAY_EFFECT_OPTION3_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     rebootCharacteristic = pService->createCharacteristic(
         BLE_REBOOT_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::WRITE);
+        BLE_WRITE);
 
     glitchTriggerCharacteristic = pService->createCharacteristic(
         BLE_GLITCH_TRIGGER_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::WRITE);
+        BLE_WRITE);
 
     motionEnableFlagsCharacteristic = pService->createCharacteristic(
         BLE_MOTION_ENABLE_FLAGS_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     tapSensitivityCharacteristic = pService->createCharacteristic(
         BLE_TAP_SENSITIVITY_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     glitchIntensityCharacteristic = pService->createCharacteristic(
         BLE_GLITCH_INTENSITY_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     // Fan Control Characteristics
     #if HAS_FAN_CONTROL
     fanSpeedCharacteristic = pService->createCharacteristic(
         BLE_FAN_SPEED_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     fanEnabledCharacteristic = pService->createCharacteristic(
         BLE_FAN_ENABLED_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     fanRpmCharacteristic = pService->createCharacteristic(
         BLE_FAN_RPM_CHARACTERISTIC_UUID,
@@ -695,55 +611,51 @@ void BLEManager::setup() {
     // Viseme Advanced Parameter Characteristics
     visemeEnvelopeAttackCharacteristic = pService->createCharacteristic(
         BLE_VISEME_ENVELOPE_ATTACK_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     visemeEnvelopeReleaseCharacteristic = pService->createCharacteristic(
         BLE_VISEME_ENVELOPE_RELEASE_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     visemeAttackThresholdCharacteristic = pService->createCharacteristic(
         BLE_VISEME_ATTACK_THRESHOLD_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     visemeMinSeparationCharacteristic = pService->createCharacteristic(
         BLE_VISEME_MIN_SEPARATION_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
-
-    visemeMinHoldTimeCharacteristic = pService->createCharacteristic(
-        BLE_VISEME_MIN_HOLD_TIME_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     visemeNoiseFloorMinCharacteristic = pService->createCharacteristic(
         BLE_VISEME_NOISE_FLOOR_MIN_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     visemeNoiseFloorMaxCharacteristic = pService->createCharacteristic(
         BLE_VISEME_NOISE_FLOOR_MAX_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     visemeNoiseAdaptSpeedCharacteristic = pService->createCharacteristic(
         BLE_VISEME_NOISE_ADAPT_SPEED_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     visemeAhScaleCharacteristic = pService->createCharacteristic(
         BLE_VISEME_AH_SCALE_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     visemeEeScaleCharacteristic = pService->createCharacteristic(
         BLE_VISEME_EE_SCALE_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     visemeOhScaleCharacteristic = pService->createCharacteristic(
         BLE_VISEME_OH_SCALE_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     visemeOoScaleCharacteristic = pService->createCharacteristic(
         BLE_VISEME_OO_SCALE_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     visemeThScaleCharacteristic = pService->createCharacteristic(
         BLE_VISEME_TH_SCALE_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+        BLE_RW);
 
     // Set default values for each characteristic
     uint8_t brightnessValue = controller.getDisplayBrightness();
@@ -834,9 +746,6 @@ void BLEManager::setup() {
     float minSep = controller.getVisemeMinSeparation();
     visemeMinSeparationCharacteristic->setValue(reinterpret_cast<uint8_t*>(&minSep), sizeof(float));
 
-    uint16_t minHoldTime = controller.getVisemeMinHoldTime();
-    visemeMinHoldTimeCharacteristic->setValue(reinterpret_cast<uint8_t*>(&minHoldTime), sizeof(uint16_t));
-
     float noiseMin = controller.getVisemeNoiseFloorMin();
     visemeNoiseFloorMinCharacteristic->setValue(reinterpret_cast<uint8_t*>(&noiseMin), sizeof(float));
 
@@ -890,19 +799,18 @@ void BLEManager::setup() {
     #endif
 
     // Set viseme advanced parameter callbacks
-    visemeEnvelopeAttackCharacteristic->setCallbacks(new VisemeEnvelopeAttackCallbacks());
-    visemeEnvelopeReleaseCharacteristic->setCallbacks(new VisemeEnvelopeReleaseCallbacks());
-    visemeAttackThresholdCharacteristic->setCallbacks(new VisemeAttackThresholdCallbacks());
-    visemeMinSeparationCharacteristic->setCallbacks(new VisemeMinSeparationCallbacks());
-    visemeMinHoldTimeCharacteristic->setCallbacks(new VisemeMinHoldTimeCallbacks());
-    visemeNoiseFloorMinCharacteristic->setCallbacks(new VisemeNoiseFloorMinCallbacks());
-    visemeNoiseFloorMaxCharacteristic->setCallbacks(new VisemeNoiseFloorMaxCallbacks());
-    visemeNoiseAdaptSpeedCharacteristic->setCallbacks(new VisemeNoiseAdaptSpeedCallbacks());
-    visemeAhScaleCharacteristic->setCallbacks(new VisemeAhScaleCallbacks());
-    visemeEeScaleCharacteristic->setCallbacks(new VisemeEeScaleCallbacks());
-    visemeOhScaleCharacteristic->setCallbacks(new VisemeOhScaleCallbacks());
-    visemeOoScaleCharacteristic->setCallbacks(new VisemeOoScaleCallbacks());
-    visemeThScaleCharacteristic->setCallbacks(new VisemeThScaleCallbacks());
+    visemeEnvelopeAttackCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::EnvelopeAttack));
+    visemeEnvelopeReleaseCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::EnvelopeRelease));
+    visemeAttackThresholdCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::AttackThreshold));
+    visemeMinSeparationCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::MinSeparation));
+    visemeNoiseFloorMinCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::NoiseFloorMin));
+    visemeNoiseFloorMaxCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::NoiseFloorMax));
+    visemeNoiseAdaptSpeedCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::NoiseAdaptSpeed));
+    visemeAhScaleCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::AhScale));
+    visemeEeScaleCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::EeScale));
+    visemeOhScaleCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::OhScale));
+    visemeOoScaleCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::OoScale));
+    visemeThScaleCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::ThScale));
 
     // Start the server (this automatically starts all services)
     pServer->start();
@@ -940,4 +848,27 @@ void BLEManager::setup() {
 
 bool BLEManager::isConnected() const {
     return pServer && pServer->getConnectedCount() > 0;
+}
+
+void BLEManager::update() {
+#if HAS_FAN_CONTROL
+    static uint32_t lastUpdate = 0;
+    static uint16_t lastRpm = UINT16_MAX;
+    static uint8_t lastConnected = UINT8_MAX;
+    if (!isConnected() || millis() - lastUpdate < 500) return;
+    lastUpdate = millis();
+
+    const uint16_t rpm = controller.getFanRPM();
+    const uint8_t connected = controller.getFanConnected();
+    if (rpm != lastRpm) {
+        lastRpm = rpm;
+        fanRpmCharacteristic->setValue(reinterpret_cast<const uint8_t*>(&rpm), sizeof(rpm));
+        fanRpmCharacteristic->notify();
+    }
+    if (connected != lastConnected) {
+        lastConnected = connected;
+        fanConnectedCharacteristic->setValue(&connected, sizeof(connected));
+        fanConnectedCharacteristic->notify();
+    }
+#endif
 }
