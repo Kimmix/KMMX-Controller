@@ -259,6 +259,69 @@ bool Viseme::detectAttack() {
 }
 
 // =============================================================================
+// LOUDNESS LEVEL PROCESSING
+// =============================================================================
+
+/**
+ * Calculate mouth opening level with improved perceptual scaling and smoothing.
+ *
+ * Improvements:
+ * 1. Non-linear perceptual scaling - Uses power curve for more natural response
+ * 2. Temporal smoothing - Reduces jitter while maintaining responsiveness
+ * 3. Mid-range boost - Emphasizes expressive mid-range movements
+ * 4. Adaptive dynamic range - Scales based on noise floor
+ *
+ * @return Mouth opening level (0-60)
+ */
+unsigned int Viseme::calculateLoudnessLevel() {
+    // Return 0 if below noise floor
+    if (currentEnvelope <= adaptiveNoiseFloor) {
+        // Smooth decay to 0
+        smoothedLoudness *= (1.0f - loudnessSmoothing);
+        return 0;
+    }
+
+    // Step 1 & 2: Normalize and apply non-linear perceptual curve (power law)
+    // Lower exponent emphasizes quiet/medium sounds for better expressiveness
+    float normalized = (currentEnvelope - adaptiveNoiseFloor) /
+                       (adaptiveNoiseFloor * loudnessMax);
+    normalized = constrain(normalized, 0.0f, 1.0f);
+    float perceptualLoudness = powf(normalized, loudnessExponent);
+
+    // Step 3: Apply mid-range boost for more expressive mouth movement
+    // Boost values around 0.3-0.7 range where most speech dynamics occur
+    float midBoostFactor = 1.0f;
+    if (perceptualLoudness > 0.2f && perceptualLoudness < 0.8f) {
+        // Smooth bell curve boost in mid-range
+        float midDistance = fabsf(perceptualLoudness - 0.5f);  // Distance from center
+        float boostCurve = 1.0f - (midDistance * 2.0f);        // 0-1 in mid-range
+        midBoostFactor = 1.0f + (loudnessMidBoost - 1.0f) * boostCurve;
+        perceptualLoudness *= midBoostFactor;
+        perceptualLoudness = constrain(perceptualLoudness, 0.0f, 1.0f);
+    }
+
+    // Step 4: Apply temporal smoothing to reduce jitter
+    // Use different smoothing for increases vs decreases (fast attack, medium release)
+    if (perceptualLoudness > smoothedLoudness) {
+        // Fast attack - respond quickly to increases
+        smoothedLoudness = loudnessSmoothing * perceptualLoudness +
+                          (1.0f - loudnessSmoothing) * smoothedLoudness;
+    } else {
+        // Medium release - smoother decay
+        float releaseSmoothing = loudnessSmoothing * 0.6f;  // Slower than attack
+        smoothedLoudness = releaseSmoothing * perceptualLoudness +
+                          (1.0f - releaseSmoothing) * smoothedLoudness;
+    }
+
+    // Step 5: Map to mouth opening level (1-60)
+    // Reserve 0 for completely closed mouth (handled above)
+    unsigned int loudness_level = (unsigned int)(smoothedLoudness * visemeFramelength);
+    loudness_level = constrain(loudness_level, 1, visemeFramelength);
+
+    return loudness_level;
+}
+
+// =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================
 
@@ -305,7 +368,7 @@ Viseme::VisemeType Viseme::getDominantViseme() {
 
 const uint8_t* Viseme::visemeOutput(VisemeType viseme, unsigned int level) {
     if (level == 0) {
-        return mouthDefault;
+        return mouthDefault1;
     }
 
     // Convert to 0-based index
@@ -376,16 +439,9 @@ const uint8_t* Viseme::renderViseme() {
     // Find dominant viseme (with confidence checking)
     VisemeType dominantViseme = getDominantViseme();
 
-    // Calculate mouth opening level based on envelope (volume)
-    unsigned int loudness_level = 0;
+    // Calculate mouth opening level with improved perceptual scaling and smoothing
+    unsigned int loudness_level = calculateLoudnessLevel();
     float distinctiveness = maxAmplitude - minAmplitude;
-
-    if (currentEnvelope > adaptiveNoiseFloor) {
-        // Map envelope to mouth opening level (1-60)
-        // Louder speech = bigger mouth opening
-        loudness_level = (unsigned int)mapFloat(currentEnvelope, adaptiveNoiseFloor, adaptiveNoiseFloor * 3.0f, 1, visemeFramelength);
-        loudness_level = constrain(loudness_level, 1, visemeFramelength);
-    }
 
     // Lock viseme during release phase (envelope falling) or when mouth is closing
     // Only allow viseme change if: attack detected OR envelope rising AND mouth sufficiently open

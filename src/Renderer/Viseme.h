@@ -68,6 +68,16 @@ class Viseme {
     float getThScale() const { return thScale; }
     void setThScale(float value) { thScale = value; }
 
+    // Loudness level parameters (BLE controllable)
+    float getLoudnessExponent() const { return loudnessExponent; }
+    void setLoudnessExponent(float value) { loudnessExponent = value; }
+    float getLoudnessSmoothing() const { return loudnessSmoothing; }
+    void setLoudnessSmoothing(float value) { loudnessSmoothing = value; }
+    float getLoudnessMax() const { return loudnessMax; }
+    void setLoudnessMax(float value) { loudnessMax = value; }
+    float getLoudnessMidBoost() const { return loudnessMidBoost; }
+    void setLoudnessMidBoost(float value) { loudnessMidBoost = value; }
+
    private:
     I2SMicrophone mic;
 
@@ -112,6 +122,15 @@ class Viseme {
     float ohScale = visemeOhScale;
     float ooScale = visemeOoScale;
     float thScale = visemeThScale;
+
+    // Loudness Level Parameters
+    float loudnessExponent = visemeLoudnessExponent;
+    float loudnessSmoothing = visemeLoudnessSmoothing;
+    float loudnessMax = visemeLoudnessMax;
+    float loudnessMidBoost = visemeLoudnessMidBoost;
+
+    // Smoothed loudness level tracking
+    float smoothedLoudness = 0.0f;
 
     const uint8_t* ahViseme[visemeFramelength] = {
         mouthAH1, mouthAH2, mouthAH3, mouthAH4, mouthAH5, mouthAH6, mouthAH7, mouthAH8, mouthAH9, mouthAH10,
@@ -174,4 +193,7 @@ class Viseme {
     VisemeType getDominantViseme();
     const uint8_t* visemeOutput(VisemeType viseme, unsigned int level);
     void printDebugPlotter(float distinctiveness = 0, unsigned int loudnessLevel = 0, bool canChange = false);
+
+    // Loudness processing
+    unsigned int calculateLoudnessLevel();
 };

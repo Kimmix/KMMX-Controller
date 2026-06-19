@@ -38,8 +38,8 @@ const uint16_t visemeThFreqMax = 4000;                          // End frequency
 const float visemeNoiseThreshold = 10.0f;                       // Initial noise threshold for viseme to activate (RMS-based envelope scale)
 
 // Envelope Tracking Parameters
-const float visemeEnvelopeAttack = 0.3f;                        // Attack time constant (0-1, higher = faster response to increases)
-const float visemeEnvelopeRelease = 0.1f;                       // Release time constant (0-1, lower = slower decay)
+const float visemeEnvelopeAttack = 0.4f;                        // Attack time constant (0-1, higher = faster response to increases)
+const float visemeEnvelopeRelease = 0.4f;                       // Release time constant (0-1, lower = slower decay)
 
 // Adaptive Noise Floor Parameters
 const float visemeNoiseFloorMin = 5.0f;                         // Minimum adaptive noise floor (scaled for RMS envelope)
@@ -56,11 +56,18 @@ const float visemeMinSeparation = 1.10f;                        // Minimum separ
 // Normalization Scale Factors
 // These multipliers balance the sensitivity across different visemes
 // Lower values = less sensitive, Higher values = more sensitive
-const float visemeAhScale = 1.0f;                               // AH viseme scale factor
+const float visemeAhScale = 3.3f;                               // AH viseme scale factor
 const float visemeEeScale = 1.3f;                               // EE viseme scale factor
 const float visemeOhScale = 1.5f;                               // OH viseme scale factor
 const float visemeOoScale = 1.4f;                               // OO viseme scale factor
-const float visemeThScale = 3.0f;                               // TH viseme scale factor
+const float visemeThScale = 1.0f;                               // TH viseme scale factor
+
+// Loudness Level Parameters
+// Controls mouth opening based on volume (envelope)
+const float visemeLoudnessExponent = 0.9f;                      // Perceptual loudness curve (0.5-1.0, lower = more emphasis on quiet sounds)
+const float visemeLoudnessSmoothing = 0.75f;                    // Temporal smoothing for mouth opening (0-1, higher = faster response)
+const float visemeLoudnessMax = 4.0f;                           // Dynamic range multiplier (envelope * noiseFloor * this = max loudness)
+const float visemeLoudnessMidBoost = 1.2f;                      // Boost mid-range mouth openings for better expression (1.0-1.5)
 
 // Debug Configuration
 #define VISEME_DEBUG_PLOTTER 1

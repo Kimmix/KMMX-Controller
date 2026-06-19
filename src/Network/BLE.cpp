@@ -404,11 +404,11 @@ class VisemeParameterCallbacks : public NimBLECharacteristicCallbacks {
                 controller.setVisemeMinSeparation(value);
                 break;
             case VisemeParameter::NoiseFloorMin:
-                if (value < 100.0f || value > 500.0f || value > controller.getVisemeNoiseFloorMax()) return;
+                if (value < 1.0f || value > 50.0f || value > controller.getVisemeNoiseFloorMax()) return;
                 controller.setVisemeNoiseFloorMin(value);
                 break;
             case VisemeParameter::NoiseFloorMax:
-                if (value < 500.0f || value > 2000.0f || value < controller.getVisemeNoiseFloorMin()) return;
+                if (value < 5.0f || value > 200.0f || value < controller.getVisemeNoiseFloorMin()) return;
                 controller.setVisemeNoiseFloorMax(value);
                 break;
             case VisemeParameter::NoiseAdaptSpeed:
