@@ -1,15 +1,15 @@
 <div align="left">
 
 # ✨ KMMX-Fursuit Controller ✨
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Platform: ESP32](https://img.shields.io/badge/Platform-ESP32-blue.svg)](https://www.espressif.com/en/products/socs/esp32)
 [![IDE: PlatformIO](https://img.shields.io/badge/IDE-PlatformIO-orange.svg)](https://platformio.org/)
 [![Status](https://img.shields.io/badge/Status-In%20Development-orange.svg)](https://github.com/Kimmix/KMMX-Fursuit)
 
-### Controller V2 Preview
-<img src="doc\ControllerV2.webp" alt="Kimmix Controller V2">
-
 ### Controller V4 Preview
+
+<img src="doc\ControllerV4.3_real.webp" alt="Kimmix Controller V4 real board">
 <img src="doc\ControllerV4.3.webp" alt="Kimmix Controller V4">
 
 </div>
@@ -42,16 +42,19 @@ Custom PCB designed in collaboration with [Tas.Polar](https://github.com/BaiTian
 <div align="center">
 
 ### Booping Interaction
+
 <img src="doc/demo-boop.webp" alt="Booping Demo" width="400">
 
 [🎥 Watch full video on X](https://x.com/kimmix00/status/1687878110430339072/video/1)
 
 ### Bluetooth Smartphone Control
+
 <img src="doc/demo-ble.webp" alt="BLE Control Demo" width="400">
 
 [🎥 Watch full video on X](https://x.com/kimmix00/status/1704465522497397001/video/1)
 
 ### Viseme (Audio-Reactive)
+
 <img src="doc/demo-viseme.webp" alt="Viseme Demo" width="400">
 
 [🎥 Watch full video on X](https://x.com/kimmix00/status/1638887564550754306/video/1)
@@ -85,12 +88,14 @@ Custom PCB designed in collaboration with [Tas.Polar](https://github.com/BaiTian
 ### Prerequisites
 
 **Required:**
+
 - [PlatformIO](https://platformio.org/) IDE or PlatformIO Core
 - ESP32-S3 development board (or compatible ESP32 variant)
 - Basic understanding of C/C++ and embedded development
 - Soldering skills for hardware assembly
 
 **Hardware Components:**
+
 - HUB75 LED Matrix panels (64x32 resolution recommended)
 - APDS9930 proximity sensor (optional, for booping feature)
 - LIS3DH accelerometer (optional, for motion detection)
@@ -112,6 +117,7 @@ Key configuration areas you'll need to review:
 - **Feature flags** to enable/disable specific hardware modules
 
 Look for configuration in:
+
 - Pin definitions in device-specific source files
 - Main controller initialization code
 - Individual device driver files in `src/Devices/`
@@ -132,6 +138,7 @@ Control your fursuit remotely via Bluetooth using a web browser!
 </div>
 
 **Features:**
+
 - 📱 Works on any device with Web Bluetooth support (Chrome/Edge on Android, macOS, Windows)
 - 🎭 Change facial expressions on the fly
 - 🎨 Adjust LED brightness and colors
@@ -161,12 +168,14 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 **Current Status:** Not accepting contributions or providing support.
 
 As this is a personal project still in active development, I'm not currently:
+
 - ❌ Accepting pull requests or contributions
 - ❌ Providing technical support or troubleshooting help
 - ❌ Answering questions about setup or usage
 - ❌ Maintaining issues or feature requests
 
 **However**, you're absolutely encouraged to:
+
 - ✅ Fork this repository and make it your own
 - ✅ Learn from the code and adapt it to your needs
 - ✅ Share your own creations with the community
