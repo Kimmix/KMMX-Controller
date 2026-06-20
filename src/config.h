@@ -100,7 +100,7 @@ const uint32_t sideColor2RGB = 0xF9826C;        // Wave color: #F9826C Coral
 const uint16_t sideLEDFadeInterval = 100;       // Wave update interval (ms) - slow, relaxed animation
 
 // --- Horn LED ---
-const uint8_t hornBrightness = 20;              // Horn brightness (0-100)
+const uint8_t hornBrightness = 40;              // Horn brightness (0-100)
 
 // --- Fan Control ---
 #if HAS_FAN_CONTROL
