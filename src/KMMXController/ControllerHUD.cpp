@@ -8,7 +8,7 @@ extern BLEManager& bleManager;
 // OLED Layout Constants
 namespace OLEDLayout {
     // Update settings
-    constexpr unsigned long UPDATE_INTERVAL = 50;  // 20Hz
+    constexpr unsigned long UPDATE_INTERVAL = 100;  // 10Hz; keeps shared I2C bus responsive
 
     // Face mirror positions (top half)
     constexpr int FACE_EYE_X = 0;
@@ -22,17 +22,17 @@ namespace OLEDLayout {
     constexpr int ACCEL_CENTER_X = 19;
     constexpr int ACCEL_CENTER_Y = 50;
     constexpr int ACCEL_RANGE = 13;
-    constexpr int ACCEL_MIN_X = 6;
-    constexpr int ACCEL_MAX_X = 32;
-    constexpr int ACCEL_MIN_Y = 37;
-    constexpr int ACCEL_MAX_Y = 63;
+    constexpr int ACCEL_MIN_X = 8;
+    constexpr int ACCEL_MAX_X = 29;
+    constexpr int ACCEL_MIN_Y = 39;
+    constexpr int ACCEL_MAX_Y = 60;
     constexpr int ZBAR_X = 0;
     constexpr int ZBAR_WIDTH = 6;
 
     // Sensor bars positions (bottom right)
     constexpr int BAR_LABEL_X = 38;
     constexpr int BAR_START_X = 48;
-    constexpr int BAR_WIDTH = 80;
+    constexpr int BAR_WIDTH = 75;  // Ends at x=122, aligned with proximity bar
     constexpr int PROX_BAR_WIDTH = 30;  // Equal width for both bars
     constexpr int TAP_BAR_WIDTH = 30;   // Equal width for both bars
     constexpr int BAR_HEIGHT = 6;
@@ -152,11 +152,12 @@ void KMMXController::updateOLED() {
     lastOLEDUpdate = currentTime;
 
     oledDisplay.clear();
+    oledDisplay.setFont(u8g2_font_5x8_tr);
 
     const SensorData& sensors = getSensorData();
 
     // Draw all HUD components
-    drawOLEDFaceMirror(sensors);
+    drawOLEDFaceMirror();
     drawOLEDBluetooth();
     drawOLEDStateNames();
     drawOLEDFPS();
@@ -166,7 +167,7 @@ void KMMXController::updateOLED() {
     oledDisplay.update();
 }
 
-void KMMXController::drawOLEDFaceMirror(const SensorData& sensors) {
+void KMMXController::drawOLEDFaceMirror() {
     using namespace OLEDLayout;
 
     // Get last rendered bitmaps from display (automatically tracked)
@@ -221,7 +222,6 @@ void KMMXController::drawOLEDStateNames() {
     const char* eyeStateName = StateNames::getEyeStateName(eyeState.getState());
     const char* mouthStateName = StateNames::getMouthStateName(mouthState.getState());
 
-    oledDisplay.setFont(u8g2_font_5x8_tr);
     oledDisplay.drawText(STATE_LABEL_X, EYE_STATE_Y, "E:");
     oledDisplay.drawText(STATE_VALUE_X, EYE_STATE_Y, eyeStateName);
     oledDisplay.drawText(STATE_LABEL_X, MOUTH_STATE_Y, "M:");
@@ -233,8 +233,6 @@ void KMMXController::drawOLEDFPS() {
 
     float currentFPS = getFPS();
 
-    oledDisplay.setFont(u8g2_font_5x8_tr);
-
     // Format: "FPS:240"
     char fpsText[16];
     snprintf(fpsText, sizeof(fpsText), "FPS:%d", (int)currentFPS);
@@ -243,8 +241,6 @@ void KMMXController::drawOLEDFPS() {
 
 void KMMXController::drawOLEDSensorBars(const SensorData& sensors) {
     using namespace OLEDLayout;
-
-    oledDisplay.setFont(u8g2_font_5x8_tr);
 
     // Tap magnitude bar (always visible, equal width, on the LEFT)
     oledDisplay.drawText(TAP_LABEL_X, TAP_LABEL_Y, "T:");
@@ -299,18 +295,7 @@ void KMMXController::drawOLEDSensorBars(const SensorData& sensors) {
     float envelope = mouthState.viseme.getEnvelope();                    // currentEnvelope
     float gateThreshold = mouthState.viseme.getGateThreshold();          // adaptiveNoiseFloor * visemeNoiseGateMultiplier
     bool isLoudEnough = mouthState.viseme.isLoudEnough();                // envelope > gateThreshold
-    float noiseFloor = mouthState.viseme.getNoiseThreshold();            // For debug output
-
-    // Debug output to Serial
-    // static unsigned long lastDebugPrint = 0;
-    // if (millis() - lastDebugPrint > 500) {  // Print every 500ms
-    //     Serial.printf("VU Debug - Envelope: %.1f, NoiseFloor: %.1f, Gate: %.1f, isLoudEnough: %s\n",
-    //                  envelope, noiseFloor, gateThreshold, isLoudEnough ? "YES" : "NO");
-    //     lastDebugPrint = millis();
-    // }
-
-    // Draw VU bar - map full envelope range (0 to noiseFloor*3) to bar width
-    // This shows the complete audio level
+    // Draw VU bar across the expected envelope range
     constexpr float VU_MAX_ENVELOPE = 100.0f;  // Maximum expected envelope
     int vuLevel = 0;
     if (envelope > 1.0f) {  // Ignore very small noise
@@ -328,13 +313,13 @@ void KMMXController::drawOLEDSensorBars(const SensorData& sensors) {
     // Draw threshold line (double line if gate is active for better visibility)
     if (isLoudEnough) {
         // Active: draw thick line (2 pixels)
-        u8g2->drawLine(gatePos, VU_BAR_Y, gatePos, VU_BAR_Y + BAR_HEIGHT);
+        u8g2->drawLine(gatePos, VU_BAR_Y, gatePos, VU_BAR_Y + BAR_HEIGHT - 1);
         if (gatePos + 1 < BAR_START_X + BAR_WIDTH) {
-            u8g2->drawLine(gatePos + 1, VU_BAR_Y, gatePos + 1, VU_BAR_Y + BAR_HEIGHT);
+            u8g2->drawLine(gatePos + 1, VU_BAR_Y, gatePos + 1, VU_BAR_Y + BAR_HEIGHT - 1);
         }
     } else {
         // Inactive: draw single line
-        u8g2->drawLine(gatePos, VU_BAR_Y, gatePos, VU_BAR_Y + BAR_HEIGHT);
+        u8g2->drawLine(gatePos, VU_BAR_Y, gatePos, VU_BAR_Y + BAR_HEIGHT - 1);
     }
 
     // Viseme text (always show current viseme)
@@ -370,7 +355,7 @@ void KMMXController::drawOLEDAccelerometer(const SensorData& sensors) {
     int zBarY = ACCEL_CENTER_Y - ACCEL_RANGE - 1;
     int zBarCenter = zBarHeight / 2;
     int zBarPos = zBarCenter - (int)(sensors.accelZ * zBarCenter / GRAVITY);
-    zBarPos = constrain(zBarPos, 0, zBarHeight - 2);
+    zBarPos = constrain(zBarPos, 0, zBarHeight - 3);
 
     // Draw Z-bar
     oledDisplay.drawFrame(ZBAR_X, zBarY, ZBAR_WIDTH, zBarHeight);

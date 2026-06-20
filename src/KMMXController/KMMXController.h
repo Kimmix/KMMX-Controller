@@ -138,7 +138,7 @@ class KMMXController {
     template<typename StateType, typename EnumType>
     void setStateIfDifferent(StateType& state, EnumType targetState, unsigned long timeout);
     void updateOLED();
-    void drawOLEDFaceMirror(const SensorData& sensors);
+    void drawOLEDFaceMirror();
     void drawOLEDSensorBars(const SensorData& sensors);
     void drawOLEDBluetooth();
     void drawOLEDAccelerometer(const SensorData& sensors);
