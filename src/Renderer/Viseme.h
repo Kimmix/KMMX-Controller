@@ -17,6 +17,7 @@ class Viseme {
     };
 
     void initMic();
+    void reset();
     const uint8_t* renderViseme();
 
     // Noise threshold (adaptive)
@@ -82,7 +83,7 @@ class Viseme {
     float ooAmplitude = 0, thAmplitude = 0;
 
     static const uint8_t visemeFramelength = 60;
-    VisemeType previousViseme;
+    VisemeType previousViseme = AH;
 
     // Envelope Tracker
     float currentEnvelope = 0;

@@ -213,7 +213,21 @@ void MouthState::startVisemeTask() {
 
 void MouthState::visemeRenderingTask(void* parameter) {
     MouthState* mouthState = reinterpret_cast<MouthState*>(parameter);
+    bool wasTalking = false;
+
     while (true) {
+        if (mouthState->getState() != MouthStateEnum::TALKING) {
+            mouthState->visemeFrame = mouthDefault;
+            wasTalking = false;
+            vTaskDelay(pdMS_TO_TICKS(20));
+            continue;
+        }
+
+        if (!wasTalking) {
+            mouthState->viseme.reset();
+            wasTalking = true;
+        }
+
         mouthState->visemeFrame = mouthState->viseme.renderViseme();
     }
 }

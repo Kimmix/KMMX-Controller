@@ -14,6 +14,15 @@ void Viseme::initMic() {
     }
 }
 
+void Viseme::reset() {
+    i2s_zero_dma_buffer(I2S_PORT);
+    ahAmplitude = eeAmplitude = ohAmplitude = ooAmplitude = thAmplitude = 0;
+    currentEnvelope = previousEnvelope = smoothedLoudness = 0;
+    adaptiveNoiseFloor = visemeNoiseThreshold;
+    previousViseme = AH;
+    lastAttackTime = millis();
+}
+
 float Viseme::getNoiseThreshold() {
     return adaptiveNoiseFloor;
 }
