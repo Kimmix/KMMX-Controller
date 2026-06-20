@@ -43,15 +43,12 @@ const float visemeEnvelopeRelease = 0.4f;                       // Release time 
 
 // Adaptive Noise Floor Parameters
 const float visemeNoiseFloorMin = 5.0f;                         // Minimum adaptive noise floor (scaled for RMS envelope)
-const float visemeNoiseFloorMax = 50.0f;                        // Maximum adaptive noise floor (scaled for RMS envelope)
-const float visemeNoiseAdaptSpeed = 0.001f;                     // Speed of noise floor adaptation
+const float visemeNoiseFloorCap = 50.0f;                        // Safety cap preventing the detector from becoming deaf
+const float visemeNoiseAdaptSpeed = 0.01f;                      // Fixed speed of noise floor adaptation
 
 // Attack Detection Parameters
 const float visemeAttackThreshold = 1.25f;                      // Envelope increase ratio to detect attack
 const uint16_t visemeMinAttackInterval = 50;                    // Minimum time between attacks (ms)
-
-// Confidence & Switching Parameters
-const float visemeMinSeparation = 1.10f;                        // Minimum separation ratio between 1st and 2nd viseme (1.10 = 10% stronger)
 
 // Normalization Scale Factors
 // These multipliers balance the sensitivity across different visemes

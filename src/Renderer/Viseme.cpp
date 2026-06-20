@@ -18,10 +18,6 @@ float Viseme::getNoiseThreshold() {
     return adaptiveNoiseFloor;
 }
 
-void Viseme::setNoiseThreshold(float value) {
-    adaptiveNoiseFloor = value;
-}
-
 // =============================================================================
 // INITIALIZATION FUNCTIONS
 // =============================================================================
@@ -202,24 +198,14 @@ void Viseme::updateEnvelope() {
  * Adapts down during silence, adapts up during sustained noise.
  */
 void Viseme::updateNoiseFloor() {
-    if (currentEnvelope <= adaptiveNoiseFloor * 1.2f) {
-        // During silence, track the minimum amplitude
-        if (currentEnvelope < adaptiveNoiseFloor) {
-            // Quick adaptation down to new quiet level
-            adaptiveNoiseFloor -= noiseAdaptSpeed * 50.0f;
-        } else {
-            // Slow adaptation up toward current noise level
-            adaptiveNoiseFloor += noiseAdaptSpeed;
-        }
+    if (currentEnvelope < adaptiveNoiseFloor) {
+        adaptiveNoiseFloor -= visemeNoiseAdaptSpeed * 50.0f;
+    } else {
+        // ponytail: slow upward drift handles sustained noise; add speech/noise classification only if field tests need it.
+        adaptiveNoiseFloor += visemeNoiseAdaptSpeed;
     }
 
-    // Clamp to min/max range
-    if (adaptiveNoiseFloor < noiseFloorMin) {
-        adaptiveNoiseFloor = noiseFloorMin;
-    }
-    if (adaptiveNoiseFloor > noiseFloorMax) {
-        adaptiveNoiseFloor = noiseFloorMax;
-    }
+    adaptiveNoiseFloor = constrain(adaptiveNoiseFloor, noiseFloorMin, visemeNoiseFloorCap);
 }
 
 // =============================================================================
@@ -328,24 +314,15 @@ Viseme::VisemeType Viseme::getDominantViseme() {
 
     int maxIdx = 0;
     float maxAmp = amps[0];
-    float secondMax = 0;
     for (int i = 1; i < 5; i++) {
         if (amps[i] > maxAmp) {
-            secondMax = maxAmp;
             maxAmp = amps[i];
             maxIdx = i;
-        } else if (amps[i] > secondMax) {
-            secondMax = amps[i];
         }
     }
 
     // Check if amplitude is above adaptive noise floor
     if (maxAmp < adaptiveNoiseFloor) {
-        return previousViseme;
-    }
-
-    // Check if there's sufficient separation (e.g. 10% stronger than 2nd place)
-    if (maxAmp < secondMax * minSeparation) {
         return previousViseme;
     }
 

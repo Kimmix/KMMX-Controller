@@ -118,10 +118,7 @@ class BLEManager {
     NimBLECharacteristic* visemeEnvelopeAttackCharacteristic;
     NimBLECharacteristic* visemeEnvelopeReleaseCharacteristic;
     NimBLECharacteristic* visemeAttackThresholdCharacteristic;
-    NimBLECharacteristic* visemeMinSeparationCharacteristic;
     NimBLECharacteristic* visemeNoiseFloorMinCharacteristic;
-    NimBLECharacteristic* visemeNoiseFloorMaxCharacteristic;
-    NimBLECharacteristic* visemeNoiseAdaptSpeedCharacteristic;
     NimBLECharacteristic* visemeAhScaleCharacteristic;
     NimBLECharacteristic* visemeEeScaleCharacteristic;
     NimBLECharacteristic* visemeOhScaleCharacteristic;

@@ -48,12 +48,11 @@ The KMMX controller supports two hardware versions with different capabilities:
 |------|------|------------|-------------|-------------|
 | Eye State | `49a36bb2-1c66-4e5c-8ff3-28e55a64beb3` | READ, WRITE | `uint8_t` | Changes eye expression state. See expression mapping below. |
 | Mouth State | `f6a7b8c9-d0e1-4f5a-b1c2-3d4e5f6a7b8c` | READ, WRITE | `uint8_t` | Changes mouth expression state. See expression mapping below. |
-| Viseme | `493d06f3-0fa0-4a90-88f1-ebaed0da9b80` | READ, WRITE | `uint8_t` (0-10) | Controls automatic viseme/lip-sync system. See values below. |
+| Viseme | `493d06f3-0fa0-4a90-88f1-ebaed0da9b80` | READ, WRITE | `uint8_t` (0-1) | Controls automatic viseme/lip-sync system. See values below. |
 
 **Viseme Control Values:**
 - **0**: Disable viseme (mouth returns to IDLE)
 - **1**: Enable viseme (mouth enters TALKING mode with automatic lip-sync)
-- **2-10**: Enable viseme and set noise threshold sensitivity (2 = lowest/400, 10 = highest/25000)
 
 *Note: When enabled, the system automatically analyzes microphone input and generates mouth shapes (AH, EE, OH, OO, TH) based on frequency analysis.*
 
@@ -66,10 +65,7 @@ The KMMX controller supports two hardware versions with different capabilities:
 | Envelope Attack | `d1e2f3a4-b5c6-47d8-9e0f-1a2b3c4d5e6f` | READ, WRITE | `float` | 0.1-0.9 | 0.3 | Attack time constant (higher = faster rise) |
 | Envelope Release | `d2e3f4a5-b6c7-48d9-9f0a-1b2c3d4e5f6a` | READ, WRITE | `float` | 0.01-0.5 | 0.1 | Release time constant (lower = slower decay) |
 | Attack Threshold | `d3e4f5a6-b7c8-49da-a0b1-2c3d4e5f6a7b` | READ, WRITE | `float` | 1.0-3.0 | 1.25 | Envelope ratio to detect syllable start (1.25 = 25% increase) |
-| Min Separation | `d4e5f6a7-b8c9-4adb-a1b2-3d4e5f6a7b8c` | READ, WRITE | `float` | 1.0-2.0 | 1.10 | Required separation between 1st and 2nd viseme (1.10 = 10% stronger) |
 | Noise Floor Min | `d6e7f8a9-bacb-4cdd-a3b4-5f6a7b8c9d0e` | READ, WRITE | `float` | 1.0-50.0 | 5.0 | Minimum adaptive noise floor threshold (RMS scale) |
-| Noise Floor Max | `d7e8f9aa-bbcc-4dde-a4b5-6a7b8c9d0e1f` | READ, WRITE | `float` | 5.0-200.0 | 50.0 | Maximum adaptive noise floor threshold (RMS scale) |
-| Noise Adapt Speed | `d8e9faab-bccd-4edf-a5b6-7b8c9d0e1f2a` | READ, WRITE | `float` | 0.0001-0.01 | 0.001 | Speed of noise floor adaptation |
 | AH Scale | `d9eafbac-bdce-4fe0-a6b7-8c9d0e1f2a3b` | READ, WRITE | `float` | 0.1-5.0 | 0.4 | Sensitivity multiplier for AH viseme |
 | EE Scale | `dafbfcad-becf-4ae1-a7b8-9d0e1f2a3b4c` | READ, WRITE | `float` | 0.1-5.0 | 0.3 | Sensitivity multiplier for EE viseme |
 | OH Scale | `dbfcfdae-bfd0-4be2-a8b9-0e1f2a3b4c5d` | READ, WRITE | `float` | 0.1-5.0 | 1.5 | Sensitivity multiplier for OH viseme |
@@ -79,8 +75,7 @@ The KMMX controller supports two hardware versions with different capabilities:
 **Tuning Tips:**
 - **Envelope Attack/Release:** Controls how quickly the loudness tracker responds to sound
 - **Attack Threshold:** Lower values detect more syllables, higher values detect only clear syllables
-- **Min Separation:** Increase to reduce flickering between visemes
-- **Noise Floor:** System auto-adjusts between min/max based on ambient noise
+- **Noise Floor:** System auto-adjusts from the configured minimum up to its fixed safety cap
 - **Viseme Scales:** Adjust individual viseme sensitivity if certain mouth shapes are under/over-detected
 
 ### LED Brightness Control

@@ -199,15 +199,11 @@ void KMMXController::setMouth(int i) {
 }
 
 void KMMXController::setViseme(int b) {
-    static const int noiseThresholds[] = {400, 600, 1000, 1600, 3200, 6400, 1200, 18000, 25000};
-    static const int numThresholds = sizeof(noiseThresholds) / sizeof(noiseThresholds[0]);
     if (b == 0) {
         mouthState.setState(MouthStateEnum::IDLE, true, 0);  // Persistent, no timeout
         mouthState.savePrevState(MouthStateEnum::IDLE);  // Reset restore point to IDLE for clean slate
-    } else if (b == 1 || b > numThresholds) {
+    } else if (b == 1) {
         mouthState.setState(MouthStateEnum::TALKING, true, 0);  // Persistent, no timeout
-    } else {
-        mouthState.viseme.setNoiseThreshold(noiseThresholds[b - 2]);
     }
 }
 

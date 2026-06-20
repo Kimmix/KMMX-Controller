@@ -49,6 +49,7 @@ class DisplayBrightnessCallbacks : public NimBLECharacteristicCallbacks {
         if (!BLEManager::instance) return;
         uint8_t value;
         if (!readByte(pCharacteristic, value)) return;
+        if (value > 1) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Display Brightness: "));
             Serial.println(value);
@@ -363,10 +364,7 @@ enum class VisemeParameter {
     EnvelopeAttack,
     EnvelopeRelease,
     AttackThreshold,
-    MinSeparation,
     NoiseFloorMin,
-    NoiseFloorMax,
-    NoiseAdaptSpeed,
     AhScale,
     EeScale,
     OhScale,
@@ -400,21 +398,9 @@ class VisemeParameterCallbacks : public NimBLECharacteristicCallbacks {
                 if (value < 1.0f || value > 3.0f) return;
                 viseme.setAttackThreshold(value);
                 break;
-            case VisemeParameter::MinSeparation:
-                if (value < 1.0f || value > 2.0f) return;
-                viseme.setMinSeparation(value);
-                break;
             case VisemeParameter::NoiseFloorMin:
-                if (value < 1.0f || value > 50.0f || value > viseme.getNoiseFloorMax()) return;
+                if (value < 1.0f || value > visemeNoiseFloorCap) return;
                 viseme.setNoiseFloorMin(value);
-                break;
-            case VisemeParameter::NoiseFloorMax:
-                if (value < 5.0f || value > 200.0f || value < viseme.getNoiseFloorMin()) return;
-                viseme.setNoiseFloorMax(value);
-                break;
-            case VisemeParameter::NoiseAdaptSpeed:
-                if (value < 0.0001f || value > 0.01f) return;
-                viseme.setNoiseAdaptSpeed(value);
                 break;
             case VisemeParameter::AhScale:
             case VisemeParameter::EeScale:
@@ -473,10 +459,7 @@ BLEManager::BLEManager(KMMXController& ctrl) : controller(ctrl),
                                                ,visemeEnvelopeAttackCharacteristic(nullptr),
                                                visemeEnvelopeReleaseCharacteristic(nullptr),
                                                visemeAttackThresholdCharacteristic(nullptr),
-                                               visemeMinSeparationCharacteristic(nullptr),
                                                visemeNoiseFloorMinCharacteristic(nullptr),
-                                               visemeNoiseFloorMaxCharacteristic(nullptr),
-                                               visemeNoiseAdaptSpeedCharacteristic(nullptr),
                                                visemeAhScaleCharacteristic(nullptr),
                                                visemeEeScaleCharacteristic(nullptr),
                                                visemeOhScaleCharacteristic(nullptr),
@@ -611,20 +594,8 @@ void BLEManager::setup() {
         BLE_VISEME_ATTACK_THRESHOLD_UUID,
         BLE_RW);
 
-    visemeMinSeparationCharacteristic = pService->createCharacteristic(
-        BLE_VISEME_MIN_SEPARATION_UUID,
-        BLE_RW);
-
     visemeNoiseFloorMinCharacteristic = pService->createCharacteristic(
         BLE_VISEME_NOISE_FLOOR_MIN_UUID,
-        BLE_RW);
-
-    visemeNoiseFloorMaxCharacteristic = pService->createCharacteristic(
-        BLE_VISEME_NOISE_FLOOR_MAX_UUID,
-        BLE_RW);
-
-    visemeNoiseAdaptSpeedCharacteristic = pService->createCharacteristic(
-        BLE_VISEME_NOISE_ADAPT_SPEED_UUID,
         BLE_RW);
 
     visemeAhScaleCharacteristic = pService->createCharacteristic(
@@ -734,17 +705,8 @@ void BLEManager::setup() {
     float attackThresh = viseme.getAttackThreshold();
     visemeAttackThresholdCharacteristic->setValue(reinterpret_cast<uint8_t*>(&attackThresh), sizeof(float));
 
-    float minSep = viseme.getMinSeparation();
-    visemeMinSeparationCharacteristic->setValue(reinterpret_cast<uint8_t*>(&minSep), sizeof(float));
-
     float noiseMin = viseme.getNoiseFloorMin();
     visemeNoiseFloorMinCharacteristic->setValue(reinterpret_cast<uint8_t*>(&noiseMin), sizeof(float));
-
-    float noiseMax = viseme.getNoiseFloorMax();
-    visemeNoiseFloorMaxCharacteristic->setValue(reinterpret_cast<uint8_t*>(&noiseMax), sizeof(float));
-
-    float noiseSpeed = viseme.getNoiseAdaptSpeed();
-    visemeNoiseAdaptSpeedCharacteristic->setValue(reinterpret_cast<uint8_t*>(&noiseSpeed), sizeof(float));
 
     float ahScale = viseme.getAhScale();
     visemeAhScaleCharacteristic->setValue(reinterpret_cast<uint8_t*>(&ahScale), sizeof(float));
@@ -793,10 +755,7 @@ void BLEManager::setup() {
     visemeEnvelopeAttackCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::EnvelopeAttack));
     visemeEnvelopeReleaseCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::EnvelopeRelease));
     visemeAttackThresholdCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::AttackThreshold));
-    visemeMinSeparationCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::MinSeparation));
     visemeNoiseFloorMinCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::NoiseFloorMin));
-    visemeNoiseFloorMaxCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::NoiseFloorMax));
-    visemeNoiseAdaptSpeedCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::NoiseAdaptSpeed));
     visemeAhScaleCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::AhScale));
     visemeEeScaleCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::EeScale));
     visemeOhScaleCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::OhScale));

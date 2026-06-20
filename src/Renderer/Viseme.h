@@ -21,7 +21,6 @@ class Viseme {
 
     // Noise threshold (adaptive)
     float getNoiseThreshold();
-    void setNoiseThreshold(float value);
 
     // Current state
     VisemeType getCurrentViseme() const { return previousViseme; }
@@ -44,17 +43,9 @@ class Viseme {
     // Noise floor parameters (BLE controllable)
     float getNoiseFloorMin() const { return noiseFloorMin; }
     void setNoiseFloorMin(float value) { noiseFloorMin = value; }
-    float getNoiseFloorMax() const { return noiseFloorMax; }
-    void setNoiseFloorMax(float value) { noiseFloorMax = value; }
-    float getNoiseAdaptSpeed() const { return noiseAdaptSpeed; }
-    void setNoiseAdaptSpeed(float value) { noiseAdaptSpeed = value; }
-
     // Attack detection parameters (BLE controllable)
     float getAttackThreshold() const { return attackThreshold; }
     void setAttackThreshold(float value) { attackThreshold = value; }
-    // Confidence parameters (BLE controllable)
-    float getMinSeparation() const { return minSeparation; }
-    void setMinSeparation(float value) { minSeparation = value; }
 
     // Viseme scale factors (BLE controllable)
     float getAhScale() const { return ahScale; }
@@ -93,17 +84,12 @@ class Viseme {
     // Adaptive Noise Floor
     float adaptiveNoiseFloor = visemeNoiseThreshold;
     float noiseFloorMin = visemeNoiseFloorMin;
-    float noiseFloorMax = visemeNoiseFloorMax;
-    float noiseAdaptSpeed = visemeNoiseAdaptSpeed;
 
     // Attack Detection
     float previousEnvelope = 0;
     float attackThreshold = visemeAttackThreshold;
     unsigned long lastAttackTime = 0;
     uint16_t minAttackInterval = visemeMinAttackInterval;
-
-    // Confidence
-    float minSeparation = visemeMinSeparation;
 
     // Viseme Scale Factors (normalization)
     float ahScale = visemeAhScale;
