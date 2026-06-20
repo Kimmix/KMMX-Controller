@@ -386,34 +386,35 @@ class VisemeParameterCallbacks : public NimBLECharacteristicCallbacks {
         if (!isfinite(value)) return;
 
         auto& controller = BLEManager::instance->controller;
+        auto& viseme = controller.viseme();
         switch (parameter) {
             case VisemeParameter::EnvelopeAttack:
                 if (value < 0.1f || value > 0.9f) return;
-                controller.setVisemeEnvelopeAttack(value);
+                viseme.setEnvelopeAttack(value);
                 break;
             case VisemeParameter::EnvelopeRelease:
                 if (value < 0.01f || value > 0.5f) return;
-                controller.setVisemeEnvelopeRelease(value);
+                viseme.setEnvelopeRelease(value);
                 break;
             case VisemeParameter::AttackThreshold:
                 if (value < 1.0f || value > 3.0f) return;
-                controller.setVisemeAttackThreshold(value);
+                viseme.setAttackThreshold(value);
                 break;
             case VisemeParameter::MinSeparation:
                 if (value < 1.0f || value > 2.0f) return;
-                controller.setVisemeMinSeparation(value);
+                viseme.setMinSeparation(value);
                 break;
             case VisemeParameter::NoiseFloorMin:
-                if (value < 1.0f || value > 50.0f || value > controller.getVisemeNoiseFloorMax()) return;
-                controller.setVisemeNoiseFloorMin(value);
+                if (value < 1.0f || value > 50.0f || value > viseme.getNoiseFloorMax()) return;
+                viseme.setNoiseFloorMin(value);
                 break;
             case VisemeParameter::NoiseFloorMax:
-                if (value < 5.0f || value > 200.0f || value < controller.getVisemeNoiseFloorMin()) return;
-                controller.setVisemeNoiseFloorMax(value);
+                if (value < 5.0f || value > 200.0f || value < viseme.getNoiseFloorMin()) return;
+                viseme.setNoiseFloorMax(value);
                 break;
             case VisemeParameter::NoiseAdaptSpeed:
                 if (value < 0.0001f || value > 0.01f) return;
-                controller.setVisemeNoiseAdaptSpeed(value);
+                viseme.setNoiseAdaptSpeed(value);
                 break;
             case VisemeParameter::AhScale:
             case VisemeParameter::EeScale:
@@ -421,11 +422,11 @@ class VisemeParameterCallbacks : public NimBLECharacteristicCallbacks {
             case VisemeParameter::OoScale:
             case VisemeParameter::ThScale:
                 if (value < 0.1f || value > 5.0f) return;
-                if (parameter == VisemeParameter::AhScale) controller.setVisemeAhScale(value);
-                else if (parameter == VisemeParameter::EeScale) controller.setVisemeEeScale(value);
-                else if (parameter == VisemeParameter::OhScale) controller.setVisemeOhScale(value);
-                else if (parameter == VisemeParameter::OoScale) controller.setVisemeOoScale(value);
-                else controller.setVisemeThScale(value);
+                if (parameter == VisemeParameter::AhScale) viseme.setAhScale(value);
+                else if (parameter == VisemeParameter::EeScale) viseme.setEeScale(value);
+                else if (parameter == VisemeParameter::OhScale) viseme.setOhScale(value);
+                else if (parameter == VisemeParameter::OoScale) viseme.setOoScale(value);
+                else viseme.setThScale(value);
                 break;
         }
     }
@@ -723,40 +724,41 @@ void BLEManager::setup() {
     #endif
 
     // Set viseme advanced parameter default values
-    float envAttack = controller.getVisemeEnvelopeAttack();
+    auto& viseme = controller.viseme();
+    float envAttack = viseme.getEnvelopeAttack();
     visemeEnvelopeAttackCharacteristic->setValue(reinterpret_cast<uint8_t*>(&envAttack), sizeof(float));
 
-    float envRelease = controller.getVisemeEnvelopeRelease();
+    float envRelease = viseme.getEnvelopeRelease();
     visemeEnvelopeReleaseCharacteristic->setValue(reinterpret_cast<uint8_t*>(&envRelease), sizeof(float));
 
-    float attackThresh = controller.getVisemeAttackThreshold();
+    float attackThresh = viseme.getAttackThreshold();
     visemeAttackThresholdCharacteristic->setValue(reinterpret_cast<uint8_t*>(&attackThresh), sizeof(float));
 
-    float minSep = controller.getVisemeMinSeparation();
+    float minSep = viseme.getMinSeparation();
     visemeMinSeparationCharacteristic->setValue(reinterpret_cast<uint8_t*>(&minSep), sizeof(float));
 
-    float noiseMin = controller.getVisemeNoiseFloorMin();
+    float noiseMin = viseme.getNoiseFloorMin();
     visemeNoiseFloorMinCharacteristic->setValue(reinterpret_cast<uint8_t*>(&noiseMin), sizeof(float));
 
-    float noiseMax = controller.getVisemeNoiseFloorMax();
+    float noiseMax = viseme.getNoiseFloorMax();
     visemeNoiseFloorMaxCharacteristic->setValue(reinterpret_cast<uint8_t*>(&noiseMax), sizeof(float));
 
-    float noiseSpeed = controller.getVisemeNoiseAdaptSpeed();
+    float noiseSpeed = viseme.getNoiseAdaptSpeed();
     visemeNoiseAdaptSpeedCharacteristic->setValue(reinterpret_cast<uint8_t*>(&noiseSpeed), sizeof(float));
 
-    float ahScale = controller.getVisemeAhScale();
+    float ahScale = viseme.getAhScale();
     visemeAhScaleCharacteristic->setValue(reinterpret_cast<uint8_t*>(&ahScale), sizeof(float));
 
-    float eeScale = controller.getVisemeEeScale();
+    float eeScale = viseme.getEeScale();
     visemeEeScaleCharacteristic->setValue(reinterpret_cast<uint8_t*>(&eeScale), sizeof(float));
 
-    float ohScale = controller.getVisemeOhScale();
+    float ohScale = viseme.getOhScale();
     visemeOhScaleCharacteristic->setValue(reinterpret_cast<uint8_t*>(&ohScale), sizeof(float));
 
-    float ooScale = controller.getVisemeOoScale();
+    float ooScale = viseme.getOoScale();
     visemeOoScaleCharacteristic->setValue(reinterpret_cast<uint8_t*>(&ooScale), sizeof(float));
 
-    float thScale = controller.getVisemeThScale();
+    float thScale = viseme.getThScale();
     visemeThScaleCharacteristic->setValue(reinterpret_cast<uint8_t*>(&thScale), sizeof(float));
 
     // Set callbacks for each characteristic (simple, direct callbacks)

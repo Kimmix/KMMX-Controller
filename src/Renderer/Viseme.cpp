@@ -202,16 +202,7 @@ void Viseme::updateEnvelope() {
  * Adapts down during silence, adapts up during sustained noise.
  */
 void Viseme::updateNoiseFloor() {
-    // Check if currently speaking (envelope above threshold)
-    bool isSpeaking = currentEnvelope > adaptiveNoiseFloor * 1.2f;
-
-    if (isSpeaking) {
-        // During speech, very slowly adapt upward if needed
-        // This prevents brief loud sounds from permanently raising the floor
-        if (currentEnvelope < adaptiveNoiseFloor * 0.8f) {
-            adaptiveNoiseFloor -= noiseAdaptSpeed * 10.0f;
-        }
-    } else {
+    if (currentEnvelope <= adaptiveNoiseFloor * 1.2f) {
         // During silence, track the minimum amplitude
         if (currentEnvelope < adaptiveNoiseFloor) {
             // Quick adaptation down to new quiet level
@@ -241,13 +232,13 @@ void Viseme::updateNoiseFloor() {
  */
 bool Viseme::detectAttack() {
     unsigned long currentTime = millis();
-    attackDetected = false;
+    bool detected = false;
 
     // Check for rapid increase in envelope
     if (previousEnvelope > 0 && currentEnvelope > previousEnvelope * attackThreshold) {
         // Check if enough time has passed since last attack
         if (currentTime - lastAttackTime >= minAttackInterval) {
-            attackDetected = true;
+            detected = true;
             lastAttackTime = currentTime;
         }
     }
@@ -255,7 +246,7 @@ bool Viseme::detectAttack() {
     // Update previous envelope
     previousEnvelope = currentEnvelope;
 
-    return attackDetected;
+    return detected;
 }
 
 // =============================================================================
@@ -337,17 +328,13 @@ Viseme::VisemeType Viseme::getDominantViseme() {
 
     int maxIdx = 0;
     float maxAmp = amps[0];
+    float secondMax = 0;
     for (int i = 1; i < 5; i++) {
         if (amps[i] > maxAmp) {
+            secondMax = maxAmp;
             maxAmp = amps[i];
             maxIdx = i;
-        }
-    }
-
-    // Find second highest
-    float secondMax = 0;
-    for (int i = 0; i < 5; i++) {
-        if (i != maxIdx && amps[i] > secondMax) {
+        } else if (amps[i] > secondMax) {
             secondMax = amps[i];
         }
     }
@@ -371,22 +358,7 @@ const uint8_t* Viseme::visemeOutput(VisemeType viseme, unsigned int level) {
         return mouthDefault1;
     }
 
-    // Convert to 0-based index
-    level -= 1;
-
-    switch (viseme) {
-        case AH:
-            return ahViseme[level];
-        case EE:
-            return eeViseme[level];
-        case OH:
-            return ohViseme[level];
-        case OO:
-            return ooViseme[level];
-        case TH:
-            return thViseme[level];
-    };
-    return nullptr;
+    return visemeFrames[viseme][level - 1];
 }
 
 /**
@@ -423,14 +395,11 @@ const uint8_t* Viseme::renderViseme() {
     updateNoiseFloor();
 
     // Detect attack (syllable boundaries)
-    detectAttack();
+    const bool attackDetected = detectAttack();
 
     performFFT();
     calculateMagnitudes();
     analyzeVisemes();
-
-    const float maxAmplitude = max(max(ahAmplitude, eeAmplitude), max(max(ohAmplitude, ooAmplitude), thAmplitude));
-    const float minAmplitude = min(min(ahAmplitude, eeAmplitude), min(min(ohAmplitude, ooAmplitude), thAmplitude));
 
     // Find dominant viseme (with confidence checking)
     VisemeType dominantViseme = getDominantViseme();
