@@ -80,7 +80,7 @@ constexpr uint16_t nodSustainTime = 200;
 constexpr uint16_t nodCooldown = 1500;
 
 // Idle Detection
-const uint32_t idleTimeout = 300000;
+const uint32_t idleTimeout = 10 * 60000;
 const uint16_t baselineUpdateDelay = 2000;
 const float idleAccThreshold = 1.5f;
 const float sleepingAccThreshold = 0.7f;

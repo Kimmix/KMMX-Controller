@@ -36,6 +36,7 @@ void KMMXController::enterSleep(KMMXController* controller) {
     controller->prevHornBright = controller->hornLED.getBrightness();
     controller->hornLED.setBrightness(5);
     controller->eyeState.setState(EyeStateEnum::SLEEP, false, 0);  // Temporary, no timeout (manual control)
+    controller->mouthState.setState(MouthStateEnum::IDLE, false, 0);  // Set mouth to idle
     controller->mouthState.setSlowAnimation(true);
     controller->isSleeping = true;
 
