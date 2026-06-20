@@ -117,11 +117,15 @@ class BLEManager {
     // Viseme Advanced Parameter Characteristics
     NimBLECharacteristic* visemeEnvelopeAttackCharacteristic;
     NimBLECharacteristic* visemeEnvelopeReleaseCharacteristic;
-    NimBLECharacteristic* visemeAttackThresholdCharacteristic;
+    NimBLECharacteristic* visemeNoiseGateMultiplierCharacteristic;
     NimBLECharacteristic* visemeNoiseFloorMinCharacteristic;
     NimBLECharacteristic* visemeAhScaleCharacteristic;
     NimBLECharacteristic* visemeEeScaleCharacteristic;
     NimBLECharacteristic* visemeOhScaleCharacteristic;
     NimBLECharacteristic* visemeOoScaleCharacteristic;
     NimBLECharacteristic* visemeThScaleCharacteristic;
+    NimBLECharacteristic* visemeLoudnessExponentCharacteristic;
+    NimBLECharacteristic* visemeLoudnessSmoothingCharacteristic;
+    NimBLECharacteristic* visemeLoudnessMaxCharacteristic;
+    NimBLECharacteristic* visemeLoudnessMidBoostCharacteristic;
 };

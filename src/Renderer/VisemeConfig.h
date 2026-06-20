@@ -44,7 +44,9 @@ const float visemeEnvelopeRelease = 0.4f;                       // Release time 
 // Adaptive Noise Floor Parameters
 const float visemeNoiseFloorMin = 5.0f;                         // Minimum adaptive noise floor (scaled for RMS envelope)
 const float visemeNoiseFloorCap = 50.0f;                        // Safety cap preventing the detector from becoming deaf
-const float visemeNoiseAdaptSpeed = 0.01f;                      // Fixed speed of noise floor adaptation
+const float visemeNoiseFloorFall = 0.2f;                        // Fast tracking when ambient sound falls
+const float visemeNoiseFloorRise = 0.005f;                      // Slow tracking when ambient sound rises
+const float visemeNoiseGateMultiplier = 1.3f;                   // Speech must exceed ambient noise by 30%
 
 // Attack Detection Parameters
 const float visemeAttackThreshold = 1.25f;                      // Envelope increase ratio to detect attack

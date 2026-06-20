@@ -58,25 +58,48 @@ The KMMX controller supports two hardware versions with different capabilities:
 
 ### Viseme Advanced Parameters
 
-**Note:** These characteristics provide fine-grained control over the viseme detection algorithm. Values are sent as little-endian binary (float or uint16_t).
+**Note:** These characteristics provide fine-grained control over the viseme detector. Values are little-endian `float`.
 
 | Name | UUID | Properties | Data Format | Range | Default | Description |
 |------|------|------------|-------------|-------|---------|-------------|
-| Envelope Attack | `d1e2f3a4-b5c6-47d8-9e0f-1a2b3c4d5e6f` | READ, WRITE | `float` | 0.1-0.9 | 0.3 | Attack time constant (higher = faster rise) |
-| Envelope Release | `d2e3f4a5-b6c7-48d9-9f0a-1b2c3d4e5f6a` | READ, WRITE | `float` | 0.01-0.5 | 0.1 | Release time constant (lower = slower decay) |
-| Attack Threshold | `d3e4f5a6-b7c8-49da-a0b1-2c3d4e5f6a7b` | READ, WRITE | `float` | 1.0-3.0 | 1.25 | Envelope ratio to detect syllable start (1.25 = 25% increase) |
-| Noise Floor Min | `d6e7f8a9-bacb-4cdd-a3b4-5f6a7b8c9d0e` | READ, WRITE | `float` | 1.0-50.0 | 5.0 | Minimum adaptive noise floor threshold (RMS scale) |
-| AH Scale | `d9eafbac-bdce-4fe0-a6b7-8c9d0e1f2a3b` | READ, WRITE | `float` | 0.1-5.0 | 0.4 | Sensitivity multiplier for AH viseme |
-| EE Scale | `dafbfcad-becf-4ae1-a7b8-9d0e1f2a3b4c` | READ, WRITE | `float` | 0.1-5.0 | 0.3 | Sensitivity multiplier for EE viseme |
+| Envelope Attack | `d1e2f3a4-b5c6-47d8-9e0f-1a2b3c4d5e6f` | READ, WRITE | `float` | 0.1-0.9 | 0.5 | Attack time constant (higher = faster rise) |
+| Envelope Release | `d2e3f4a5-b6c7-48d9-9f0a-1b2c3d4e5f6a` | READ, WRITE | `float` | 0.01-0.5 | 0.4 | Release time constant (lower = slower decay) |
+| Noise Gate Multiplier | `d4e5f6a7-b8c9-4adb-a1b2-3d4e5f6a7b8c` | READ, WRITE | `float` | 0.5-3.0 | 1.2 | Required loudness above the adaptive noise floor |
+| Noise Floor Min | `d6e7f8a9-bacb-4cdd-a3b4-5f6a7b8c9d0e` | READ, WRITE | `float` | 5.0-200.0 | 5.0 | Minimum adaptive noise floor threshold (RMS scale) |
+| AH Scale | `d9eafbac-bdce-4fe0-a6b7-8c9d0e1f2a3b` | READ, WRITE | `float` | 0.1-5.0 | 3.3 | Sensitivity multiplier for AH viseme |
+| EE Scale | `dafbfcad-becf-4ae1-a7b8-9d0e1f2a3b4c` | READ, WRITE | `float` | 0.1-5.0 | 1.3 | Sensitivity multiplier for EE viseme |
 | OH Scale | `dbfcfdae-bfd0-4be2-a8b9-0e1f2a3b4c5d` | READ, WRITE | `float` | 0.1-5.0 | 1.5 | Sensitivity multiplier for OH viseme |
 | OO Scale | `dcfdfebf-c0d1-4ce3-a9ba-1f2a3b4c5d6e` | READ, WRITE | `float` | 0.1-5.0 | 1.4 | Sensitivity multiplier for OO viseme |
-| TH Scale | `ddfeafc0-c1d2-4de4-aabb-2a3b4c5d6e7f` | READ, WRITE | `float` | 0.1-5.0 | 3.0 | Sensitivity multiplier for TH viseme |
+| TH Scale | `ddfeafc0-c1d2-4de4-aabb-2a3b4c5d6e7f` | READ, WRITE | `float` | 0.1-5.0 | 1.0 | Sensitivity multiplier for TH viseme |
+| Loudness Exponent | `deafc0d1-c2d3-4ef5-abcc-3b4c5d6e7f80` | READ, WRITE | `float` | 0.2-2.0 | 0.8 | Perceptual mouth-opening curve |
+| Loudness Smoothing | `dfb0c1d2-c3d4-4fa6-abdd-4c5d6e7f8091` | READ, WRITE | `float` | 0.05-1.0 | 0.65 | Mouth-opening response speed |
+| Loudness Max | `e0c1d2e3-d4e5-40b7-acee-5d6e7f8091a2` | READ, WRITE | `float` | 1.0-20.0 | 5.0 | Dynamic range before the mouth reaches maximum opening |
+| Loudness Mid Boost | `e1d2e3f4-e5f6-41c8-adff-6e7f8091a2b3` | READ, WRITE | `float` | 0.5-2.0 | 1.2 | Boost applied to medium mouth openings |
 
 **Tuning Tips:**
 - **Envelope Attack/Release:** Controls how quickly the loudness tracker responds to sound
-- **Attack Threshold:** Lower values detect more syllables, higher values detect only clear syllables
-- **Noise Floor:** System auto-adjusts from the configured minimum up to its fixed safety cap
+- **Noise Gate Multiplier:** Lower is more sensitive; higher rejects more ambient noise
+- **Noise Floor Min:** Hardware calibration floor; normally leave at default
 - **Viseme Scales:** Adjust individual viseme sensitivity if certain mouth shapes are under/over-detected
+- **Loudness Parameters:** Tune mouth opening independently from phoneme selection
+
+#### Recommended UI Slider Scaling
+
+BLE values remain the raw `float` values listed above. These recommendations only affect how a frontend maps a normalized slider position `t` (`0.0-1.0`) to that value.
+
+| Parameter | UI Scaling | Mapping | Reason |
+|-----------|------------|---------|--------|
+| Envelope Attack | Linear | `0.1 + t * 0.8` | The useful response changes are distributed reasonably across the range. |
+| Envelope Release | Logarithmic | `0.01 * pow(50, t)` | Most useful tuning resolution is near the low end. |
+| Noise Gate Multiplier | Quadratic | `1.0 + 2.0 * t²` | Gives finer sensitivity control near `1.0-1.5`. |
+| Noise Floor Min | Logarithmic | `pow(50, t)` | RMS noise levels are perceptual and span a wide range. |
+| AH/EE/OH/OO/TH Scale | Logarithmic | `0.1 * pow(50, t)` | Multipliers are best tuned by ratios rather than equal numeric steps. |
+| Loudness Exponent | Logarithmic | `0.2 * pow(10, t)` | Fine control around values below `1.0` is more useful. |
+| Loudness Smoothing | Linear | `0.05 + t * 0.95` | Directly represents the blend applied each frame. |
+| Loudness Max | Logarithmic | `pow(20, t)` | Dynamic range is naturally ratio-based. |
+| Loudness Mid Boost | Linear | `0.5 + t * 1.5` | The range is small and centered around neutral `1.0`. |
+
+For frontend reset buttons, use the defaults from the parameter table rather than the slider midpoint.
 
 ### LED Brightness Control
 

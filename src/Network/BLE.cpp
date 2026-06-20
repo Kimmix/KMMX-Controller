@@ -49,7 +49,6 @@ class DisplayBrightnessCallbacks : public NimBLECharacteristicCallbacks {
         if (!BLEManager::instance) return;
         uint8_t value;
         if (!readByte(pCharacteristic, value)) return;
-        if (value > 1) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Display Brightness: "));
             Serial.println(value);
@@ -89,6 +88,7 @@ class VisemeCallbacks : public NimBLECharacteristicCallbacks {
         if (!BLEManager::instance) return;
         uint8_t value;
         if (!readByte(pCharacteristic, value)) return;
+        if (value > 1) return;
         if (BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Viseme: "));
             Serial.println(value);
@@ -363,13 +363,17 @@ class FanEnabledCallbacks : public NimBLECharacteristicCallbacks {
 enum class VisemeParameter {
     EnvelopeAttack,
     EnvelopeRelease,
-    AttackThreshold,
+    NoiseGateMultiplier,
     NoiseFloorMin,
     AhScale,
     EeScale,
     OhScale,
     OoScale,
     ThScale,
+    LoudnessExponent,
+    LoudnessSmoothing,
+    LoudnessMax,
+    LoudnessMidBoost,
 };
 
 class VisemeParameterCallbacks : public NimBLECharacteristicCallbacks {
@@ -394,9 +398,9 @@ class VisemeParameterCallbacks : public NimBLECharacteristicCallbacks {
                 if (value < 0.01f || value > 0.5f) return;
                 viseme.setEnvelopeRelease(value);
                 break;
-            case VisemeParameter::AttackThreshold:
+            case VisemeParameter::NoiseGateMultiplier:
                 if (value < 1.0f || value > 3.0f) return;
-                viseme.setAttackThreshold(value);
+                viseme.setNoiseGateMultiplier(value);
                 break;
             case VisemeParameter::NoiseFloorMin:
                 if (value < 1.0f || value > visemeNoiseFloorCap) return;
@@ -413,6 +417,22 @@ class VisemeParameterCallbacks : public NimBLECharacteristicCallbacks {
                 else if (parameter == VisemeParameter::OhScale) viseme.setOhScale(value);
                 else if (parameter == VisemeParameter::OoScale) viseme.setOoScale(value);
                 else viseme.setThScale(value);
+                break;
+            case VisemeParameter::LoudnessExponent:
+                if (value < 0.2f || value > 2.0f) return;
+                viseme.setLoudnessExponent(value);
+                break;
+            case VisemeParameter::LoudnessSmoothing:
+                if (value < 0.05f || value > 1.0f) return;
+                viseme.setLoudnessSmoothing(value);
+                break;
+            case VisemeParameter::LoudnessMax:
+                if (value < 1.0f || value > 20.0f) return;
+                viseme.setLoudnessMax(value);
+                break;
+            case VisemeParameter::LoudnessMidBoost:
+                if (value < 0.5f || value > 2.0f) return;
+                viseme.setLoudnessMidBoost(value);
                 break;
         }
     }
@@ -458,13 +478,17 @@ BLEManager::BLEManager(KMMXController& ctrl) : controller(ctrl),
 #endif
                                                ,visemeEnvelopeAttackCharacteristic(nullptr),
                                                visemeEnvelopeReleaseCharacteristic(nullptr),
-                                               visemeAttackThresholdCharacteristic(nullptr),
+                                               visemeNoiseGateMultiplierCharacteristic(nullptr),
                                                visemeNoiseFloorMinCharacteristic(nullptr),
                                                visemeAhScaleCharacteristic(nullptr),
                                                visemeEeScaleCharacteristic(nullptr),
                                                visemeOhScaleCharacteristic(nullptr),
                                                visemeOoScaleCharacteristic(nullptr),
-                                               visemeThScaleCharacteristic(nullptr)
+                                               visemeThScaleCharacteristic(nullptr),
+                                               visemeLoudnessExponentCharacteristic(nullptr),
+                                               visemeLoudnessSmoothingCharacteristic(nullptr),
+                                               visemeLoudnessMaxCharacteristic(nullptr),
+                                               visemeLoudnessMidBoostCharacteristic(nullptr)
 {
 }
 
@@ -590,8 +614,8 @@ void BLEManager::setup() {
         BLE_VISEME_ENVELOPE_RELEASE_UUID,
         BLE_RW);
 
-    visemeAttackThresholdCharacteristic = pService->createCharacteristic(
-        BLE_VISEME_ATTACK_THRESHOLD_UUID,
+    visemeNoiseGateMultiplierCharacteristic = pService->createCharacteristic(
+        BLE_VISEME_NOISE_GATE_MULTIPLIER_UUID,
         BLE_RW);
 
     visemeNoiseFloorMinCharacteristic = pService->createCharacteristic(
@@ -616,6 +640,22 @@ void BLEManager::setup() {
 
     visemeThScaleCharacteristic = pService->createCharacteristic(
         BLE_VISEME_TH_SCALE_UUID,
+        BLE_RW);
+
+    visemeLoudnessExponentCharacteristic = pService->createCharacteristic(
+        BLE_VISEME_LOUDNESS_EXPONENT_UUID,
+        BLE_RW);
+
+    visemeLoudnessSmoothingCharacteristic = pService->createCharacteristic(
+        BLE_VISEME_LOUDNESS_SMOOTHING_UUID,
+        BLE_RW);
+
+    visemeLoudnessMaxCharacteristic = pService->createCharacteristic(
+        BLE_VISEME_LOUDNESS_MAX_UUID,
+        BLE_RW);
+
+    visemeLoudnessMidBoostCharacteristic = pService->createCharacteristic(
+        BLE_VISEME_LOUDNESS_MID_BOOST_UUID,
         BLE_RW);
 
     // Set default values for each characteristic
@@ -702,8 +742,8 @@ void BLEManager::setup() {
     float envRelease = viseme.getEnvelopeRelease();
     visemeEnvelopeReleaseCharacteristic->setValue(reinterpret_cast<uint8_t*>(&envRelease), sizeof(float));
 
-    float attackThresh = viseme.getAttackThreshold();
-    visemeAttackThresholdCharacteristic->setValue(reinterpret_cast<uint8_t*>(&attackThresh), sizeof(float));
+    float noiseGateMultiplier = viseme.getNoiseGateMultiplier();
+    visemeNoiseGateMultiplierCharacteristic->setValue(reinterpret_cast<uint8_t*>(&noiseGateMultiplier), sizeof(float));
 
     float noiseMin = viseme.getNoiseFloorMin();
     visemeNoiseFloorMinCharacteristic->setValue(reinterpret_cast<uint8_t*>(&noiseMin), sizeof(float));
@@ -722,6 +762,18 @@ void BLEManager::setup() {
 
     float thScale = viseme.getThScale();
     visemeThScaleCharacteristic->setValue(reinterpret_cast<uint8_t*>(&thScale), sizeof(float));
+
+    float loudnessExponent = viseme.getLoudnessExponent();
+    visemeLoudnessExponentCharacteristic->setValue(reinterpret_cast<uint8_t*>(&loudnessExponent), sizeof(float));
+
+    float loudnessSmoothing = viseme.getLoudnessSmoothing();
+    visemeLoudnessSmoothingCharacteristic->setValue(reinterpret_cast<uint8_t*>(&loudnessSmoothing), sizeof(float));
+
+    float loudnessMax = viseme.getLoudnessMax();
+    visemeLoudnessMaxCharacteristic->setValue(reinterpret_cast<uint8_t*>(&loudnessMax), sizeof(float));
+
+    float loudnessMidBoost = viseme.getLoudnessMidBoost();
+    visemeLoudnessMidBoostCharacteristic->setValue(reinterpret_cast<uint8_t*>(&loudnessMidBoost), sizeof(float));
 
     // Set callbacks for each characteristic (simple, direct callbacks)
     displayBrightnessCharacteristic->setCallbacks(new DisplayBrightnessCallbacks());
@@ -754,13 +806,17 @@ void BLEManager::setup() {
     // Set viseme advanced parameter callbacks
     visemeEnvelopeAttackCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::EnvelopeAttack));
     visemeEnvelopeReleaseCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::EnvelopeRelease));
-    visemeAttackThresholdCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::AttackThreshold));
+    visemeNoiseGateMultiplierCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::NoiseGateMultiplier));
     visemeNoiseFloorMinCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::NoiseFloorMin));
     visemeAhScaleCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::AhScale));
     visemeEeScaleCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::EeScale));
     visemeOhScaleCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::OhScale));
     visemeOoScaleCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::OoScale));
     visemeThScaleCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::ThScale));
+    visemeLoudnessExponentCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::LoudnessExponent));
+    visemeLoudnessSmoothingCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::LoudnessSmoothing));
+    visemeLoudnessMaxCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::LoudnessMax));
+    visemeLoudnessMidBoostCharacteristic->setCallbacks(new VisemeParameterCallbacks(VisemeParameter::LoudnessMidBoost));
 
     // Start the server (this automatically starts all services)
     pServer->start();

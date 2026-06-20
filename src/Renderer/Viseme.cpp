@@ -198,13 +198,8 @@ void Viseme::updateEnvelope() {
  * Adapts down during silence, adapts up during sustained noise.
  */
 void Viseme::updateNoiseFloor() {
-    if (currentEnvelope < adaptiveNoiseFloor) {
-        adaptiveNoiseFloor -= visemeNoiseAdaptSpeed * 50.0f;
-    } else {
-        // ponytail: slow upward drift handles sustained noise; add speech/noise classification only if field tests need it.
-        adaptiveNoiseFloor += visemeNoiseAdaptSpeed;
-    }
-
+    const float rate = currentEnvelope < adaptiveNoiseFloor ? visemeNoiseFloorFall : visemeNoiseFloorRise;
+    adaptiveNoiseFloor += rate * (currentEnvelope - adaptiveNoiseFloor);
     adaptiveNoiseFloor = constrain(adaptiveNoiseFloor, noiseFloorMin, visemeNoiseFloorCap);
 }
 
@@ -221,7 +216,7 @@ bool Viseme::detectAttack() {
     bool detected = false;
 
     // Check for rapid increase in envelope
-    if (previousEnvelope > 0 && currentEnvelope > previousEnvelope * attackThreshold) {
+    if (previousEnvelope > 0 && currentEnvelope > previousEnvelope * visemeAttackThreshold) {
         // Check if enough time has passed since last attack
         if (currentTime - lastAttackTime >= minAttackInterval) {
             detected = true;
@@ -251,8 +246,10 @@ bool Viseme::detectAttack() {
  * @return Mouth opening level (0-60)
  */
 unsigned int Viseme::calculateLoudnessLevel() {
+    const float gateThreshold = getGateThreshold();
+
     // Return 0 if below noise floor
-    if (currentEnvelope <= adaptiveNoiseFloor) {
+    if (currentEnvelope <= gateThreshold) {
         // Smooth decay to 0
         smoothedLoudness *= (1.0f - loudnessSmoothing);
         return 0;
@@ -260,8 +257,8 @@ unsigned int Viseme::calculateLoudnessLevel() {
 
     // Step 1 & 2: Normalize and apply non-linear perceptual curve (power law)
     // Lower exponent emphasizes quiet/medium sounds for better expressiveness
-    float normalized = (currentEnvelope - adaptiveNoiseFloor) /
-                       (adaptiveNoiseFloor * loudnessMax);
+    float normalized = (currentEnvelope - gateThreshold) /
+                       (gateThreshold * loudnessMax);
     normalized = constrain(normalized, 0.0f, 1.0f);
     float perceptualLoudness = powf(normalized, loudnessExponent);
 
@@ -321,11 +318,6 @@ Viseme::VisemeType Viseme::getDominantViseme() {
         }
     }
 
-    // Check if amplitude is above adaptive noise floor
-    if (maxAmp < adaptiveNoiseFloor) {
-        return previousViseme;
-    }
-
     // Return the dominant viseme
     return names[maxIdx];
 }
@@ -349,6 +341,8 @@ void Viseme::printDebugPlotter(unsigned int loudnessLevel) {
     Serial.print(currentEnvelope * mutiplier);
     Serial.print(",NoiseFloor:");
     Serial.print(adaptiveNoiseFloor * mutiplier);
+    Serial.print(",Gate:");
+    Serial.print(getGateThreshold() * mutiplier);
     Serial.print(",AH:");
     Serial.print(ahAmplitude);
     Serial.print(",EE:");

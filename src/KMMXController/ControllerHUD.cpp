@@ -297,7 +297,7 @@ void KMMXController::drawOLEDSensorBars(const SensorData& sensors) {
     // VU meter bar (uses loudness from viseme/microphone)
     oledDisplay.drawText(BAR_LABEL_X, VU_LABEL_Y, "VU");
     float envelope = mouthState.viseme.getEnvelope();                    // currentEnvelope
-    float gateThreshold = mouthState.viseme.getGateThreshold();          // adaptiveNoiseFloor * visemeLoudnessGateMultiplier
+    float gateThreshold = mouthState.viseme.getGateThreshold();          // adaptiveNoiseFloor * visemeNoiseGateMultiplier
     bool isLoudEnough = mouthState.viseme.isLoudEnough();                // envelope > gateThreshold
     float noiseFloor = mouthState.viseme.getNoiseThreshold();            // For debug output
 
@@ -319,7 +319,7 @@ void KMMXController::drawOLEDSensorBars(const SensorData& sensors) {
     }
     drawHorizontalBar(oledDisplay, BAR_START_X, VU_BAR_Y, BAR_WIDTH, BAR_HEIGHT, vuLevel);
 
-    // Draw gate threshold line showing where visemes trigger (when envelope > noiseFloor * 1.5)
+    // Draw gate threshold line showing where visemes trigger
     // Line position shows the trigger point - bar crossing this line = visemes active
     auto* u8g2 = oledDisplay.getU8g2();
     int gatePos = BAR_START_X + (int)mapFloat(gateThreshold, 0, VU_MAX_ENVELOPE, 0, BAR_WIDTH);

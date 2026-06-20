@@ -25,7 +25,7 @@ class Viseme {
     // Current state
     VisemeType getCurrentViseme() const { return previousViseme; }
     float getEnvelope() const { return currentEnvelope; }
-    float getGateThreshold() const { return adaptiveNoiseFloor; }
+    float getGateThreshold() const { return adaptiveNoiseFloor * noiseGateMultiplier; }
     bool isLoudEnough() const { return currentEnvelope > getGateThreshold(); }
 
     // Get loudness level for display (0-60 range, based on envelope)
@@ -43,9 +43,8 @@ class Viseme {
     // Noise floor parameters (BLE controllable)
     float getNoiseFloorMin() const { return noiseFloorMin; }
     void setNoiseFloorMin(float value) { noiseFloorMin = value; }
-    // Attack detection parameters (BLE controllable)
-    float getAttackThreshold() const { return attackThreshold; }
-    void setAttackThreshold(float value) { attackThreshold = value; }
+    float getNoiseGateMultiplier() const { return noiseGateMultiplier; }
+    void setNoiseGateMultiplier(float value) { noiseGateMultiplier = value; }
 
     // Viseme scale factors (BLE controllable)
     float getAhScale() const { return ahScale; }
@@ -58,6 +57,15 @@ class Viseme {
     void setOoScale(float value) { ooScale = value; }
     float getThScale() const { return thScale; }
     void setThScale(float value) { thScale = value; }
+
+    float getLoudnessExponent() const { return loudnessExponent; }
+    void setLoudnessExponent(float value) { loudnessExponent = value; }
+    float getLoudnessSmoothing() const { return loudnessSmoothing; }
+    void setLoudnessSmoothing(float value) { loudnessSmoothing = value; }
+    float getLoudnessMax() const { return loudnessMax; }
+    void setLoudnessMax(float value) { loudnessMax = value; }
+    float getLoudnessMidBoost() const { return loudnessMidBoost; }
+    void setLoudnessMidBoost(float value) { loudnessMidBoost = value; }
 
    private:
     I2SMicrophone mic;
@@ -84,10 +92,10 @@ class Viseme {
     // Adaptive Noise Floor
     float adaptiveNoiseFloor = visemeNoiseThreshold;
     float noiseFloorMin = visemeNoiseFloorMin;
+    float noiseGateMultiplier = visemeNoiseGateMultiplier;
 
     // Attack Detection
     float previousEnvelope = 0;
-    float attackThreshold = visemeAttackThreshold;
     unsigned long lastAttackTime = 0;
     uint16_t minAttackInterval = visemeMinAttackInterval;
 
