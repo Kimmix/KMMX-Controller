@@ -30,7 +30,6 @@ class GlitchIntensityCallbacks;
 // Fan Control Callbacks
 #if HAS_FAN_CONTROL
 class FanSpeedCallbacks;
-class FanEnabledCallbacks;
 #endif
 
 class VisemeParameterCallbacks;
@@ -69,7 +68,6 @@ class BLEManager {
     // Fan Control Callbacks
     #if HAS_FAN_CONTROL
     friend class FanSpeedCallbacks;
-    friend class FanEnabledCallbacks;
     #endif
 
     friend class VisemeParameterCallbacks;
@@ -109,9 +107,6 @@ class BLEManager {
     // Fan Control Characteristics
     #if HAS_FAN_CONTROL
     NimBLECharacteristic* fanSpeedCharacteristic;
-    NimBLECharacteristic* fanEnabledCharacteristic;
-    NimBLECharacteristic* fanRpmCharacteristic;
-    NimBLECharacteristic* fanConnectedCharacteristic;
     #endif
 
     // Viseme Advanced Parameter Characteristics

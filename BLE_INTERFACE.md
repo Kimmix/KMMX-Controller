@@ -143,17 +143,12 @@ For frontend reset buttons, use the defaults from the parameter table rather tha
 | Name | UUID | Properties | Data Format | Description |
 |------|------|------------|-------------|-------------|
 | Fan Speed | `f1f2f3f4-a1a2-4b1b-c1c2-d1d2d3d4d5f1` | READ, WRITE | `uint8_t` (0-100) | Controls fan speed. 0 = off, 100 = maximum speed. Smooth transitions are applied automatically. |
-| Fan Enabled | `f1f2f3f4-a1a2-4b1b-c1c2-d1d2d3d4d5f2` | READ, WRITE | `uint8_t` (0/1) | Enable/disable fan control. 0 = disabled (fan forced off), 1 = enabled. |
-| Fan RPM | `f1f2f3f4-a1a2-4b1b-c1c2-d1d2d3d4d5f3` | READ, NOTIFY | `uint16_t` (0-65535) | Current fan speed in RPM (revolutions per minute). Read-only tachometer feedback. Subscribe to NOTIFY for real-time updates. |
-| Fan Connected | `f1f2f3f4-a1a2-4b1b-c1c2-d1d2d3d4d5f4` | READ, NOTIFY | `uint8_t` (0/1) | Fan connection status. 0 = disconnected/not responding, 1 = connected and responding. Subscribe to NOTIFY for connection changes. |
 
 **Fan Behavior Notes:**
 - **Graceful Degradation**: Controller operates normally without fan connected.
-- **Connection Detection**: Monitors tachometer when speed > 0. Fan marked disconnected if RPM < 100 for 3+ seconds.
-- **Safe Defaults**: Fan disabled (speed = 0) on boot.
+- **Safe Defaults**: Fan speed is 0 on boot.
 - **Smooth Transitions**: Speed changes use automatic fade transitions.
 - **PWM Control**: 4-pin PWM (25kHz, 8-bit) via TXU0202DCUR level shifter.
-- **Update Rate**: RPM updates every 1 second, connection check every 3 seconds.
 
 ---
 
@@ -185,9 +180,6 @@ For frontend reset buttons, use the defaults from the parameter table rather tha
 
 ### V4 Only
 🆕 Fan Speed
-🆕 Fan Enabled
-🆕 Fan RPM
-🆕 Fan Connected
 
 **Total Characteristics:**
 - V2: 19 characteristics

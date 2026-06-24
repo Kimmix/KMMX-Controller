@@ -227,20 +227,4 @@ void KMMXController::setFanSpeed(int speed) {
 int KMMXController::getFanSpeed() {
     return fan.getSpeed();
 }
-
-void KMMXController::setFanEnabled(bool enabled) {
-    fan.setEnabled(enabled);
-}
-
-bool KMMXController::getFanEnabled() {
-    return fan.isEnabled();
-}
-
-uint16_t KMMXController::getFanRPM() {
-    return fan.getRPM();
-}
-
-bool KMMXController::getFanConnected() {
-    return fan.isConnected();
-}
 #endif

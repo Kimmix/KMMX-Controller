@@ -345,19 +345,6 @@ class FanSpeedCallbacks : public NimBLECharacteristicCallbacks {
         BLEManager::instance->controller.setFanSpeed(speed);
     }
 };
-
-class FanEnabledCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-        if (!BLEManager::instance) return;
-        uint8_t enabled;
-        if (!readByte(pCharacteristic, enabled)) return;
-        if (BLEManager::instance->debugEnabled) {
-            Serial.print(F("[BLE] Fan Enabled: "));
-            Serial.println(enabled ? "ON" : "OFF");
-        }
-        BLEManager::instance->controller.setFanEnabled(enabled != 0);
-    }
-};
 #endif
 
 enum class VisemeParameter {
@@ -471,10 +458,7 @@ BLEManager::BLEManager(KMMXController& ctrl) : controller(ctrl),
                                                tapSensitivityCharacteristic(nullptr),
                                                glitchIntensityCharacteristic(nullptr)
 #if HAS_FAN_CONTROL
-                                               ,fanSpeedCharacteristic(nullptr),
-                                               fanEnabledCharacteristic(nullptr),
-                                               fanRpmCharacteristic(nullptr),
-                                               fanConnectedCharacteristic(nullptr)
+                                               ,fanSpeedCharacteristic(nullptr)
 #endif
                                                ,visemeEnvelopeAttackCharacteristic(nullptr),
                                                visemeEnvelopeReleaseCharacteristic(nullptr),
@@ -591,18 +575,6 @@ void BLEManager::setup() {
     fanSpeedCharacteristic = pService->createCharacteristic(
         BLE_FAN_SPEED_CHARACTERISTIC_UUID,
         BLE_RW);
-
-    fanEnabledCharacteristic = pService->createCharacteristic(
-        BLE_FAN_ENABLED_CHARACTERISTIC_UUID,
-        BLE_RW);
-
-    fanRpmCharacteristic = pService->createCharacteristic(
-        BLE_FAN_RPM_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);  // Read + Notify for real-time updates
-
-    fanConnectedCharacteristic = pService->createCharacteristic(
-        BLE_FAN_CONNECTED_CHARACTERISTIC_UUID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);  // Read + Notify for connection status updates
     #endif
 
     // Viseme Advanced Parameter Characteristics
@@ -723,15 +695,6 @@ void BLEManager::setup() {
     #if HAS_FAN_CONTROL
     uint8_t fanSpeed = controller.getFanSpeed();
     fanSpeedCharacteristic->setValue(&fanSpeed, 1);
-
-    uint8_t fanEnabled = controller.getFanEnabled() ? 1 : 0;
-    fanEnabledCharacteristic->setValue(&fanEnabled, 1);
-
-    uint16_t fanRpm = controller.getFanRPM();
-    fanRpmCharacteristic->setValue(reinterpret_cast<uint8_t*>(&fanRpm), 2);  // 2 bytes for RPM
-
-    uint8_t fanConnected = controller.getFanConnected() ? 1 : 0;
-    fanConnectedCharacteristic->setValue(&fanConnected, 1);
     #endif
 
     // Set viseme advanced parameter default values
@@ -799,8 +762,6 @@ void BLEManager::setup() {
     // Set fan control callbacks
     #if HAS_FAN_CONTROL
     fanSpeedCharacteristic->setCallbacks(new FanSpeedCallbacks());
-    fanEnabledCharacteristic->setCallbacks(new FanEnabledCallbacks());
-    // RPM characteristic is read-only (no callbacks needed)
     #endif
 
     // Set viseme advanced parameter callbacks
@@ -857,24 +818,4 @@ bool BLEManager::isConnected() const {
 }
 
 void BLEManager::update() {
-#if HAS_FAN_CONTROL
-    static uint32_t lastUpdate = 0;
-    static uint16_t lastRpm = UINT16_MAX;
-    static uint8_t lastConnected = UINT8_MAX;
-    if (!isConnected() || millis() - lastUpdate < 500) return;
-    lastUpdate = millis();
-
-    const uint16_t rpm = controller.getFanRPM();
-    const uint8_t connected = controller.getFanConnected();
-    if (rpm != lastRpm) {
-        lastRpm = rpm;
-        fanRpmCharacteristic->setValue(reinterpret_cast<const uint8_t*>(&rpm), sizeof(rpm));
-        fanRpmCharacteristic->notify();
-    }
-    if (connected != lastConnected) {
-        lastConnected = connected;
-        fanConnectedCharacteristic->setValue(&connected, sizeof(connected));
-        fanConnectedCharacteristic->notify();
-    }
-#endif
 }

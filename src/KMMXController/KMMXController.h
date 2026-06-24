@@ -89,10 +89,6 @@ class KMMXController {
     #if HAS_FAN_CONTROL
     void setFanSpeed(int speed);                                    // Set fan speed 0-100
     int getFanSpeed();                                              // Get current fan speed
-    void setFanEnabled(bool enabled);                               // Enable/disable fan
-    bool getFanEnabled();                                           // Get fan enabled state
-    uint16_t getFanRPM();                                           // Get fan RPM reading
-    bool getFanConnected();                                         // Get fan connection status
     #endif
 
    private:
