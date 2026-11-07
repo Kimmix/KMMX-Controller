@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 #include <Adafruit_Sensor.h>
 #include "Devices/LEDMatrixDisplay/Hub75DMA.h"
 #include "Bitmaps/Bitmaps.h"
@@ -50,7 +51,8 @@ class MouthState {
     Hub75DMA* display;
     SensorData sensorData;
     bool boopCompleted = false;
-    MouthStateEnum prevState = MouthStateEnum::IDLE, currentState = MouthStateEnum::IDLE;
+    MouthStateEnum prevState = MouthStateEnum::IDLE;
+    std::atomic<MouthStateEnum> currentState{MouthStateEnum::IDLE};
     unsigned long mouthInterval, nextAngry;
     unsigned long stateStartTime = 0;       // When current state started (for auto-reset)
     unsigned long customResetDuration = 0;  // Custom duration override (0 = infinite)
@@ -60,7 +62,8 @@ class MouthState {
     bool pendingPersistent = false;
     unsigned long pendingDuration = 0;
     TimeBasedAnimState returnAnim;
-    const uint8_t *visemeFrame = mouthDefault, *mouthFrame = mouthDefault;
+    std::atomic<const uint8_t*> visemeFrame{mouthDefault};
+    const uint8_t* mouthFrame = mouthDefault;
 
     const uint8_t* defaultAnimation[60] = {mouthDefault1, mouthDefault2, mouthDefault3, mouthDefault4, mouthDefault5, mouthDefault6, mouthDefault7, mouthDefault8, mouthDefault9, mouthDefault10, mouthDefault11, mouthDefault12, mouthDefault13, mouthDefault14, mouthDefault15, mouthDefault16, mouthDefault17, mouthDefault18, mouthDefault19, mouthDefault20, mouthDefault21, mouthDefault22, mouthDefault23, mouthDefault24, mouthDefault25, mouthDefault26, mouthDefault27, mouthDefault28, mouthDefault29, mouthDefault30, mouthDefault31, mouthDefault32, mouthDefault33, mouthDefault34, mouthDefault35, mouthDefault36, mouthDefault37, mouthDefault38, mouthDefault39, mouthDefault40, mouthDefault41, mouthDefault42, mouthDefault43, mouthDefault44, mouthDefault45, mouthDefault46, mouthDefault47, mouthDefault48, mouthDefault49, mouthDefault50, mouthDefault51, mouthDefault52, mouthDefault53, mouthDefault54, mouthDefault55, mouthDefault56, mouthDefault57, mouthDefault58, mouthDefault59, mouthDefault60};
     uint8_t defaultAnimationLength = arrayLength(defaultAnimation);

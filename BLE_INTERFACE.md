@@ -56,50 +56,98 @@ The KMMX controller supports two hardware versions with different capabilities:
 
 *Note: When enabled, the system automatically analyzes microphone input and generates mouth shapes (AH, EE, OH, OO, TH) based on frequency analysis.*
 
-### Viseme Advanced Parameters
+### Viseme tuning (settings v2, status v3)
 
-**Note:** These characteristics provide fine-grained control over the viseme detector. Values are little-endian `float`.
+The existing lip-sync on/off UUID is unchanged. The 13 old advanced viseme
+characteristics are absent; their UUIDs are not repurposed. Discover the new
+characteristics and check settings version 2 and status version 3 before enabling tuning. Unsupported/old firmware
+keeps basic controls and shows **Update firmware to tune lip sync**. Old panels on
+new firmware retain basic controls, but their cached advanced sliders are unsupported.
 
-| Name | UUID | Properties | Data Format | Range | Default | Description |
-|------|------|------------|-------------|-------|---------|-------------|
-| Envelope Attack | `d1e2f3a4-b5c6-47d8-9e0f-1a2b3c4d5e6f` | READ, WRITE | `float` | 0.1-0.9 | 0.5 | Attack time constant (higher = faster rise) |
-| Envelope Release | `d2e3f4a5-b6c7-48d9-9f0a-1b2c3d4e5f6a` | READ, WRITE | `float` | 0.01-0.5 | 0.4 | Release time constant (lower = slower decay) |
-| Noise Gate Multiplier | `d4e5f6a7-b8c9-4adb-a1b2-3d4e5f6a7b8c` | READ, WRITE | `float` | 0.5-3.0 | 1.2 | Required loudness above the adaptive noise floor |
-| Noise Floor Min | `d6e7f8a9-bacb-4cdd-a3b4-5f6a7b8c9d0e` | READ, WRITE | `float` | 5.0-200.0 | 5.0 | Minimum adaptive noise floor threshold (RMS scale) |
-| AH Scale | `d9eafbac-bdce-4fe0-a6b7-8c9d0e1f2a3b` | READ, WRITE | `float` | 0.1-5.0 | 3.3 | Sensitivity multiplier for AH viseme |
-| EE Scale | `dafbfcad-becf-4ae1-a7b8-9d0e1f2a3b4c` | READ, WRITE | `float` | 0.1-5.0 | 1.3 | Sensitivity multiplier for EE viseme |
-| OH Scale | `dbfcfdae-bfd0-4be2-a8b9-0e1f2a3b4c5d` | READ, WRITE | `float` | 0.1-5.0 | 1.5 | Sensitivity multiplier for OH viseme |
-| OO Scale | `dcfdfebf-c0d1-4ce3-a9ba-1f2a3b4c5d6e` | READ, WRITE | `float` | 0.1-5.0 | 1.4 | Sensitivity multiplier for OO viseme |
-| TH Scale | `ddfeafc0-c1d2-4de4-aabb-2a3b4c5d6e7f` | READ, WRITE | `float` | 0.1-5.0 | 1.0 | Sensitivity multiplier for TH viseme |
-| Loudness Exponent | `deafc0d1-c2d3-4ef5-abcc-3b4c5d6e7f80` | READ, WRITE | `float` | 0.2-2.0 | 0.8 | Perceptual mouth-opening curve |
-| Loudness Smoothing | `dfb0c1d2-c3d4-4fa6-abdd-4c5d6e7f8091` | READ, WRITE | `float` | 0.05-1.0 | 0.65 | Mouth-opening response speed |
-| Loudness Max | `e0c1d2e3-d4e5-40b7-acee-5d6e7f8091a2` | READ, WRITE | `float` | 1.0-20.0 | 5.0 | Dynamic range before the mouth reaches maximum opening |
-| Loudness Mid Boost | `e1d2e3f4-e5f6-41c8-adff-6e7f8091a2b3` | READ, WRITE | `float` | 0.5-2.0 | 1.2 | Boost applied to medium mouth openings |
+| Characteristic | UUID | Properties | Length |
+|---|---|---|---|
+| Viseme settings | `b9725d01-7546-4e0b-9b91-486e25012a02` | READ, WRITE | 10 bytes |
+| Calibration command | `b9725d02-7546-4e0b-9b91-486e25012a02` | WRITE | 1 byte |
+| Viseme status | `b9725d03-7546-4e0b-9b91-486e25012a02` | READ, NOTIFY | 16 bytes |
 
-**Tuning Tips:**
-- **Envelope Attack/Release:** Controls how quickly the loudness tracker responds to sound
-- **Noise Gate Multiplier:** Lower is more sensitive; higher rejects more ambient noise
-- **Noise Floor Min:** Hardware calibration floor; normally leave at default
-- **Viseme Scales:** Adjust individual viseme sensitivity if certain mouth shapes are under/over-detected
-- **Loudness Parameters:** Tune mouth opening independently from phoneme selection
+All multibyte fields are little-endian. Serialize fields explicitly, without C struct
+padding. Each settings write replaces the complete record atomically.
 
-#### Recommended UI Slider Scaling
+| Settings offset | Type | Meaning / validation |
+|---|---|---|
+| 0 | uint8 | Version, exactly 2 |
+| 1 | float32 | Fixed RMS opening threshold, 1–1,000; default 13 |
+| 5 | float32 | Mouth gain, 0.25–4; default 1 |
+| 9 | uint8 | Response: 0 Snappy, 1 Natural (default), 2 Smooth |
 
-BLE values remain the raw `float` values listed above. These recommendations only affect how a frontend maps a normalized slider position `t` (`0.0-1.0`) to that value.
+Reject wrong lengths, unsupported versions, NaN/infinity, invalid ranges/enums, and
+settings writes during calibration. Rejection changes no settings. READ always returns
+the canonical accepted values, including immediately after a rejected write. Inspect
+status and compare readback; a successful transport write alone does not prove acceptance.
+Default settings golden bytes: `02 00 00 50 41 00 00 80 3f 01`.
 
-| Parameter | UI Scaling | Mapping | Reason |
-|-----------|------------|---------|--------|
-| Envelope Attack | Linear | `0.1 + t * 0.8` | The useful response changes are distributed reasonably across the range. |
-| Envelope Release | Logarithmic | `0.01 * pow(50, t)` | Most useful tuning resolution is near the low end. |
-| Noise Gate Multiplier | Quadratic | `1.0 + 2.0 * t²` | Gives finer sensitivity control near `1.0-1.5`. |
-| Noise Floor Min | Logarithmic | `pow(50, t)` | RMS noise levels are perceptual and span a wide range. |
-| AH/EE/OH/OO/TH Scale | Logarithmic | `0.1 * pow(50, t)` | Multipliers are best tuned by ratios rather than equal numeric steps. |
-| Loudness Exponent | Logarithmic | `0.2 * pow(10, t)` | Fine control around values below `1.0` is more useful. |
-| Loudness Smoothing | Linear | `0.05 + t * 0.95` | Directly represents the blend applied each frame. |
-| Loudness Max | Logarithmic | `pow(20, t)` | Dynamic range is naturally ratio-based. |
-| Loudness Mid Boost | Linear | `0.5 + t * 1.5` | The range is small and centered around neutral `1.0`. |
+Calibration command: **1 start**, **2 cancel**; all other payloads are invalid.
+Start while already calibrating reports Busy; start with an unhealthy mic reports
+AudioError. Cancel is idempotent. Commands never change the active expression.
 
-For frontend reset buttons, use the defaults from the parameter table rather than the slider midpoint.
+| Status offset | Type | Meaning |
+|---|---|---|
+| 0 | uint8 | Version 3 |
+| 1 | uint16 | Accepted settings revision |
+| 3 | uint16 | Revision applied by audio processing |
+| 5 | float32 | Latest DC-removed, unwindowed microphone RMS |
+| 9 | uint8 | Gate: 0 closed, 1 open |
+| 10 | uint8 | Selected shape: 0 AH, 1 EE, 2 OH, 3 OO, 4 TH |
+| 11 | uint8 | Rendered opening level, 0–60 |
+| 12 | uint8 | Calibration: 0 Idle, 1 Countdown, 2 Measuring, 3 Success, 4 Failed, 5 Cancelled |
+| 13 | uint8 | Progress 0–100 within current calibration phase |
+| 14 | uint8 | Mic: 0 Ready, 1 ReadError (recoverable), 2 InitError (reboot required) |
+| 15 | uint8 | Last result: 0 OK, 1 Invalid, 2 Busy, 3 AudioError, 4 Clipping, 5 ZeroAudio, 6 TooLoud |
+
+Revisions are session-local counters, start at 1, and wrap skipping 0; compare for
+equality, not numerical ordering. Matching accepted/applied revisions mean the
+settings reached processing. Mic faults can prevent application.
+The status version changed because saved revision, save state, and storage errors
+were removed. Update both panel and firmware for tuning; mismatched versions retain
+basic controls. Settings and calibration payloads and all three UUIDs are unchanged.
+
+Status is sent at 10 Hz while connected, plus gate, calibration, revision, health, and
+result transitions. READ is authoritative on reconnect; do not replay browser defaults.
+The gate is independent of whether a temporary expression is showing; opening is zero
+when lip-sync animation is inactive. A closed gate may have a nonzero closing-animation
+level. Calibration reports a closed gate and zero opening.
+
+**Signal behavior:** Open at RMS >= threshold. Close after 80 ms continuously below
+80% of threshold. A threshold change re-evaluates on the next audio frame without the
+old hold timer. Sustained speech never changes the threshold. While open, target
+opening is `pow(clamp(RMS * gain / 80, 0, 1), 0.8)`; otherwise zero. Response attack/
+release constants in milliseconds: Snappy 25/70, Natural 50/120, Smooth 90/200.
+The 8 kHz, 256-sample analysis cadence is nominally 32 ms; browser writes also incur
+BLE/queue latency. Shape switching needs a 15% margin for two consecutive frames.
+
+**Calibrate Room:** Stay quiet for a two-second countdown and 64 frames of measurement.
+Use sorted frame RMS index 57 (nearest-rank 90th percentile), then threshold
+`max(1, 1.5 * percentile + 2)`. Commit only on success. Read failures, clipping
+(raw samples >=32760 or <=-32760), an entirely zero stream, or a threshold above 1,000
+fail without changing settings. Cancellation also preserves settings. Calibration
+works with lip sync off, survives temporary expressions and BLE disconnect, and stops
+on reboot. It is not speech recognition: talking during measurement can set an
+excessive threshold. There is no automatic recalibration or background adaptation.
+
+**Session-only tuning:** Settings and calibration live in RAM. Every reboot restores
+threshold 13, mouth gain 1, and Natural response, and starts IDLE. Temporary expressions
+and BLE disconnects preserve tuning while the controller remains powered.
+There are no viseme NVS reads, writes, save timers, retries, or save indicators.
+Previously saved viseme records are ignored and left untouched; unrelated NVS data
+is unchanged. Returning to older firmware may read its previously saved record.
+Removing persistence reduces status from 19 to 16 bytes; it does not remove a BLE
+characteristic because persistence never had a dedicated characteristic.
+
+**Panel:** Noise rejection and mouth size use logarithmic mappings
+`low * pow(high/low, t)` for slider fraction t in 0–1. Display pending edits separately
+from accepted readback; serialize settings writes and reads and keep only the latest
+queued slider update. Use the same linear meter scale for signal and threshold:
+`max(100, threshold * 1.25)`. Show actionable calibration/mic failures and explain that reboot resets tuning.
 
 ### LED Brightness Control
 
@@ -171,7 +219,7 @@ While game mode is enabled, a completed proximity boop spins the three reels. Ho
 ✅ Eye State
 ✅ Mouth State
 ✅ Viseme
-✅ Viseme Advanced Parameters (13)
+✅ Viseme Settings v2, Calibration, Status v3 (3)
 ✅ Horn Brightness
 ✅ Cheek Brightness
 ✅ Cheek Background Color
@@ -187,8 +235,8 @@ While game mode is enabled, a completed proximity boop spins the three reels. Ho
 🆕 Fan Speed
 
 **Total Characteristics:**
-- V2: 33 characteristics
-- V4: 34 characteristics (33 + fan control)
+- V2: 23 characteristics
+- V4: 24 characteristics (23 + fan control)
 
 ---
 
@@ -199,3 +247,5 @@ While game mode is enabled, a completed proximity boop spins the three reels. Ho
 | 1.0 | Initial | Original KMMX-Fursuit BLE specification (V2 hardware) |
 | 2.0 | 2026-06 | Added V4 hardware support, fan control characteristics, hardware version documentation |
 | 2.1 | 2026-07 | Added BLE-controlled slot machine game mode |
+
+Viseme session-only tuning revision: 2026-11-07. See protocol and compatibility above.

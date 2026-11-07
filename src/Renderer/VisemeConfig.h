@@ -34,24 +34,6 @@ const uint16_t visemeOoFreqMax = 900;                           // End frequency
 const uint16_t visemeThFreqMin = 2800;                          // Start frequency of TH viseme (fricative sound like "think")
 const uint16_t visemeThFreqMax = 4000;                          // End frequency of TH viseme
 
-// Signal Processing Parameters
-const float visemeNoiseThreshold = 10.0f;                       // Initial noise threshold for viseme to activate (RMS-based envelope scale)
-
-// Envelope Tracking Parameters
-const float visemeEnvelopeAttack = 0.5f;                        // Attack time constant (0-1, higher = faster response to increases)
-const float visemeEnvelopeRelease = 0.4f;                       // Release time constant (0-1, lower = slower decay)
-
-// Adaptive Noise Floor Parameters
-const float visemeNoiseFloorMin = 5.0f;                         // Minimum adaptive noise floor (scaled for RMS envelope)
-const float visemeNoiseFloorCap = 50.0f;                        // Safety cap preventing the detector from becoming deaf
-const float visemeNoiseFloorFall = 0.2f;                        // Fast tracking when ambient sound falls
-const float visemeNoiseFloorRise = 0.005f;                      // Slow tracking when ambient sound rises
-const float visemeNoiseGateMultiplier = 1.3f;                   // Speech must exceed ambient noise by 30%
-
-// Attack Detection Parameters
-const float visemeAttackThreshold = 1.25f;                      // Envelope increase ratio to detect attack
-const uint16_t visemeMinAttackInterval = 50;                    // Minimum time between attacks (ms)
-
 // Normalization Scale Factors
 // These multipliers balance the sensitivity across different visemes
 // Lower values = less sensitive, Higher values = more sensitive
@@ -60,13 +42,3 @@ const float visemeEeScale = 1.3f;                               // EE viseme sca
 const float visemeOhScale = 1.5f;                               // OH viseme scale factor
 const float visemeOoScale = 1.4f;                               // OO viseme scale factor
 const float visemeThScale = 1.0f;                               // TH viseme scale factor
-
-// Loudness Level Parameters
-// Controls mouth opening based on volume (envelope)
-const float visemeLoudnessExponent = 0.8f;                      // Perceptual loudness curve (0.5-1.0, lower = more emphasis on quiet sounds)
-const float visemeLoudnessSmoothing = 0.65f;                    // Temporal smoothing for mouth opening (0-1, higher = faster response)
-const float visemeLoudnessMax = 5.0f;                           // Dynamic range multiplier (envelope * noiseFloor * this = max loudness)
-const float visemeLoudnessMidBoost = 1.2f;                      // Boost mid-range mouth openings for better expression (1.0-1.5)
-
-// Debug Configuration
-#define VISEME_DEBUG_PLOTTER 1
