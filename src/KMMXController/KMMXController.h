@@ -36,6 +36,7 @@
 #include "Devices/Ws2812/CheekPanel.h"
 #include "Devices/OLEDDisplay/SSD1306.h"
 #include "Types/SensorData.h"
+#include "Types/Orientation.h"
 
 class KMMXController {
    public:
@@ -47,6 +48,7 @@ class KMMXController {
     int getViseme();
     Viseme& viseme() { return mouthState.viseme; }
     Hub75DMA& displayControl() { return display; }
+    Orientation::Snapshot getOrientation();
     int getHornBrightness();
     void setHornBrightness(int i);
     int getCheekBrightness();
@@ -92,6 +94,8 @@ class KMMXController {
     #endif
     // Double-buffer for thread-safe sensor access
     SensorData sensorBuffer[2];
+    portMUX_TYPE orientationMux = portMUX_INITIALIZER_UNLOCKED;
+    Orientation::Snapshot orientation = {ACCEL_TYPE_MPU6050 ? Orientation::Unavailable : Orientation::Unsupported};
     volatile uint8_t activeBuffer = 0;
     TaskHandle_t sensorTaskHandle;
     TaskHandle_t renderTaskHandle;

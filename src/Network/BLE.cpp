@@ -206,6 +206,14 @@ class VisemeCalibrationCallbacks : public NimBLECharacteristicCallbacks {
         BLEManager::instance->controller.viseme().calibrationCommand(value.data(), value.size());
     }
 };
+class OrientationCallbacks : public NimBLECharacteristicCallbacks {
+    void onRead(NimBLECharacteristic* characteristic, NimBLEConnInfo&) override {
+        uint8_t bytes[Orientation::PacketSize];
+        Orientation::encode(BLEManager::instance->controller.getOrientation(), bytes);
+        characteristic->setValue(bytes, sizeof(bytes));
+    }
+};
+
 class VisemeStatusCallbacks : public NimBLECharacteristicCallbacks {
     void onRead(NimBLECharacteristic* characteristic, NimBLEConnInfo&) override {
         uint8_t bytes[LipSync::StatusSize];
@@ -228,6 +236,9 @@ BLEManager::BLEManager(KMMXController& ctrl) : controller(ctrl),
 }
 
 void BLEManager::setup() {
+#ifndef NDEBUG
+    Orientation::checkPacket();
+#endif
     Serial.println(F("Booting BLE..."));
 
     // Initialize NimBLE with device name
@@ -338,6 +349,12 @@ void BLEManager::setup() {
     visemeSettings->setCallbacks(new VisemeSettingsCallbacks());
     visemeCalibration->setCallbacks(new VisemeCalibrationCallbacks());
     visemeStatus->setCallbacks(new VisemeStatusCallbacks());
+    orientationStatus = pService->createCharacteristic(BLE_ORIENTATION_UUID,
+        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY, Orientation::PacketSize);
+    orientationStatus->setCallbacks(new OrientationCallbacks());
+    uint8_t orientationBytes[Orientation::PacketSize];
+    Orientation::encode(controller.getOrientation(), orientationBytes);
+    orientationStatus->setValue(orientationBytes, sizeof(orientationBytes));
     uint8_t settingsBytes[LipSync::SettingsSize];
     controller.viseme().readSettings(settingsBytes);
     visemeSettings->setValue(settingsBytes, sizeof(settingsBytes));
@@ -478,6 +495,13 @@ bool BLEManager::isConnected() const {
 }
 
 void BLEManager::update() {
+    if (isConnected() && orientationStatus && millis() - lastOrientationNotify >= 100) {
+        uint8_t bytes[Orientation::PacketSize];
+        Orientation::encode(controller.getOrientation(), bytes);
+        orientationStatus->setValue(bytes, sizeof(bytes));
+        orientationStatus->notify(); // NimBLE dispatches the stored value only to subscribers.
+        lastOrientationNotify = millis();
+    }
     if (isConnected() && visemeStatus) {
         uint8_t bytes[LipSync::StatusSize];
         controller.viseme().readStatus(bytes);

@@ -89,6 +89,14 @@ void KMMXController::readSensorTask(void* parameter) {
             // Get fused orientation angles
             ctrl->accelerometer.getFusedOrientation(data.pitch, data.roll, data.yaw);
         }
+        Orientation::Snapshot orientation;
+        if (ctrl->accelerometerInitialized && std::isfinite(data.pitch) &&
+            std::isfinite(data.roll) && std::isfinite(data.yaw)) {
+            orientation = {Orientation::Ready, data.pitch, data.roll, data.yaw};
+        }
+        portENTER_CRITICAL(&ctrl->orientationMux);
+        ctrl->orientation = orientation;
+        portEXIT_CRITICAL(&ctrl->orientationMux);
         #endif
 
         // Read proximity (handles nullptr internally)
@@ -118,6 +126,13 @@ void KMMXController::readSensorTask(void* parameter) {
 
 const SensorData& KMMXController::getSensorData() const {
     return sensorBuffer[activeBuffer];
+}
+
+Orientation::Snapshot KMMXController::getOrientation() {
+    portENTER_CRITICAL(&orientationMux);
+    const auto snapshot = orientation;
+    portEXIT_CRITICAL(&orientationMux);
+    return snapshot;
 }
 
 // ===========================

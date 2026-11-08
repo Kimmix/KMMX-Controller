@@ -25,4 +25,6 @@ class BLEManager {
     NimBLECharacteristic* visemeStatus = nullptr;
     uint8_t lastVisemeStatus[LipSync::StatusSize] = {};
     uint32_t lastVisemeNotify = 0;
+    NimBLECharacteristic* orientationStatus = nullptr;
+    uint32_t lastOrientationNotify = 0;
 };
