@@ -8,13 +8,14 @@ constexpr uint8_t HORN_MIN_BRIGHTNESS = 2;   // Minimum safe brightness
 constexpr uint8_t HORN_MAX_BRIGHTNESS = 200; // Maximum safe brightness (255 can overheat!)
 
 HornLED::HornLED() {
-    ledcSetup(HORN_PWM_CHANNEL, HORN_PWM_FREQ, HORN_PWM_RESOLUTION);
-    ledcAttachPin(LED_PWM_PIN, HORN_PWM_CHANNEL);
+    if (!ledcAttachChannel(LED_PWM_PIN, HORN_PWM_FREQ, HORN_PWM_RESOLUTION, HORN_PWM_CHANNEL)) {
+        Serial.println("Horn LED PWM initialization failed");
+    }
     // Initialize brightness
     currentBrightness = hornBrightness;
     targetBrightness = hornBrightness;
     pwmValue = fastMap<int>(currentBrightness, 0, 100, HORN_MIN_BRIGHTNESS, HORN_MAX_BRIGHTNESS);
-    ledcWrite(HORN_PWM_CHANNEL, pwmValue);
+    ledcWriteChannel(HORN_PWM_CHANNEL, pwmValue);
 }
 
 int HornLED::getBrightness() const {
@@ -57,7 +58,7 @@ void HornLED::update() {
             if (abs(pwmValue - targetPwm) < 1.0f) {
                 pwmValue = targetPwm;
             }
-            ledcWrite(HORN_PWM_CHANNEL, round(pwmValue));  // Write the new PWM value
+            ledcWriteChannel(HORN_PWM_CHANNEL, round(pwmValue));
         }
     }
 }

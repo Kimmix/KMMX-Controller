@@ -37,8 +37,8 @@ const uint16_t visemeThFreqMax = 4000;                          // End frequency
 // Normalization Scale Factors
 // These multipliers balance the sensitivity across different visemes
 // Lower values = less sensitive, Higher values = more sensitive
-const float visemeAhScale = 3.3f;                               // AH viseme scale factor
+const float visemeAhScale = 3.5f;                               // AH viseme scale factor
 const float visemeEeScale = 1.3f;                               // EE viseme scale factor
 const float visemeOhScale = 1.5f;                               // OH viseme scale factor
-const float visemeOoScale = 1.4f;                               // OO viseme scale factor
+const float visemeOoScale = 1.1f;                               // OO viseme scale factor
 const float visemeThScale = 1.0f;                               // TH viseme scale factor
