@@ -29,7 +29,7 @@
 #define BLE_MOUTH_STATE_CHARACTERISTIC_UUID "f6a7b8c9-d0e1-4f5a-b1c2-3d4e5f6a7b8c"
 #define BLE_VISEME_CHARACTERISTIC_UUID "493d06f3-0fa0-4a90-88f1-ebaed0da9b80"
 
-// Viseme protocol v2 (legacy advanced UUIDs are intentionally not reused).
+// Viseme settings v2 (legacy advanced UUIDs are intentionally not reused).
 #define BLE_VISEME_SETTINGS_UUID "b9725d01-7546-4e0b-9b91-486e25012a02"
 #define BLE_VISEME_CALIBRATION_UUID "b9725d02-7546-4e0b-9b91-486e25012a02"
 #define BLE_VISEME_STATUS_UUID "b9725d03-7546-4e0b-9b91-486e25012a02"

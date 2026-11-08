@@ -151,7 +151,7 @@ void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
             if (++candidateFrames >= 2) { status.shape = winner; candidateFrames = 0; }
         } else candidateFrames = 0;
     } else candidateFrames = 0;
-    const float target = status.gate ? std::pow(std::min(rms * settings.gain / 80, 1.0f), 0.8f) : 0;
+    const float target = status.gate ? std::pow(std::min(std::max(rms - settings.threshold, 0.0f) * settings.gain / 80, 1.0f), 0.8f) : 0;
     const float attack[] = {25, 50, 90}, release[] = {70, 120, 200};
     const float tau = target > opening ? attack[uint8_t(settings.response)] : release[uint8_t(settings.response)];
     opening += (target - opening) * (1 - std::exp(-dt / tau));
