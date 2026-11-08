@@ -6,6 +6,7 @@ Hub75DMA::Hub75DMA() {
     HUB75_I2S_CFG mxconfig(panelWidth, panelHeight, panelsNumber, _pins);
     mxconfig.min_refresh_rate = minRefreshRate;
     mxconfig.double_buff = doubleBuffer;
+    mxconfig.latch_blanking = 2;  // Preserve the panel timing used before HUB75 3.1.0.
     matrix = new MatrixPanel_I2S_DMA(mxconfig);
     matrix->begin();  // Initialize matrix
     matrix->setBrightness8(panelBrightness);

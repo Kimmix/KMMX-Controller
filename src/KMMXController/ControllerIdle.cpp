@@ -47,8 +47,8 @@ void KMMXController::enterSleep(KMMXController* controller) {
 
 void KMMXController::checkIdleAndSleep(KMMXController* controller, unsigned long currentTime) {
     // Only check idle/sleep when in IDLE or SLEEP eye states
-    if (controller->eyeState.getState() != EyeStateEnum::IDLE &&
-        controller->eyeState.getState() != EyeStateEnum::SLEEP ||
+    if ((controller->eyeState.getState() != EyeStateEnum::IDLE &&
+         controller->eyeState.getState() != EyeStateEnum::SLEEP) ||
         controller->mouthState.getState() == MouthStateEnum::TALKING) {
         return;
     }

@@ -319,10 +319,7 @@ void ColorEffects::modeDualCircle(uint8_t lightness, int row, int col, uint8_t& 
     const float dy = row - effectCenterY;
 
     // Calculate distance from center
-    const float distance = sqrtf(dx * dx + dy * dy);
-
-    // Create rotating circle pattern (using cached time for performance)
-    const int numBands = 12;               // Number of circle bands
+    const float distance = sqrtf(dx * dx + dy * dy);             // Number of circle bands
 
     // Speed control: map 0-255 to rotation speed (2.0 to 20.0)
     // 0 = very slow (2.0), 128 = medium (10.0), 255 = very fast (20.0)

@@ -450,7 +450,8 @@ void KMMXController::detectPetting(const SensorData& current) {
             if (enableMotionDebug) {
                 Serial.printf("[PETTING] ✓ Petting triggered! Happiness: %.1f | Saved previous state: Eye=%d, Mouth=%d\n",
                               pettingDetector.happiness,
-                              pettingDetector.previousEyeState, pettingDetector.previousMouthState);
+                              pettingDetector.previousEyeState,
+                              static_cast<int>(pettingDetector.previousMouthState));
             }
 
             triggerPettingResponse();
