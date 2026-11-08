@@ -22,4 +22,7 @@ class BLEManager {
     BLEManager(KMMXController& controller);
     NimBLEServer* pServer;
     NimBLEService* pService;
+    NimBLECharacteristic* visemeStatus = nullptr;
+    uint8_t lastVisemeStatus[LipSync::StatusSize] = {};
+    uint32_t lastVisemeNotify = 0;
 };

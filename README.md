@@ -183,3 +183,19 @@ As this is a personal project still in active development, I'm not currently:
 </div>
 
 ---
+
+## Lip-sync session settings
+
+Noise rejection, mouth size, response, and room calibration apply immediately and
+remain in RAM through temporary expressions and BLE reconnects. Every reboot restores
+13 RMS, 1× mouth size, and Natural response. Viseme tuning no longer reads or writes
+NVS. Older saved records are ignored, not erased. Update the panel together with firmware
+for the 16-byte status v3 format; basic controls remain compatible. See
+[BLE_INTERFACE.md](BLE_INTERFACE.md).
+
+Host regression check (standard C++17 compiler):
+
+```sh
+g++ -std=c++17 -Wall -Wextra -Werror -Isrc tests/viseme_session_test.cpp src/Renderer/VisemeCore.cpp -o viseme-session-test
+./viseme-session-test
+```

@@ -43,8 +43,8 @@ MouthState::MouthState(Hub75DMA* display) : display(display) {
 }
 
 void MouthState::startMic() {
-    viseme.initMic();
-    startVisemeTask();
+    visemeFrame = mouthDefault1;
+    if (viseme.initMic()) startVisemeTask();
 }
 
 void MouthState::update() {
@@ -306,27 +306,17 @@ void MouthState::angryBoop() {
 
 void MouthState::startVisemeTask() {
     Serial.println(F("Start viseme task..."));
-    xTaskCreatePinnedToCore(visemeRenderingTask, "VisemeTask", 2048, this, 2, &visemeTaskHandle, 0);
+    if (xTaskCreatePinnedToCore(visemeRenderingTask, "VisemeTask", 4096, this, 2, &visemeTaskHandle, 0) != pdPASS)
+        viseme.taskFailed();
 }
 
 void MouthState::visemeRenderingTask(void* parameter) {
-    MouthState* mouthState = reinterpret_cast<MouthState*>(parameter);
-    bool wasTalking = false;
-
+    auto* mouthState = static_cast<MouthState*>(parameter);
     while (true) {
-        if (mouthState->getState() != MouthStateEnum::TALKING) {
-            mouthState->visemeFrame = mouthDefault;
-            wasTalking = false;
+        const bool talking = mouthState->getState() == MouthStateEnum::TALKING;
+        mouthState->visemeFrame = mouthState->viseme.renderViseme(talking);
+        if (mouthState->viseme.snapshot().status.mic == LipSync::MicState::ReadError)
             vTaskDelay(pdMS_TO_TICKS(20));
-            continue;
-        }
-
-        if (!wasTalking) {
-            mouthState->viseme.reset();
-            wasTalking = true;
-        }
-
-        mouthState->visemeFrame = mouthState->viseme.renderViseme();
     }
 }
 

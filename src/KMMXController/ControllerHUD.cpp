@@ -353,40 +353,24 @@ void KMMXController::drawOLEDSensorBars(const SensorData& sensors) {
 
     // VU meter bar (uses loudness from viseme/microphone)
     oledDisplay.drawText(BAR_LABEL_X, VU_LABEL_Y, "VU");
-    float envelope = mouthState.viseme.getEnvelope();                    // currentEnvelope
-    float gateThreshold = mouthState.viseme.getGateThreshold();          // adaptiveNoiseFloor * visemeNoiseGateMultiplier
-    bool isLoudEnough = mouthState.viseme.isLoudEnough();                // envelope > gateThreshold
-    // Draw VU bar across the expected envelope range
-    constexpr float VU_MAX_ENVELOPE = 100.0f;  // Maximum expected envelope
-    int vuLevel = 0;
-    if (envelope > 1.0f) {  // Ignore very small noise
-        vuLevel = (int)mapFloat(envelope, 0, VU_MAX_ENVELOPE, 3, BAR_WIDTH);  // Start at 3 for visibility
-        vuLevel = constrain(vuLevel, 3, BAR_WIDTH);
-    }
+    const auto audio = mouthState.viseme.snapshot();
+    const float envelope = audio.status.rms;
+    const float gateThreshold = audio.settings.threshold;
+    const float meterMax = max(100.0f, gateThreshold * 1.25f);
+    int vuLevel = constrain(int(envelope / meterMax * BAR_WIDTH), 0, BAR_WIDTH);
     drawHorizontalBar(oledDisplay, BAR_START_X, VU_BAR_Y, BAR_WIDTH, BAR_HEIGHT, vuLevel);
-
-    // Draw gate threshold line showing where visemes trigger
-    // Line position shows the trigger point - bar crossing this line = visemes active
     auto* u8g2 = oledDisplay.getU8g2();
-    int gatePos = BAR_START_X + (int)mapFloat(gateThreshold, 0, VU_MAX_ENVELOPE, 0, BAR_WIDTH);
-    gatePos = constrain(gatePos, BAR_START_X, BAR_START_X + BAR_WIDTH - 1);
-
-    // Draw threshold line (double line if gate is active for better visibility)
-    if (isLoudEnough) {
-        // Active: draw thick line (2 pixels)
-        u8g2->drawLine(gatePos, VU_BAR_Y, gatePos, VU_BAR_Y + BAR_HEIGHT - 1);
-        if (gatePos + 1 < BAR_START_X + BAR_WIDTH) {
-            u8g2->drawLine(gatePos + 1, VU_BAR_Y, gatePos + 1, VU_BAR_Y + BAR_HEIGHT - 1);
-        }
-    } else {
-        // Inactive: draw single line
-        u8g2->drawLine(gatePos, VU_BAR_Y, gatePos, VU_BAR_Y + BAR_HEIGHT - 1);
-    }
-
-    // Viseme text (always show current viseme)
-    const char* visemeText = StateNames::getVisemeName(mouthState.viseme.getCurrentViseme());
-    oledDisplay.drawText(BAR_LABEL_X, VISEME_Y, "V:");
-    oledDisplay.drawText(BAR_LABEL_X + 10, VISEME_Y, visemeText);
+    const int gatePos = BAR_START_X + constrain(int(gateThreshold / meterMax * BAR_WIDTH), 0, BAR_WIDTH - 1);
+    u8g2->drawLine(gatePos, VU_BAR_Y, gatePos, VU_BAR_Y + BAR_HEIGHT - 1);
+    char label[32];
+    if (audio.status.mic != LipSync::MicState::Ready) snprintf(label, sizeof(label), "MIC ERROR");
+    else if (audio.status.calibration == LipSync::Calibration::Countdown) snprintf(label, sizeof(label), "Quiet %u%%", audio.status.progress);
+    else if (audio.status.calibration == LipSync::Calibration::Measuring) snprintf(label, sizeof(label), "Cal %u%%", audio.status.progress);
+    else if (audio.status.result != LipSync::Result::Ok) snprintf(label, sizeof(label), "Audio error %u", unsigned(audio.status.result));
+    else snprintf(label, sizeof(label), "%s %s %u T:%.0f",
+        StateNames::getVisemeName(Viseme::VisemeType(audio.status.shape)),
+        audio.status.gate ? "ON" : "OFF", audio.status.opening, gateThreshold);
+    oledDisplay.drawText(BAR_LABEL_X, VISEME_Y, label);
 }
 
 void KMMXController::drawOLEDAccelerometer(const SensorData& sensors) {

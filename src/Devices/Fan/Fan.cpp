@@ -10,14 +10,15 @@ constexpr uint8_t FAN_PWM_RESOLUTION = 8;   // 8-bit (0-255)
 
 Fan::Fan() {
     // Initialize PWM for fan control
-    ledcSetup(FAN_PWM_CHANNEL, FAN_PWM_FREQ, FAN_PWM_RESOLUTION);
-    ledcAttachPin(FAN_PWM_PIN, FAN_PWM_CHANNEL);
+    if (!ledcAttachChannel(FAN_PWM_PIN, FAN_PWM_FREQ, FAN_PWM_RESOLUTION, FAN_PWM_CHANNEL)) {
+        Serial.println("Fan PWM initialization failed");
+    }
 
     // Start with fan off for safety
     currentSpeed = 0;
     targetSpeed = 0;
     pwmValue = 0.0f;
-    ledcWrite(FAN_PWM_CHANNEL, 0);
+    ledcWriteChannel(FAN_PWM_CHANNEL, 0);
 
     Serial.println("Fan controller initialized (IO40=PWM)");
 }
@@ -54,7 +55,7 @@ void Fan::update() {
                 pwmValue = targetPwm;
             }
 
-            ledcWrite(FAN_PWM_CHANNEL, round(pwmValue));
+            ledcWriteChannel(FAN_PWM_CHANNEL, round(pwmValue));
         }
     }
 }
