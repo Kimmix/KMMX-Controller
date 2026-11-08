@@ -409,14 +409,20 @@ void SlotMachine::drawWinParticles(unsigned long now, uint16_t first, uint16_t s
 }
 
 void SlotMachine::drawWord(const uint8_t* const* glyphs, uint8_t count, int x, int y, uint16_t color) {
-    for (uint8_t i = 0; i < count; ++i) drawGlyph(glyphs[i], x + i * 4, y, color);
+    // Mirror the word's placement while keeping its letters readable on both panels.
+    const int leftX = x + slotScreenOffsetX;
+    const int rightX = screenWidth - leftX - (count * 4 - 1);
+    for (uint8_t i = 0; i < count; ++i) {
+        drawGlyph(glyphs[i], leftX + i * 4, y, color);
+        drawGlyph(glyphs[i], rightX + i * 4, y, color);
+    }
 }
 
 void SlotMachine::drawGlyph(const uint8_t* glyph, int x, int y, uint16_t color) {
     for (uint8_t row = 0; row < 5; ++row) {
         const uint8_t bits = pgm_read_byte(glyph + row);
         for (uint8_t col = 0; col < 3; ++col) {
-            if (bits & (1 << (2 - col))) drawPixelBoth(x + col, y + row, color);
+            if (bits & (1 << (2 - col))) display->drawPixel(x + col, y + row, color);
         }
     }
 }
