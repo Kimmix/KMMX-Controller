@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 
@@ -37,6 +38,9 @@ void encodeStatus(const Status& status, uint8_t* bytes);
 // Hardware-independent state machine, also used by the host regression tests.
 class Core {
 public:
+    Core();
+    std::array<uint8_t, 5> scales;
+    void writeScales(const uint8_t* bytes, size_t size);
     Settings settings;
     Status status;
     bool accept(const uint8_t* bytes, size_t size);

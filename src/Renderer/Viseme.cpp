@@ -25,6 +25,17 @@ Viseme::Snapshot Viseme::snapshot() {
     xSemaphoreGive(mutex);
     return result;
 }
+std::array<uint8_t, 5> Viseme::readScales() {
+    xSemaphoreTake(mutex, portMAX_DELAY);
+    const auto scales = core.scales;
+    xSemaphoreGive(mutex);
+    return scales;
+}
+void Viseme::writeScales(const uint8_t* bytes, size_t size) {
+    xSemaphoreTake(mutex, portMAX_DELAY);
+    core.writeScales(bytes, size);
+    xSemaphoreGive(mutex);
+}
 void Viseme::readSettings(uint8_t* bytes) { LipSync::encodeSettings(snapshot().settings, bytes); }
 void Viseme::readStatus(uint8_t* bytes) { LipSync::encodeStatus(snapshot().status, bytes); }
 void Viseme::writeSettings(const uint8_t* bytes, size_t size) {
@@ -62,14 +73,12 @@ const uint8_t* Viseme::renderViseme(bool talking) {
             dsps_bit_rev_fc32(fftBuffer, i2sSamples);
             const uint16_t low[] = {visemeAhFreqMin, visemeEeFreqMin, visemeOhFreqMin, visemeOoFreqMin, visemeThFreqMin};
             const uint16_t high[] = {visemeAhFreqMax, visemeEeFreqMax, visemeOhFreqMax, visemeOoFreqMax, visemeThFreqMax};
-            const float scale[] = {visemeAhScale, visemeEeScale, visemeOhScale, visemeOoScale, visemeThScale};
             for (int i = 0; i < i2sSamples / 2; ++i) {
                 float frequency = i * i2sSampleRate / i2sSamples;
                 float magnitude = hypotf(fftBuffer[2 * i], fftBuffer[2 * i + 1]);
                 for (int band = 0; band < 5; ++band)
                     if (frequency >= low[band] && frequency <= high[band]) scores[band] += magnitude;
             }
-            for (int band = 0; band < 5; ++band) scores[band] *= scale[band];
         }
     }
     xSemaphoreTake(mutex, portMAX_DELAY);

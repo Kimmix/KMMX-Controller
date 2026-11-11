@@ -222,6 +222,17 @@ class VisemeStatusCallbacks : public NimBLECharacteristicCallbacks {
     }
 };
 
+class VisemeScalesCallbacks : public NimBLECharacteristicCallbacks {
+    void onRead(NimBLECharacteristic* characteristic, NimBLEConnInfo&) override {
+        const auto scales = BLEManager::instance->controller.viseme().readScales();
+        characteristic->setValue(scales.data(), scales.size());
+    }
+    void onWrite(NimBLECharacteristic* characteristic, NimBLEConnInfo& info) override {
+        const auto value = characteristic->getValue();
+        BLEManager::instance->controller.viseme().writeScales(value.data(), value.size());
+        onRead(characteristic, info);
+    }
+};
 class VisemeScoresCallbacks : public NimBLECharacteristicCallbacks {
     void onRead(NimBLECharacteristic* characteristic, NimBLEConnInfo&) override {
         const auto status = BLEManager::instance->controller.viseme().snapshot().status;
@@ -356,6 +367,8 @@ void BLEManager::setup() {
     visemeSettings->setCallbacks(new VisemeSettingsCallbacks());
     visemeCalibration->setCallbacks(new VisemeCalibrationCallbacks());
     visemeStatus->setCallbacks(new VisemeStatusCallbacks());
+    pService->createCharacteristic(BLE_VISEME_SCALES_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE)
+        ->setCallbacks(new VisemeScalesCallbacks());
     visemeScores = pService->createCharacteristic(BLE_VISEME_SCORES_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
     visemeScores->setCallbacks(new VisemeScoresCallbacks());
     orientationStatus = pService->createCharacteristic(BLE_ORIENTATION_UUID,

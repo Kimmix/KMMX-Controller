@@ -2,6 +2,22 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include "VisemeConfig.h"
+
+namespace {
+constexpr uint8_t tenths(float value) { return uint8_t(value * 10 + 0.5f); }
+constexpr std::array<uint8_t, 5> defaultScales = {tenths(visemeAhScale), tenths(visemeEeScale),
+    tenths(visemeOhScale), tenths(visemeOoScale), tenths(visemeThScale)};
+}
+
+LipSync::Core::Core() : scales(defaultScales) {}
+
+void LipSync::Core::writeScales(const uint8_t* bytes, size_t size) {
+    if (size == 1 && bytes[0] == 0xff) scales = defaultScales;
+    if (size != scales.size()) return;
+    for (size_t i = 0; i < size; ++i) if (bytes[i] > 50) return;
+    std::copy(bytes, bytes + size, scales.begin());
+}
 
 namespace LipSync {
 namespace {
@@ -92,9 +108,12 @@ void Core::initFailed() {
     if (calibrating()) failCalibration(Result::AudioError);
 }
 void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
-                 bool talking, const float scores[5], uint32_t now) {
+                 bool talking, const float rawScores[5], uint32_t now) {
+    float scores[5] = {};
+    if (rawScores)
+        for (size_t i = 0; i < scales.size(); ++i) scores[i] = rawScores[i] * (scales[i] / 10.0f);
     float total = 0;
-    for (size_t i = 0; scores && i < sizeof(status.scoreWeights); ++i) total += scores[i];
+    for (size_t i = 0; i < sizeof(status.scoreWeights); ++i) total += scores[i];
     for (size_t i = 0; i < sizeof(status.scoreWeights); ++i)
         status.scoreWeights[i] = total > 0 ? uint8_t(std::round(scores[i] / total * 255)) : 0;
     const float dt = hasFrame ? std::min(uint32_t(now - lastFrame), uint32_t(100)) : 32;
@@ -143,7 +162,7 @@ void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
     } else below = false;
 
     if (!talking) { opening = 0; status.opening = 0; candidateFrames = 0; return; }
-    if (status.gate && scores) {
+    if (status.gate && rawScores) {
         int winner = 0;
         float second = 0;
         for (int i = 1; i < 5; ++i) {
