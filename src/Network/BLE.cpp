@@ -222,6 +222,13 @@ class VisemeStatusCallbacks : public NimBLECharacteristicCallbacks {
     }
 };
 
+class VisemeScoresCallbacks : public NimBLECharacteristicCallbacks {
+    void onRead(NimBLECharacteristic* characteristic, NimBLEConnInfo&) override {
+        const auto status = BLEManager::instance->controller.viseme().snapshot().status;
+        characteristic->setValue(status.scoreWeights, sizeof(status.scoreWeights));
+    }
+};
+
 BLEManager& BLEManager::getInstance(KMMXController& ctrl) {
     if (!instance) {
         instance = new BLEManager(ctrl);
@@ -349,6 +356,8 @@ void BLEManager::setup() {
     visemeSettings->setCallbacks(new VisemeSettingsCallbacks());
     visemeCalibration->setCallbacks(new VisemeCalibrationCallbacks());
     visemeStatus->setCallbacks(new VisemeStatusCallbacks());
+    visemeScores = pService->createCharacteristic(BLE_VISEME_SCORES_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
+    visemeScores->setCallbacks(new VisemeScoresCallbacks());
     orientationStatus = pService->createCharacteristic(BLE_ORIENTATION_UUID,
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY, Orientation::PacketSize);
     orientationStatus->setCallbacks(new OrientationCallbacks());
@@ -495,6 +504,11 @@ bool BLEManager::isConnected() const {
 }
 
 void BLEManager::update() {
+    if (isConnected() && visemeScores && millis() - lastScoresNotify >= 100) {
+        const auto status = controller.viseme().snapshot().status;
+        visemeScores->notify(status.scoreWeights, sizeof(status.scoreWeights));
+        lastScoresNotify = millis();
+    }
     if (isConnected() && orientationStatus && millis() - lastOrientationNotify >= 100) {
         uint8_t bytes[Orientation::PacketSize];
         Orientation::encode(controller.getOrientation(), bytes);

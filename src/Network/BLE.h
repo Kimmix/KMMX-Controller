@@ -23,6 +23,8 @@ class BLEManager {
     NimBLEServer* pServer;
     NimBLEService* pService;
     NimBLECharacteristic* visemeStatus = nullptr;
+    NimBLECharacteristic* visemeScores = nullptr;
+    uint32_t lastScoresNotify = 0;
     uint8_t lastVisemeStatus[LipSync::StatusSize] = {};
     uint32_t lastVisemeNotify = 0;
     NimBLECharacteristic* orientationStatus = nullptr;

@@ -93,6 +93,10 @@ void Core::initFailed() {
 }
 void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
                  bool talking, const float scores[5], uint32_t now) {
+    float total = 0;
+    for (size_t i = 0; scores && i < sizeof(status.scoreWeights); ++i) total += scores[i];
+    for (size_t i = 0; i < sizeof(status.scoreWeights); ++i)
+        status.scoreWeights[i] = total > 0 ? uint8_t(std::round(scores[i] / total * 255)) : 0;
     const float dt = hasFrame ? std::min(uint32_t(now - lastFrame), uint32_t(100)) : 32;
     lastFrame = now; hasFrame = true;
     if (status.mic == MicState::InitError) return;

@@ -69,6 +69,9 @@ new firmware retain basic controls, but their cached advanced sliders are unsupp
 | Viseme settings | `b9725d01-7546-4e0b-9b91-486e25012a02` | READ, WRITE | 10 bytes |
 | Calibration command | `b9725d02-7546-4e0b-9b91-486e25012a02` | WRITE | 1 byte |
 | Viseme status | `b9725d03-7546-4e0b-9b91-486e25012a02` | READ, NOTIFY | 16 bytes |
+| Viseme scores | `b9725d05-7546-4e0b-9b91-486e25012a02` | READ, NOTIFY | 5 bytes |
+
+Viseme scores report the latest frame in AH, EE, OH, OO, TH order, with notifications up to 10 Hz. Each byte is the scaled FFT band score divided by the sum of the five scaled scores, multiplied by 255 and rounded independently. A zero total or skipped FFT produces five zeros. Mouth opening is available separately in viseme status.
 
 All multibyte fields are little-endian. Serialize fields explicitly, without C struct
 padding. Each settings write replaces the complete record atomically.
@@ -258,6 +261,7 @@ While game mode is enabled, a completed proximity boop spins the three reels. Ho
 ✅ Mouth State
 ✅ Viseme
 ✅ Viseme Settings v2, Calibration, Status v3 (3)
+✅ Viseme scores
 ✅ Orientation v1 (reports unsupported on V2)
 ✅ Horn Brightness
 ✅ Cheek Brightness
@@ -274,8 +278,8 @@ While game mode is enabled, a completed proximity boop spins the three reels. Ho
 🆕 Fan Speed
 
 **Total Characteristics:**
-- V2: 24 characteristics
-- V4: 25 characteristics (24 + fan control)
+- V2: 25 characteristics
+- V4: 26 characteristics (25 + fan control)
 
 ---
 

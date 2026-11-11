@@ -26,6 +26,7 @@ struct Status {
     float rms = 0;
     bool gate = false;
     uint8_t shape = 0, opening = 0;
+    uint8_t scoreWeights[5] = {};
     Calibration calibration = Calibration::Idle;
     uint8_t progress = 0;
     MicState mic = MicState::Ready;
