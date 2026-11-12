@@ -104,100 +104,54 @@ class ByteWriteCallbacks : public NimBLECharacteristicCallbacks {
     bool hex;
 };
 
-class CheekBgColorCallbacks : public NimBLECharacteristicCallbacks {
+static void setCheekBgColor(KMMXController& controller, uint8_t r, uint8_t g, uint8_t b) { controller.setCheekBackgroundColor(r, g, b); }
+static void setCheekFadeColor(KMMXController& controller, uint8_t r, uint8_t g, uint8_t b) { controller.setCheekFadeColor(r, g, b); }
+
+// Effect colour 1/2 set the gradient end they own and keep the other; colour 1 also drives the dual spiral/circle colour.
+static void setEffectColor1(KMMXController& controller, uint8_t r, uint8_t g, uint8_t b) {
+    uint8_t color2R, color2G, color2B;
+    auto& display = controller.displayControl();
+    display.getGradientBottomColor(color2R, color2G, color2B);
+    display.setGradientColors(r, g, b, color2R, color2G, color2B);
+    display.setDualSpiralColor(r, g, b);
+    display.setDualCircleColor(r, g, b);
+}
+
+static void setEffectColor2(KMMXController& controller, uint8_t r, uint8_t g, uint8_t b) {
+    uint8_t color1R, color1G, color1B;
+    auto& display = controller.displayControl();
+    display.getGradientTopColor(color1R, color1G, color1B);
+    display.setGradientColors(color1R, color1G, color1B, r, g, b);
+    display.setDualSpiralColor(color1R, color1G, color1B);
+    display.setDualCircleColor(color1R, color1G, color1B);
+}
+
+using RgbWriteHandler = void (*)(KMMXController&, uint8_t, uint8_t, uint8_t);
+
+class RgbWriteCallbacks : public NimBLECharacteristicCallbacks {
+   public:
+    RgbWriteCallbacks(const __FlashStringHelper* label, RgbWriteHandler handler) : label(label), handler(handler) {}
+
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         if (!BLEManager::instance) return;
         const auto value = pCharacteristic->getValue();
-        if (value.length() >= 3) {
-            const uint8_t* data = value.data();
-            if (BLEManager::instance->debugEnabled) {
-                Serial.print(F("[BLE] Cheek BG Color: R="));
-                Serial.print(data[0]);
-                Serial.print(F(" G="));
-                Serial.print(data[1]);
-                Serial.print(F(" B="));
-                Serial.println(data[2]);
-            }
-            BLEManager::instance->controller.setCheekBackgroundColor(data[0], data[1], data[2]);
+        if (value.length() < 3) return;
+        const uint8_t* data = value.data();
+        if (BLEManager::instance->debugEnabled) {
+            Serial.print(label);
+            Serial.print(F(" R="));
+            Serial.print(data[0]);
+            Serial.print(F(" G="));
+            Serial.print(data[1]);
+            Serial.print(F(" B="));
+            Serial.println(data[2]);
         }
+        handler(BLEManager::instance->controller, data[0], data[1], data[2]);
     }
-};
 
-class CheekFadeColorCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
-        if (!BLEManager::instance) return;
-        const auto value = pCharacteristic->getValue();
-        if (value.length() >= 3) {
-            const uint8_t* data = value.data();
-            if (BLEManager::instance->debugEnabled) {
-                Serial.print(F("[BLE] Cheek Fade Color: R="));
-                Serial.print(data[0]);
-                Serial.print(F(" G="));
-                Serial.print(data[1]);
-                Serial.print(F(" B="));
-                Serial.println(data[2]);
-            }
-            BLEManager::instance->controller.setCheekFadeColor(data[0], data[1], data[2]);
-        }
-    }
-};
-
-class DisplayEffectColor1Callbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
-        if (!BLEManager::instance) return;
-        const auto value = pCharacteristic->getValue();
-        if (value.length() >= 3) {
-            const uint8_t* data = value.data();
-            uint8_t r = data[0], g = data[1], b = data[2];
-            if (BLEManager::instance->debugEnabled) {
-                Serial.print(F("[BLE] Display Effect Color 1: R="));
-                Serial.print(r);
-                Serial.print(F(" G="));
-                Serial.print(g);
-                Serial.print(F(" B="));
-                Serial.println(b);
-            }
-
-            // Get current color 2 to preserve it
-            uint8_t color2R, color2G, color2B;
-            auto& display = BLEManager::instance->controller.displayControl();
-            display.getGradientBottomColor(color2R, color2G, color2B);
-            display.setGradientColors(r, g, b, color2R, color2G, color2B);
-
-            // Also set the dual spiral and dual circle color
-            display.setDualSpiralColor(r, g, b);
-            display.setDualCircleColor(r, g, b);
-        }
-    }
-};
-
-class DisplayEffectColor2Callbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
-        if (!BLEManager::instance) return;
-        const auto value = pCharacteristic->getValue();
-        if (value.length() >= 3) {
-            const uint8_t* data = value.data();
-            uint8_t r = data[0], g = data[1], b = data[2];
-            if (BLEManager::instance->debugEnabled) {
-                Serial.print(F("[BLE] Display Effect Color 2: R="));
-                Serial.print(r);
-                Serial.print(F(" G="));
-                Serial.print(g);
-                Serial.print(F(" B="));
-                Serial.println(b);
-            }
-
-            // Get current color 1 to preserve it
-            uint8_t color1R, color1G, color1B;
-            auto& display = BLEManager::instance->controller.displayControl();
-            display.getGradientTopColor(color1R, color1G, color1B);
-            display.setGradientColors(color1R, color1G, color1B, r, g, b);
-
-            // Also set the dual spiral and dual circle color to match color 1
-            display.setDualSpiralColor(color1R, color1G, color1B);
-            display.setDualCircleColor(color1R, color1G, color1B);
-        }
-    }
+   private:
+    const __FlashStringHelper* label;
+    RgbWriteHandler handler;
 };
 
 class VisemeSettingsCallbacks : public NimBLECharacteristicCallbacks {
@@ -475,11 +429,11 @@ void BLEManager::setup() {
     visemeCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Viseme: "), setVisemeState, [](KMMXController& c) -> uint8_t { return c.getViseme(); }, validBoolean));
     hornBrightnessCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Horn Brightness: "), setHornBrightness, [](KMMXController& c) -> uint8_t { return c.getHornBrightness(); }));
     cheekBrightnessCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Cheek Brightness: "), setCheekBrightness, [](KMMXController& c) -> uint8_t { return c.getCheekBrightness(); }));
-    cheekBgColorCharacteristic->setCallbacks(new CheekBgColorCallbacks());
-    cheekFadeColorCharacteristic->setCallbacks(new CheekFadeColorCallbacks());
+    cheekBgColorCharacteristic->setCallbacks(new RgbWriteCallbacks(F("[BLE] Cheek BG Color:"), setCheekBgColor));
+    cheekFadeColorCharacteristic->setCallbacks(new RgbWriteCallbacks(F("[BLE] Cheek Fade Color:"), setCheekFadeColor));
     displayColorModeCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Display Color Mode: "), setDisplayColorMode, [](KMMXController& c) -> uint8_t { return c.displayControl().getColorMode(); }));
-    displayEffectColor1Characteristic->setCallbacks(new DisplayEffectColor1Callbacks());
-    displayEffectColor2Characteristic->setCallbacks(new DisplayEffectColor2Callbacks());
+    displayEffectColor1Characteristic->setCallbacks(new RgbWriteCallbacks(F("[BLE] Display Effect Color 1:"), setEffectColor1));
+    displayEffectColor2Characteristic->setCallbacks(new RgbWriteCallbacks(F("[BLE] Display Effect Color 2:"), setEffectColor2));
     displayEffectOption1Characteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Display Effect Option 1 (Thickness): "), setDisplayEffectThickness, [](KMMXController& c) -> uint8_t { return c.displayControl().getEffectThickness(); }));
     displayEffectOption2Characteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Display Effect Option 2 (Speed): "), setDisplayEffectSpeed, [](KMMXController& c) -> uint8_t { return c.displayControl().getEffectSpeed(); }));
     displayEffectOption3Characteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Display Effect Option 3 (Direction Inverted): "), setDisplayEffectDirection, [](KMMXController& c) -> uint8_t { return c.displayControl().getEffectDirectionInverted(); }));

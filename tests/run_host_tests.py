@@ -86,14 +86,15 @@ int main() {
     run('startup_queue', [test])
 
     callbacks = (root / 'src/Network/BLE.cpp').read_text()
-    callbacks = callbacks[callbacks.index('class CheekBgColorCallbacks'):callbacks.index('class VisemeSettingsCallbacks')]
+    callbacks = callbacks[callbacks.index('static void setCheekBgColor'):callbacks.index('class VisemeSettingsCallbacks')]
     test = Path(temporary) / 'ble_colors.cpp'
     test.write_text(r"""
 #include <cassert>
 #include <cstdint>
 #include <vector>
 #include <array>
-#define F(value) value
+struct __FlashStringHelper;
+#define F(value) reinterpret_cast<const __FlashStringHelper*>(value)
 struct SerialStub { template<class T> void print(T) {} template<class T> void println(T) {} } Serial;
 struct NimBLEConnInfo {};
 struct Value {
@@ -108,6 +109,8 @@ struct NimBLECharacteristic {
 struct NimBLECharacteristicCallbacks {
     virtual void onWrite(NimBLECharacteristic*, NimBLEConnInfo&) = 0;
 };
+struct Controller;
+using KMMXController = Controller;
 struct Controller {
     std::array<uint8_t, 3> bg{}, fade{}, top{}, bottom{}, spiral{}, circle{};
     void setCheekBackgroundColor(uint8_t r, uint8_t g, uint8_t b) { bg = {r,g,b}; }
@@ -123,8 +126,8 @@ struct BLEManager { static BLEManager* instance; bool debugEnabled=false; Contro
 BLEManager* BLEManager::instance = &manager;
 """ + callbacks + r"""
 int main() {
-    CheekBgColorCallbacks bg; CheekFadeColorCallbacks fade;
-    DisplayEffectColor1Callbacks first; DisplayEffectColor2Callbacks second;
+    RgbWriteCallbacks bg(F("bg"), setCheekBgColor), fade(F("fade"), setCheekFadeColor);
+    RgbWriteCallbacks first(F("c1"), setEffectColor1), second(F("c2"), setEffectColor2);
     NimBLECharacteristicCallbacks* handlers[] = {&bg, &fade, &first, &second};
     auto& c = manager.controller;
     std::array<uint8_t,3>* results[] = {&c.bg, &c.fade, &c.top, &c.bottom};
