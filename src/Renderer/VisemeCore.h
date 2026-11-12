@@ -38,6 +38,8 @@ void encodeStatus(const Status& status, uint8_t* bytes);
 
 // Scores AH, EE, OH, OO, TH from an FFT magnitude spectrum of i2sSamples / 2 bins.
 void formantScores(const float* magnitude, float scores[5]);
+// Removes a steady noise spectrum (the fan, averaged during calibration) from a magnitude spectrum.
+void subtractNoise(float* magnitude, const float* noise);
 
 // Hardware-independent state machine, also used by the host regression tests.
 class Core {

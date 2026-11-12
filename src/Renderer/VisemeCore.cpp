@@ -34,6 +34,10 @@ std::array<uint8_t, LipSync::ScalesSize> LipSync::Core::readScales() const {
 }
 
 namespace LipSync {
+void subtractNoise(float* magnitude, const float* noise) {
+    // 1.5x: a single frame of noise swings above its average, so the bare average leaves peaks behind.
+    for (int k = 0; k < i2sSamples / 2; ++k) magnitude[k] = std::max(magnitude[k] - 1.5f * noise[k], 0.0f);
+}
 void formantScores(const float* magnitude, float scores[5]) {
     // F1/F2 in Hz for AH, EE, OH, OO: Peterson & Barney 1952, men and women averaged.
     static const float vowels[4][2] = {{790, 1150}, {290, 2500}, {580, 880}, {330, 900}};

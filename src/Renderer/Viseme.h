@@ -33,6 +33,8 @@ private:
     // The ESP32-S3 FFT uses paired loads/stores; keep alignment independent of sensor layout.
     alignas(16) float fftBuffer[2 * i2sSamples];
     float hannWindow[i2sSamples];
+    float noiseFloor[i2sSamples / 2] = {}, noiseSum[i2sSamples / 2];
+    uint16_t noiseFrames = 0;
     static const uint8_t visemeFramelength = 60;
     const uint8_t* visemeFrames[5][visemeFramelength] = {
         {mouthAH1, mouthAH2, mouthAH3, mouthAH4, mouthAH5, mouthAH6, mouthAH7, mouthAH8, mouthAH9, mouthAH10,

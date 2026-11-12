@@ -53,7 +53,7 @@ const uint8_t* Viseme::renderViseme(bool talking) {
     const bool ready = audioWindow.append(i2sBuffer, validAudio ? i2sHopSamples : 0);
     if (validAudio && !ready) return mouthDefault1;
     float rms = 0, scores[5] = {};
-    bool clipped = false, nonzero = false;
+    bool clipped = false, nonzero = false, measuring = false;
     if (validAudio) {
         float sum = 0;
         for (float sample : audioWindow.samples) {
@@ -70,18 +70,29 @@ const uint8_t* Viseme::renderViseme(bool talking) {
         }
         rms = sqrtf(squares / i2sSamples);
         const auto state = snapshot().status.calibration;
-        if (talking && state != LipSync::Calibration::Countdown && state != LipSync::Calibration::Measuring) {
+        measuring = state == LipSync::Calibration::Measuring;
+        if (state == LipSync::Calibration::Countdown) noiseFrames = 0;
+        if (measuring || (talking && state != LipSync::Calibration::Countdown)) {
             dsps_fft2r_fc32(fftBuffer, i2sSamples);
             dsps_bit_rev_fc32(fftBuffer, i2sSamples);
             // Magnitudes overwrite the buffer in place: index i is written after 2i and 2i+1 are read.
             for (int i = 0; i < i2sSamples / 2; ++i)
                 fftBuffer[i] = sqrtf(fftBuffer[2 * i] * fftBuffer[2 * i] + fftBuffer[2 * i + 1] * fftBuffer[2 * i + 1]);
-            LipSync::formantScores(fftBuffer, scores);
+            if (measuring) { // the wearer is silent here, so this is the fan's spectrum
+                for (int i = 0; i < i2sSamples / 2; ++i) noiseSum[i] = (noiseFrames ? noiseSum[i] : 0) + fftBuffer[i];
+                ++noiseFrames;
+            } else {
+                LipSync::subtractNoise(fftBuffer, noiseFloor);
+                LipSync::formantScores(fftBuffer, scores);
+            }
         }
     }
     xSemaphoreTake(mutex, portMAX_DELAY);
     core.frame(rms, validAudio, clipped, nonzero, talking, scores, millis());
     const auto status = core.status;
     xSemaphoreGive(mutex);
+    // shortcut: RAM only, so the fan profile is gone after a reboot until the next calibration; store it in NVS if that annoys.
+    if (measuring && noiseFrames && status.calibration == LipSync::Calibration::Success)
+        for (int i = 0; i < i2sSamples / 2; ++i) noiseFloor[i] = noiseSum[i] / noiseFrames;
     return status.opening ? visemeFrames[status.shape][status.opening - 1] : mouthDefault1;
 }

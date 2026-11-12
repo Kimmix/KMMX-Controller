@@ -1,4 +1,5 @@
 #include "../src/Renderer/VisemeCore.h"
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include "../src/Renderer/AudioWindow.h"
@@ -45,6 +46,16 @@ static void testFormants() {
         spectrum(samples, magnitude);
         LipSync::formantScores(magnitude, scores);
         assert(winner(scores) == vowel);
+        if (vowel != 0) continue;
+        // Fan hum around 190-375 Hz louder than the voice drags "ah" to a low-F1 shape until removed.
+        float fan[i2sSamples / 2] = {};
+        const float loudest = *std::max_element(magnitude, magnitude + i2sSamples / 2);
+        for (int k = 6; k <= 12; ++k) { fan[k] = 3 * loudest; magnitude[k] += fan[k]; }
+        LipSync::formantScores(magnitude, scores);
+        assert(winner(scores) != 0);
+        LipSync::subtractNoise(magnitude, fan);
+        LipSync::formantScores(magnitude, scores);
+        assert(winner(scores) == 0);
     }
     uint32_t seed = 1;
     float previous = 0;
