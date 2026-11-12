@@ -64,7 +64,7 @@ class KMMXController {
     int getSlotMachineEnabled() const;
 
     // Motion Detection & Glitch Control (BLE)
-    void triggerGlitch(uint8_t intensity);                      // Manually trigger glitch effect with intensity 0-100
+    void triggerGlitch(int intensity);                         // Manually trigger glitch effect with intensity 0-100
     void setMotionEnableFlags(uint8_t flags);                   // Set motion detection enable flags (bitfield)
     uint8_t getMotionEnableFlags();                             // Get current motion detection enable flags
     void setTapSensitivity(uint8_t sensitivity);                // Set tap sensitivity 0-100 (maps to threshold)

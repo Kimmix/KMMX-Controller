@@ -6,6 +6,7 @@ void GooglyEye::update(float inputX, float inputY) {
     unsigned long t = millis();
     float elapsed = (float)(t - lastTime) / 1000.0;
     lastTime = t;
+    if (elapsed > 0.1f) elapsed = 0.02f;  // first frame / long stall: avoid a huge physics step
 
     float scale = googlyAccelScale * elapsed;
     float ax = inputY * scale, ay = inputX * scale;

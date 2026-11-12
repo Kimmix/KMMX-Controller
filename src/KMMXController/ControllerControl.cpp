@@ -23,6 +23,7 @@ int KMMXController::getCheekBrightness() {
 }
 
 void KMMXController::setCheekBrightness(int i) {
+    if (renderRunning.load() && queueControl(&KMMXController::setCheekBrightness, i)) return;  // no render task: apply directly
     // Map 0-100 input range to 0-255 range for NeoPixel brightness
     int mappedBrightness = fastMap<int>(constrain(i, 0, 100), 0, 100, 0, 255);
     cheekPanel.setBrightness(mappedBrightness);
