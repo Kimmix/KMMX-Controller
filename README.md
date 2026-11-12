@@ -75,7 +75,7 @@ A small game mode for the face: enable it over BLE, and each completed boop spin
 
 ## Bluetooth
 
-The controller advertises a single GATT service with about 25 characteristics: brightness, colour modes, eye and mouth state, viseme tuning, LED colours, motion flags, glitch, orientation, slot machine and (V4) fan speed. Writes need an encrypted, bonded link with a 6-digit passkey. Full spec: [BLE_INTERFACE.md](BLE_INTERFACE.md).
+The controller advertises a single GATT service with about 25 characteristics: brightness, colour modes, eye and mouth state, viseme tuning, LED colours, motion flags, glitch, orientation, slot machine and (V4) fan speed. No pairing is required. Full spec: [BLE_INTERFACE.md](BLE_INTERFACE.md).
 
 ## V2 and V4
 

@@ -29,4 +29,7 @@ class BLEManager {
     uint32_t lastVisemeNotify = 0;
     NimBLECharacteristic* orientationStatus = nullptr;
     uint32_t lastOrientationNotify = 0;
+    NimBLECharacteristic* displayFps = nullptr;
+    uint32_t lastFpsNotify = 0;
+    void encodeFps(uint8_t bytes[2]) const;
 };

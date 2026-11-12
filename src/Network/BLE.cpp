@@ -9,8 +9,9 @@ BLEManager* BLEManager::instance = nullptr;
 static constexpr uint16_t BLE_ADV_MIN_INTERVAL = 0x20;      // 20ms (0x20 * 0.625ms)
 static constexpr uint16_t BLE_ADV_MAX_INTERVAL = 0x40;      // 40ms (0x40 * 0.625ms)
 static constexpr uint16_t BLE_APPEARANCE_DISPLAY = 0x03C0;  // Generic Display
-static constexpr uint32_t BLE_RW = NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_ENC;
-static constexpr uint32_t BLE_WRITE = NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_ENC;
+// No pairing: any nearby client can write (accepted risk, avoids passkey prompts and stale bonded GATT caches).
+static constexpr uint32_t BLE_RW = NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE;
+static constexpr uint32_t BLE_WRITE = NIMBLE_PROPERTY::WRITE;
 
 // Manufacturer data stored in flash memory (PROGMEM)
 static const uint8_t BLE_MFG_DATA[] PROGMEM = {
@@ -228,11 +229,6 @@ void BLEManager::setup() {
     // Initialize NimBLE with device name
     NimBLEDevice::init(BLE_DEVICE_NAME);
 
-    // Pairing required for writes: bonding + MITM, passkey shown on our side only (fixed, set in config.h)
-    NimBLEDevice::setSecurityAuth(true, true, true);
-    NimBLEDevice::setSecurityIOCap(BLE_HS_IO_DISPLAY_ONLY);
-    NimBLEDevice::setSecurityPasskey(BLE_PASSKEY);
-
     // Set power level for better range
     NimBLEDevice::setPower(ESP_PWR_LVL_P9);  // +9dBm
 
@@ -348,6 +344,10 @@ void BLEManager::setup() {
     uint8_t orientationBytes[Orientation::PacketSize];
     Orientation::encode(controller.getOrientation(), orientationBytes);
     orientationStatus->setValue(orientationBytes, sizeof(orientationBytes));
+    displayFps = pService->createCharacteristic(BLE_DISPLAY_FPS_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY, 2);
+    uint8_t fpsBytes[2];
+    encodeFps(fpsBytes);
+    displayFps->setValue(fpsBytes, sizeof(fpsBytes));
     uint8_t settingsBytes[LipSync::SettingsSize];
     controller.viseme().readSettings(settingsBytes);
     visemeSettings->setValue(settingsBytes, sizeof(settingsBytes));
@@ -483,6 +483,12 @@ void BLEManager::setup() {
     }
 }
 
+// [measured FPS, target FPS], each rounded and clamped to 0-255.
+void BLEManager::encodeFps(uint8_t bytes[2]) const {
+    bytes[0] = static_cast<uint8_t>(constrain(lroundf(controller.getFPS()), 0L, 255L));
+    bytes[1] = static_cast<uint8_t>(constrain(controller.getTargetFPS(), 0, 255));
+}
+
 bool BLEManager::isConnected() const {
     return pServer && pServer->getConnectedCount() > 0;
 }
@@ -499,6 +505,13 @@ void BLEManager::update() {
         orientationStatus->setValue(bytes, sizeof(bytes));
         orientationStatus->notify(); // NimBLE dispatches the stored value only to subscribers.
         lastOrientationNotify = millis();
+    }
+    if (isConnected() && displayFps && millis() - lastFpsNotify >= 250) {
+        uint8_t bytes[2];
+        encodeFps(bytes);
+        displayFps->setValue(bytes, sizeof(bytes));
+        displayFps->notify(); // NimBLE dispatches the stored value only to subscribers.
+        lastFpsNotify = millis();
     }
     if (isConnected() && visemeStatus) {
         uint8_t bytes[LipSync::StatusSize];
