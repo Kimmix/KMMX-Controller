@@ -36,9 +36,6 @@ struct Status {
 };
 void encodeStatus(const Status& status, uint8_t* bytes);
 
-// Scores AH, EE, OH, OO, TH from an FFT magnitude spectrum of i2sSamples / 2 bins.
-void formantScores(const float* magnitude, float scores[5]);
-
 // Hardware-independent state machine, also used by the host regression tests.
 class Core {
 public:

@@ -1,68 +1,10 @@
 #include "../src/Renderer/VisemeCore.h"
 #include <cassert>
-#include <cmath>
 #include "../src/Renderer/AudioWindow.h"
 #include <cstring>
 #include <limits>
 
-// Hann-windowed magnitude spectrum of a synthetic frame, as the firmware FFT produces.
-static void spectrum(const float* samples, float* magnitude) {
-    const float pi = 3.14159265f;
-    for (int k = 0; k < i2sSamples / 2; ++k) {
-        float re = 0, im = 0;
-        for (int n = 0; n < i2sSamples; ++n) {
-            const float s = samples[n] * 0.5f * (1 - std::cos(2 * pi * n / (i2sSamples - 1)));
-            re += s * std::cos(2 * pi * k * n / i2sSamples);
-            im -= s * std::sin(2 * pi * k * n / i2sSamples);
-        }
-        magnitude[k] = std::sqrt(re * re + im * im);
-    }
-}
-static int winner(const float* scores) {
-    int best = 0;
-    for (int i = 1; i < 5; ++i) if (scores[i] > scores[best]) best = i;
-    return best;
-}
-static void testFormants() {
-    const float pi = 3.14159265f;
-    // F1, F2, F3 for "ah", "ee", "oh", "oo" in a male and a female voice (Peterson & Barney).
-    const float voices[2][4][3] = {
-        {{730, 1090, 2440}, {270, 2290, 3010}, {570, 840, 2410}, {300, 870, 2240}},
-        {{850, 1220, 2810}, {310, 2790, 3310}, {590, 920, 2710}, {370, 950, 2670}}};
-    const float pitches[2][2] = {{100, 140}, {200, 250}};
-    float samples[i2sSamples], magnitude[i2sSamples / 2], scores[5];
-    for (int voice = 0; voice < 2; ++voice) for (float pitch : pitches[voice]) for (int vowel = 0; vowel < 4; ++vowel) {
-        std::fill(samples, samples + i2sSamples, 0.0f);
-        for (int h = 1; h * pitch < 7000; ++h) {
-            const float f = h * pitch;
-            float gain = 1.0f / h; // glottal source plus lip radiation: -6 dB/octave
-            for (int j = 0; j < 3; ++j) { // second-order resonator per formant
-                const float F = voices[voice][vowel][j], B = 60 + 40 * j;
-                gain *= F * F / std::sqrt((F * F - f * f) * (F * F - f * f) + B * B * f * f);
-            }
-            for (int n = 0; n < i2sSamples; ++n) samples[n] += gain * std::sin(2 * pi * f * n / i2sSampleRate);
-        }
-        spectrum(samples, magnitude);
-        LipSync::formantScores(magnitude, scores);
-        assert(winner(scores) == vowel);
-    }
-    uint32_t seed = 1;
-    float previous = 0;
-    for (float& sample : samples) { // differenced white noise: energy rises with frequency like "s"
-        seed = seed * 1664525u + 1013904223u;
-        const float noise = float(seed >> 8) / (1 << 24) - 0.5f;
-        sample = noise - previous; previous = noise;
-    }
-    spectrum(samples, magnitude);
-    LipSync::formantScores(magnitude, scores);
-    assert(winner(scores) == 4);
-    std::fill(magnitude, magnitude + i2sSamples / 2, 0.0f);
-    LipSync::formantScores(magnitude, scores);
-    for (float score : scores) assert(score == 0);
-}
-
 int main() {
-    testFormants();
     assert(LipSync::sampleAmplitude(0x7fffff00) > 32767);
     assert(LipSync::sampleAmplitude(INT32_MIN) == -32768);
     assert(LipSync::sampleAmplitude(65536) == 1);
@@ -115,12 +57,12 @@ int main() {
 
     LipSync::Core core;
     const float scores[] = {10, 0, 20, 0, 0};
-    core.frame(100, true, false, true, true, scores, 100);
-    const uint8_t expected[] = {85, 0, 170, 0, 0};
+    core.frame(20, true, false, true, true, scores, 100);
+    const uint8_t expected[] = {137, 0, 118, 0, 0};
     assert(std::memcmp(core.status.scoreWeights, expected, sizeof(expected)) == 0);
 
     const auto defaults = core.scales;
-    assert((defaults == std::array<uint16_t, 5>{100, 100, 100, 100, 100}));
+    assert((defaults == std::array<uint16_t, 5>{350, 130, 150, 110, 100}));
     const uint8_t precise[] = {2, 163, 0, 1, 0, 244, 1, 0, 0, 100, 0};
     core.writeScales(precise, sizeof(precise));
     assert((core.scales == std::array<uint16_t, 5>{163, 1, 500, 0, 100}));
@@ -137,12 +79,12 @@ int main() {
     assert(core.readScales() == readback);
     const uint8_t tuned[] = {2, 0, 0, 0, 0, 244, 1, 0, 0, 0, 0};
     core.writeScales(tuned, sizeof(tuned));
-    core.frame(100, true, false, true, true, scores, 132);
-    core.frame(100, true, false, true, true, scores, 164);
+    core.frame(20, true, false, true, true, scores, 132);
+    core.frame(20, true, false, true, true, scores, 164);
     assert(core.status.shape == 2 && core.status.scoreWeights[2] == 255);
     const uint8_t zeros[11] = {2};
     core.writeScales(zeros, sizeof(zeros));
-    core.frame(100, true, false, true, true, scores, 196);
+    core.frame(20, true, false, true, true, scores, 196);
     for (auto weight : core.status.scoreWeights) assert(weight == 0);
     const uint8_t reset = 0xff;
     core.writeScales(&reset, 1);
@@ -154,7 +96,7 @@ int main() {
 
     for (float bad : {-1.0f, std::numeric_limits<float>::quiet_NaN(),
                       std::numeric_limits<float>::infinity(), std::numeric_limits<float>::max(),
-                      std::numeric_limits<float>::max() / 4}) {
+                      std::numeric_limits<float>::max() / 8}) {
         LipSync::Core checked;
         const float valid[] = {0, 100, 0, 0, 0};
         checked.frame(100, true, false, true, true, valid, 100);

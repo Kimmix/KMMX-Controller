@@ -34,41 +34,6 @@ std::array<uint8_t, LipSync::ScalesSize> LipSync::Core::readScales() const {
 }
 
 namespace LipSync {
-void formantScores(const float* magnitude, float scores[5]) {
-    // F1/F2 in Hz for AH, EE, OH, OO: Peterson & Barney 1952, men and women averaged.
-    static const float vowels[4][2] = {{790, 1150}, {290, 2500}, {580, 880}, {330, 900}};
-    const float binHz = i2sSampleRate / i2sSamples;
-    const int bins = i2sSamples / 2;
-    // Averaging +-3 bins (~220 Hz) hides pitch harmonics so the peak is the vocal-tract formant.
-    auto peak = [&](float lowHz, float highHz, bool tilt) {
-        int best = int(lowHz / binHz);
-        float bestValue = -1;
-        for (int k = best; k <= int(highHz / binHz); ++k) {
-            float value = 0;
-            for (int i = std::max(k - 3, 1); i <= std::min(k + 3, bins - 1); ++i) value += magnitude[i];
-            if (tilt) value *= k; // +6 dB/octave so F2 is not buried under F1's skirt
-            if (value > bestValue) { bestValue = value; best = k; }
-        }
-        return best * binHz;
-    };
-    float total = 0, high = 0;
-    for (int k = int(200 / binHz); k < bins; ++k) {
-        const float power = magnitude[k] * magnitude[k];
-        total += power;
-        if (k * binHz >= 3500) high += power;
-    }
-    std::fill(scores, scores + 5, 0.0f);
-    if (!(total > 0) || !std::isfinite(total)) return;
-    // Fricatives put most of their power above 3.5 kHz; voiced vowels almost none.
-    const float fricative = std::min(std::max((high / total - 0.25f) / 0.25f, 0.0f), 1.0f);
-    const float f1 = peak(200, 1000, false);
-    const float f2 = peak(std::max(800.0f, f1 + 300), 3000, true);
-    for (int i = 0; i < 4; ++i) {
-        const float d1 = std::log(f1 / vowels[i][0]) / 0.3f, d2 = std::log(f2 / vowels[i][1]) / 0.3f;
-        scores[i] = (1 - fricative) * std::exp(-0.5f * (d1 * d1 + d2 * d2));
-    }
-    scores[4] = fricative;
-}
 namespace {
 void put16(uint8_t* p, uint16_t value) { p[0] = value; p[1] = value >> 8; }
 void putFloat(uint8_t* p, float value) {
