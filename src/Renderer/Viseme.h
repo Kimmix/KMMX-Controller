@@ -28,7 +28,8 @@ private:
     SemaphoreHandle_t mutex = xSemaphoreCreateMutexStatic(&mutexStorage);
     LipSync::Core core;
     int16_t i2sBuffer[i2sSamples];
-    float fftBuffer[2 * i2sSamples];
+    // The ESP32-S3 FFT uses paired loads/stores; keep alignment independent of sensor layout.
+    alignas(16) float fftBuffer[2 * i2sSamples];
     float hannWindow[i2sSamples];
     static const uint8_t visemeFramelength = 60;
     const uint8_t* visemeFrames[5][visemeFramelength] = {
