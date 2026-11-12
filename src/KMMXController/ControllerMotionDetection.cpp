@@ -446,6 +446,7 @@ void KMMXController::detectPetting(const SensorData& current) {
             pettingDetector.isPetting = true;
             pettingDetector.previousEyeState = eyeState.getState();
             pettingDetector.previousMouthState = mouthState.getState();
+            pettingDetector.previousCheekBrightness = cheekPanel.getBrightness();
 
             if (enableMotionDebug) {
                 Serial.printf("[PETTING] ✓ Petting triggered! Happiness: %.1f | Saved previous state: Eye=%d, Mouth=%d\n",
@@ -465,6 +466,7 @@ void KMMXController::detectPetting(const SensorData& current) {
 
             // Return to previous state using helper
             restorePreviousState(pettingDetector.previousEyeState, pettingDetector.previousMouthState);
+            cheekPanel.setBrightness(pettingDetector.previousCheekBrightness);
 
             if (enableMotionDebug) {
                 Serial.printf("[PETTING] Response ended naturally (happiness decayed to %.1f) - returning to previous state (Eye: %d, Mouth: %d)\n",

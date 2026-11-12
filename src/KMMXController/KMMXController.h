@@ -231,6 +231,7 @@ class KMMXController {
         bool isPetting = false;             // Currently showing petting response
         EyeStateEnum previousEyeState = EyeStateEnum::IDLE;
         MouthStateEnum previousMouthState = MouthStateEnum::IDLE;
+        uint8_t previousCheekBrightness = 0;
     } pettingDetector;
 
     struct TapDetector {
