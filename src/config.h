@@ -42,6 +42,11 @@
 #define BLE_DEVICE_NAME "KMMX"
 #endif
 
+// 6-digit pairing passkey; the phone must enter it to write. Override in platformio.ini.
+#ifndef BLE_PASSKEY
+#define BLE_PASSKEY 123456
+#endif
+
 #ifndef BLE_LOCAL_NAME
 #define BLE_LOCAL_NAME "KMMX-BLE"
 #endif

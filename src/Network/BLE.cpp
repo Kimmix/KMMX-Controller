@@ -9,8 +9,8 @@ BLEManager* BLEManager::instance = nullptr;
 static constexpr uint16_t BLE_ADV_MIN_INTERVAL = 0x20;      // 20ms (0x20 * 0.625ms)
 static constexpr uint16_t BLE_ADV_MAX_INTERVAL = 0x40;      // 40ms (0x40 * 0.625ms)
 static constexpr uint16_t BLE_APPEARANCE_DISPLAY = 0x03C0;  // Generic Display
-static constexpr uint32_t BLE_RW = NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE;
-static constexpr uint32_t BLE_WRITE = NIMBLE_PROPERTY::WRITE;
+static constexpr uint32_t BLE_RW = NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_ENC;
+static constexpr uint32_t BLE_WRITE = NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_ENC;
 
 // Manufacturer data stored in flash memory (PROGMEM)
 static const uint8_t BLE_MFG_DATA[] PROGMEM = {
@@ -266,6 +266,11 @@ void BLEManager::setup() {
     // Initialize NimBLE with device name
     NimBLEDevice::init(BLE_DEVICE_NAME);
 
+    // Pairing required for writes: bonding + MITM, passkey shown on our side only (fixed, set in config.h)
+    NimBLEDevice::setSecurityAuth(true, true, true);
+    NimBLEDevice::setSecurityIOCap(BLE_HS_IO_DISPLAY_ONLY);
+    NimBLEDevice::setSecurityPasskey(BLE_PASSKEY);
+
     // Set power level for better range
     NimBLEDevice::setPower(ESP_PWR_LVL_P9);  // +9dBm
 
@@ -371,7 +376,7 @@ void BLEManager::setup() {
     visemeSettings->setCallbacks(new VisemeSettingsCallbacks());
     visemeCalibration->setCallbacks(new VisemeCalibrationCallbacks());
     visemeStatus->setCallbacks(new VisemeStatusCallbacks());
-    pService->createCharacteristic(BLE_VISEME_SCALES_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE)
+    pService->createCharacteristic(BLE_VISEME_SCALES_UUID, BLE_RW)
         ->setCallbacks(new VisemeScalesCallbacks());
     visemeScores = pService->createCharacteristic(BLE_VISEME_SCORES_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
     visemeScores->setCallbacks(new VisemeScoresCallbacks());
