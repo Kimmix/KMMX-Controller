@@ -8,20 +8,23 @@ Hub75DMA::Hub75DMA() {
     mxconfig.double_buff = doubleBuffer;
     mxconfig.latch_blanking = 2;  // Preserve the panel timing used before HUB75 3.1.0.
     matrix = new MatrixPanel_I2S_DMA(mxconfig);
-    matrix->begin();  // Initialize matrix
+    ready = matrix->begin() && matrix->calculated_refresh_rate > 0;
+    if (!ready) { Serial.println("Display initialization failed"); return; }
     matrix->setBrightness8(panelBrightness);
     matrix->clearScreen();
 }
 
 int Hub75DMA::getRefreshRate() {
-    return matrix->calculated_refresh_rate;
+    return ready ? matrix->calculated_refresh_rate : 0;
 }
 
 void Hub75DMA::flipDMABuffer() {
+    if (!ready) return;
     matrix->flipDMABuffer();
 }
 
 void Hub75DMA::clearScreen() {
+    if (!ready) return;
     matrix->clearScreen();
 }
 
@@ -38,12 +41,13 @@ uint16_t Hub75DMA::color565(uint8_t r, uint8_t g, uint8_t b) {
 }
 
 void Hub75DMA::drawPixel(int16_t x, int16_t y, uint16_t color) {
+    if (!ready) return;
     matrix->drawPixel(x, y, color);
 }
 
 void Hub75DMA::setBrightnessValue(uint8_t value) {
     panelBrightness = constrain(value, 0, 255);
-    matrix->setBrightness8(panelBrightness);
+    if (ready) matrix->setBrightness8(panelBrightness);
 }
 
 void Hub75DMA::setColorMode(uint8_t mode) {

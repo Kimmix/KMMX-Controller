@@ -112,10 +112,15 @@ void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
     float scores[5] = {};
     if (rawScores)
         for (size_t i = 0; i < scales.size(); ++i) scores[i] = rawScores[i] * (scales[i] / 10.0f);
+    bool validScores = true;
     float total = 0;
-    for (size_t i = 0; i < sizeof(status.scoreWeights); ++i) total += scores[i];
+    for (float score : scores) {
+        validScores = validScores && std::isfinite(score) && score >= 0;
+        total += score;
+    }
+    validScores = validScores && std::isfinite(total);
     for (size_t i = 0; i < sizeof(status.scoreWeights); ++i)
-        status.scoreWeights[i] = total > 0 ? uint8_t(std::round(scores[i] / total * 255)) : 0;
+        status.scoreWeights[i] = validScores && total > 0 ? uint8_t(std::round(scores[i] / total * 255)) : 0;
     const float dt = hasFrame ? std::min(uint32_t(now - lastFrame), uint32_t(100)) : 32;
     lastFrame = now; hasFrame = true;
     if (status.mic == MicState::InitError) return;
@@ -162,7 +167,7 @@ void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
     } else below = false;
 
     if (!talking) { opening = 0; status.opening = 0; candidateFrames = 0; return; }
-    if (status.gate && rawScores) {
+    if (status.gate && rawScores && validScores) {
         int winner = 0;
         float second = 0;
         for (int i = 1; i < 5; ++i) {

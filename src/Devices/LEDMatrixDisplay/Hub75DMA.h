@@ -7,6 +7,7 @@
 
 class Hub75DMA {
    private:
+    bool ready = false;
     MatrixPanel_I2S_DMA* matrix;  // Pointer to the matrix panel object
     const uint8_t panelWidth = panelResX;   // Panel width from config
     const uint8_t panelHeight = panelResY;  // Panel height from config
@@ -96,6 +97,7 @@ class Hub75DMA {
      * @brief Constructor for the Hub75DMA class.
      */
     Hub75DMA();
+    bool isReady() const { return ready; }
 
     int getRefreshRate();
 

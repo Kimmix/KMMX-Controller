@@ -1,6 +1,8 @@
 #pragma once
 #include <Arduino.h>
 #include <memory>
+#include <atomic>
+#include <freertos/queue.h>
 
 #include "config.h"
 #include "Utils/Utils.h"
@@ -98,7 +100,18 @@ class KMMXController {
     Orientation::Snapshot orientation = {ACCEL_TYPE_MPU6050 ? Orientation::Unavailable : Orientation::Unsupported};
     volatile uint8_t activeBuffer = 0;
     TaskHandle_t sensorTaskHandle;
-    TaskHandle_t renderTaskHandle;
+    TaskHandle_t renderTaskHandle = nullptr;
+    using ControlHandler = void (KMMXController::*)(int);
+    struct RenderCommand { ControlHandler handler; int value; SensorData sample; };
+    static constexpr unsigned commandCapacity = 16;
+    StaticQueue_t commandQueueStorage;
+    uint8_t commandStorage[commandCapacity * sizeof(RenderCommand)];
+    QueueHandle_t commandQueue = nullptr;
+    std::atomic<bool> renderRunning{false};
+    mutable portMUX_TYPE sensorMux = portMUX_INITIALIZER_UNLOCKED;
+    SensorData sensorSnapshot;
+    bool queueControl(ControlHandler handler, int value);
+    void acceptSensor(const SensorData& sample);
     // Renderer states
     EyeState eyeState = EyeState(&display);
     MouthState mouthState = MouthState(&display);
@@ -136,7 +149,7 @@ class KMMXController {
     void checkIdleAndSleep(KMMXController *controller, unsigned long currentTime);
     static void readSensorTask(void *parameter);
     static void renderTask(void *parameter);
-    const SensorData& getSensorData() const;
+    SensorData getSensorData() const;
 
     // Motion detection methods
     void checkMotionFeatures(KMMXController *controller);

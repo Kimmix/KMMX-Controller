@@ -34,11 +34,16 @@ void KMMXController::setupSensors() {
 
     // Create sensor reading task on Core 1 (separate from rendering for better performance)
     // This prevents slow I2C sensors (like VL6180X) from blocking the render task
-    xTaskCreatePinnedToCore(readSensorTask, "SensorTask", 4096, this, 2, &sensorTaskHandle, 1);
+    if (xTaskCreatePinnedToCore(readSensorTask, "SensorTask", 4096, this, 2, &sensorTaskHandle, 1) != pdPASS)
+        Serial.println("Sensor task creation failed");
 
     // Create rendering task on Core 0 (dedicated core for smooth rendering)
     // Priority 1 - lower priority since it has the whole core to itself
-    xTaskCreatePinnedToCore(renderTask, "RenderTask", 4096, this, 1, &renderTaskHandle, 0);
+    if (display.isReady()) {
+        commandQueue = xQueueCreateStatic(commandCapacity, sizeof(RenderCommand), commandStorage, &commandQueueStorage);
+        if (xTaskCreatePinnedToCore(renderTask, "RenderTask", 8192, this, 1, &renderTaskHandle, 0) != pdPASS)
+            Serial.println("Render task creation failed");
+    }
 
     Serial.println("=== Task Initialization Complete ===");
 }
@@ -51,8 +56,7 @@ void KMMXController::readSensorTask(void* parameter) {
     while (true) {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
-        uint8_t writeBuffer = 1 - ctrl->activeBuffer;
-        SensorData& data = ctrl->sensorBuffer[writeBuffer];
+        SensorData data;
 
         // Update IMU sensor (reads accel + gyro, updates fusion filter)
         #if ACCEL_TYPE_MPU6050
@@ -102,20 +106,13 @@ void KMMXController::readSensorTask(void* parameter) {
         // Read proximity (handles nullptr internally)
         data.proximity = ctrl->proximitySensor ? (ctrl->proximitySensor->read(&data.proximity), data.proximity) : 0;
 
-        // Atomic buffer swap
-        ctrl->prevSensorData = ctrl->sensorBuffer[ctrl->activeBuffer];
-        ctrl->activeBuffer = writeBuffer;
-
-        // Motion detection (only if accelerometer initialized and no game owns the display)
-        if (ctrl->accelerometerInitialized && !ctrl->slotMachine.isEnabled()) {
-            ctrl->checkIdleAndSleep(ctrl, millis());
-            ctrl->checkMotionFeatures(ctrl);
+        portENTER_CRITICAL(&ctrl->sensorMux);
+        ctrl->sensorSnapshot = data;
+        portEXIT_CRITICAL(&ctrl->sensorMux);
+        if (ctrl->renderRunning.load()) {
+            const RenderCommand command{nullptr, 0, data};
+            xQueueSend(ctrl->commandQueue, &command, portMAX_DELAY);
         }
-
-        // Update facial states
-        const SensorData& current = ctrl->sensorBuffer[ctrl->activeBuffer];
-        ctrl->mouthState.setSensorData(current);
-        ctrl->eyeState.setSensorData(current);
 
         // Update fan controller
         #if HAS_FAN_CONTROL
@@ -124,8 +121,23 @@ void KMMXController::readSensorTask(void* parameter) {
     }
 }
 
-const SensorData& KMMXController::getSensorData() const {
-    return sensorBuffer[activeBuffer];
+SensorData KMMXController::getSensorData() const {
+    portENTER_CRITICAL(&sensorMux);
+    const SensorData sample = sensorSnapshot;
+    portEXIT_CRITICAL(&sensorMux);
+    return sample;
+}
+
+void KMMXController::acceptSensor(const SensorData& sample) {
+    prevSensorData = sensorBuffer[activeBuffer];
+    activeBuffer = 1 - activeBuffer;
+    sensorBuffer[activeBuffer] = sample;
+    mouthState.setSensorData(sample);
+    eyeState.setSensorData(sample);
+    if (accelerometerInitialized && !slotMachine.isEnabled()) {
+        checkIdleAndSleep(this, millis());
+        checkMotionFeatures(this);
+    }
 }
 
 Orientation::Snapshot KMMXController::getOrientation() {

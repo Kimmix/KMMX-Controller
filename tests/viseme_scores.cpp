@@ -1,6 +1,7 @@
 #include "../src/Renderer/VisemeCore.h"
 #include <cassert>
 #include <cstring>
+#include <limits>
 
 int main() {
     LipSync::Core core;
@@ -32,4 +33,21 @@ int main() {
     const float silence[5] = {};
     core.frame(0, true, false, false, true, silence, 228);
     for (auto weight : core.status.scoreWeights) assert(weight == 0);
+
+    for (float bad : {-1.0f, std::numeric_limits<float>::quiet_NaN(),
+                      std::numeric_limits<float>::infinity(), std::numeric_limits<float>::max(),
+                      std::numeric_limits<float>::max() / 8}) {
+        LipSync::Core checked;
+        const float valid[] = {0, 100, 0, 0, 0};
+        checked.frame(100, true, false, true, true, valid, 100);
+        const float invalid[] = {bad, bad, bad, bad, bad};
+        checked.frame(100, true, false, true, true, invalid, 132);
+        for (auto weight : checked.status.scoreWeights) assert(weight == 0);
+        assert(checked.status.rms == 100 && checked.status.opening > 0);
+        assert(checked.status.shape == 0);
+        checked.frame(100, true, false, true, true, valid, 164);
+        assert(checked.status.shape == 0);
+        checked.frame(100, true, false, true, true, valid, 196);
+        assert(checked.status.shape == 1 && checked.status.scoreWeights[1] == 255);
+    }
 }

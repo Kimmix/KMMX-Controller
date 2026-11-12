@@ -44,20 +44,13 @@ void Fan::update() {
             currentSpeed = max(currentSpeed - step, targetSpeed);
         }
 
-        // Map speed (0-100) to PWM value (0-255)
-        float targetPwm = fastMap<float>(currentSpeed, 0, 100, 0, 255);
-
-        // Smooth PWM transition
-        if (abs(pwmValue - targetPwm) > 0.5f) {
-            pwmValue += (targetPwm - pwmValue) * 0.3f;  // Smooth interpolation
-
-            if (abs(pwmValue - targetPwm) < 1.0f) {
-                pwmValue = targetPwm;
-            }
-
-            ledcWriteChannel(FAN_PWM_CHANNEL, round(pwmValue));
-        }
     }
+    const float targetPwm = fastMap<float>(currentSpeed, 0, 100, 0, 255);
+    const int previousDuty = round(pwmValue);
+    pwmValue += (targetPwm - pwmValue) * 0.3f;
+    if (abs(pwmValue - targetPwm) <= 1.0f) pwmValue = targetPwm;
+    const int duty = round(pwmValue);
+    if (duty != previousDuty) ledcWriteChannel(FAN_PWM_CHANNEL, duty);
 }
 
 #endif // HAS_FAN_CONTROL

@@ -30,6 +30,7 @@ void Hub75DMA::drawMouth(const uint8_t* bitmap) {
 }
 
 void Hub75DMA::drawBitmap(const uint8_t* bitmap, int imageWidth, int imageHeight, int offsetX, int offsetY) {
+    if (!ready) return;
     const int mirrorBaseX = -offsetX + panelWidth;
     const int screenWidth = panelWidth * 2;
 
@@ -66,6 +67,7 @@ void Hub75DMA::drawBitmap(const uint8_t* bitmap, int imageWidth, int imageHeight
 }
 
 void Hub75DMA::drawBitmap(const uint8_t* bitmapL, const uint8_t* bitmapR, int imageWidth, int imageHeight, int offsetX, int offsetY) {
+    if (!ready) return;
     const int mirrorBaseX = -offsetX + panelWidth;
     const int screenWidth = panelWidth * 2;
 
@@ -106,6 +108,7 @@ void Hub75DMA::drawBitmap(const uint8_t* bitmapL, const uint8_t* bitmapR, int im
 }
 
 void Hub75DMA::drawBitmap(const uint8_t* bitmap, int imageWidth, int imageHeight, int offsetX, int offsetY, uint8_t r, uint8_t g, uint8_t b) {
+    if (!ready) return;
     for (int i = 0; i < imageHeight; i++) {
         const int row = offsetY + i;
         const uint8_t* rowPtr = bitmap + i * imageWidth;

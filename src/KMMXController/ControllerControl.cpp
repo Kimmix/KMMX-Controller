@@ -46,6 +46,7 @@ uint32_t KMMXController::getCheekFadeColor() {
 
 // State control for BLE
 void KMMXController::setEye(int i) {
+    if (queueControl(&KMMXController::setEye, i)) return;
     switch (i) {
         case 1:
             eyeState.setState(EyeStateEnum::GOOGLY, true, 0);  // Persistent, no timeout
@@ -94,6 +95,7 @@ void KMMXController::setEye(int i) {
 }
 
 void KMMXController::setMouth(int i) {
+    if (queueControl(&KMMXController::setMouth, i)) return;
     switch (i) {
         case 1:
             mouthState.setState(MouthStateEnum::WAH, true, 0);  // Persistent, no timeout
@@ -130,6 +132,7 @@ void KMMXController::setMouth(int i) {
 }
 
 void KMMXController::setViseme(int b) {
+    if (queueControl(&KMMXController::setViseme, b)) return;
     if (b == 0) {
         mouthState.setState(MouthStateEnum::IDLE, true, 0);  // Persistent, no timeout
         mouthState.savePrevState(MouthStateEnum::IDLE);  // Reset restore point to IDLE for clean slate
@@ -159,3 +162,12 @@ int KMMXController::getFanSpeed() {
     return fan.getSpeed();
 }
 #endif
+
+bool KMMXController::queueControl(ControlHandler handler, int value) {
+    if (xTaskGetCurrentTaskHandle() == renderTaskHandle) return false;
+    if (renderRunning.load()) {
+        const RenderCommand command{handler, value, {}};
+        xQueueSend(commandQueue, &command, portMAX_DELAY);
+    }
+    return true;
+}

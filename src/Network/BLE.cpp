@@ -99,8 +99,9 @@ class ByteWriteCallbacks : public NimBLECharacteristicCallbacks {
 class CheekBgColorCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        if (pCharacteristic->getValue().length() >= 3) {
-            const uint8_t* data = pCharacteristic->getValue().data();
+        const auto value = pCharacteristic->getValue();
+        if (value.length() >= 3) {
+            const uint8_t* data = value.data();
             if (BLEManager::instance->debugEnabled) {
                 Serial.print(F("[BLE] Cheek BG Color: R="));
                 Serial.print(data[0]);
@@ -117,8 +118,9 @@ class CheekBgColorCallbacks : public NimBLECharacteristicCallbacks {
 class CheekFadeColorCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        if (pCharacteristic->getValue().length() >= 3) {
-            const uint8_t* data = pCharacteristic->getValue().data();
+        const auto value = pCharacteristic->getValue();
+        if (value.length() >= 3) {
+            const uint8_t* data = value.data();
             if (BLEManager::instance->debugEnabled) {
                 Serial.print(F("[BLE] Cheek Fade Color: R="));
                 Serial.print(data[0]);
@@ -135,8 +137,9 @@ class CheekFadeColorCallbacks : public NimBLECharacteristicCallbacks {
 class DisplayEffectColor1Callbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        if (pCharacteristic->getValue().length() >= 3) {
-            const uint8_t* data = pCharacteristic->getValue().data();
+        const auto value = pCharacteristic->getValue();
+        if (value.length() >= 3) {
+            const uint8_t* data = value.data();
             uint8_t r = data[0], g = data[1], b = data[2];
             if (BLEManager::instance->debugEnabled) {
                 Serial.print(F("[BLE] Display Effect Color 1: R="));
@@ -163,8 +166,9 @@ class DisplayEffectColor1Callbacks : public NimBLECharacteristicCallbacks {
 class DisplayEffectColor2Callbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         if (!BLEManager::instance) return;
-        if (pCharacteristic->getValue().length() >= 3) {
-            const uint8_t* data = pCharacteristic->getValue().data();
+        const auto value = pCharacteristic->getValue();
+        if (value.length() >= 3) {
+            const uint8_t* data = value.data();
             uint8_t r = data[0], g = data[1], b = data[2];
             if (BLEManager::instance->debugEnabled) {
                 Serial.print(F("[BLE] Display Effect Color 2: R="));

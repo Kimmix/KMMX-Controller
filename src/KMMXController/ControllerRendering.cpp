@@ -4,6 +4,7 @@
 extern BLEManager& bleManager;
 
 void KMMXController::update() {
+    if (renderTaskHandle && xTaskGetCurrentTaskHandle() != renderTaskHandle) return;
     statusLED.update();
     updateSlotMachineCheeks();
     if (!slotMachine.isEnabled()) cheekPanel.update();
@@ -21,7 +22,7 @@ void KMMXController::update() {
     }
     if (boopInitialized) {
         slotMachine.update(getSensorData().proximity);
-        if (!gameActive && enableBoopDetection) handleBoop();
+        if (renderRunning.load() && !gameActive && enableBoopDetection) handleBoop();
     }
     if (oledInitialized) {
         updateOLED();
@@ -43,12 +44,19 @@ void KMMXController::renderTask(void* parameter) {
 
     // Calculate frame interval based on refresh rate
     int refreshRate = ctrl->display.getRefreshRate();
-    int frameDelayMs = 1000 / refreshRate;
+    int frameDelayMs = max(1, 1000 / refreshRate);
+    ctrl->renderRunning.store(true);
 
     // Initialize FPS counter with target rate
     ctrl->fpsCounter.setTargetFPS(refreshRate);
 
     while (true) {
+        RenderCommand command;
+        for (unsigned count = 0; count < commandCapacity && xQueueReceive(ctrl->commandQueue, &command, 0) == pdTRUE; ++count) {
+            if (command.handler) (ctrl->*command.handler)(command.value);
+            else ctrl->acceptSensor(command.sample);
+        }
+        ctrl->update();
         // Flip buffer to display the previously rendered frame
         ctrl->display.flipDMABuffer();
 
