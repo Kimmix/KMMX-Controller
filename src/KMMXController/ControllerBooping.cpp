@@ -40,7 +40,7 @@ void KMMXController::handleBoop() {
             break;
 
         case BoopEvent::LOCKED_OUT:
-            enableBoopDetection = false;
+            boopLockedOut = true;  // cleared in the render loop once proximity drops below boopMinThreshold
             if (eyeState.getState() == EyeStateEnum::ANGRY) {
                 eyeState.setState(EyeStateEnum::ANGRY, false, 1500);
             }

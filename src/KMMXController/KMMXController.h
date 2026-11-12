@@ -181,6 +181,7 @@ class KMMXController {
     uint8_t motionCounter = 0;  // Counter for hysteresis (sustained motion detection)
     bool baselineInitialized = false;  // Whether baseline has been set
     unsigned long nextFrame;
+    bool boopLockedOut = false;  // runtime lock-out after sustained too-close; not the user setting
     unsigned long lastBoopUpdate = static_cast<unsigned long>(-50);
     bool isSleeping = false;
     bool accelerometerInitialized = false;  // Track if accelerometer successfully initialized
