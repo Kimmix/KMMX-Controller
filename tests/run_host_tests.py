@@ -19,6 +19,7 @@ with tempfile.TemporaryDirectory() as temporary:
         print(name + ' passed', flush=True)
     run('viseme_scores', ['tests/viseme_scores.cpp', 'src/Renderer/VisemeCore.cpp'])
     run('fan_pwm', ['tests/fan_pwm.cpp', 'src/Devices/Fan/Fan.cpp'], ['-Itests/host', '-Isrc'])
+    run('boop', ['tests/boop.cpp', 'src/Renderer/Boop.cpp'], ['-Itests/host', '-Isrc'])
     display = (root / 'src/Devices/LEDMatrixDisplay/Hub75DMA.cpp').read_text()
     constructor = display[display.index('    ready = matrix->begin()'):display.index('int Hub75DMA::getRefreshRate()')]
     queue = (root / 'src/KMMXController/ControllerControl.cpp').read_text()
