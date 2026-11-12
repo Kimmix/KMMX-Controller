@@ -355,6 +355,7 @@ void EyeState::checkAndTriggerBlink() {
     // Decide if double blink (10% chance)
     shouldDoubleBlink = (esp_random() % 100) < 10;
     blinkCount = 0;
+    blinkResumeAt = 0;
 
     // Select blink speed and initialize animation
     const TimeBasedAnimConfig* blinkConfig = selectBlinkSpeed(shouldDoubleBlink);
