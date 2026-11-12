@@ -21,14 +21,14 @@ static const uint8_t BLE_MFG_DATA[] PROGMEM = {
 
 // Simplified Server Callbacks - directly implement logic
 class ServerCallbacks : public NimBLEServerCallbacks {
-    void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) {
+    void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override {
         pServer->updateConnParams(connInfo.getConnHandle(), 12, 24, 0, 100);
         if (BLEManager::instance && BLEManager::instance->debugEnabled) {
             Serial.println(F("[BLE] Client connected"));
         }
     }
 
-    void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
+    void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) override {
         if (BLEManager::instance && BLEManager::instance->debugEnabled) {
             Serial.print(F("[BLE] Client disconnected, reason: "));
             Serial.println(reason);
@@ -76,7 +76,7 @@ class ByteWriteCallbacks : public NimBLECharacteristicCallbacks {
     ByteWriteCallbacks(const __FlashStringHelper* label, ByteWriteHandler handler, ByteValidator validator = validAnyByte, bool hex = false)
         : label(label), handler(handler), validator(validator), hex(hex) {}
 
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         if (!BLEManager::instance) return;
         uint8_t value;
         if (!readByte(pCharacteristic, value)) return;
@@ -97,7 +97,7 @@ class ByteWriteCallbacks : public NimBLECharacteristicCallbacks {
 };
 
 class CheekBgColorCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         if (!BLEManager::instance) return;
         const auto value = pCharacteristic->getValue();
         if (value.length() >= 3) {
@@ -116,7 +116,7 @@ class CheekBgColorCallbacks : public NimBLECharacteristicCallbacks {
 };
 
 class CheekFadeColorCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         if (!BLEManager::instance) return;
         const auto value = pCharacteristic->getValue();
         if (value.length() >= 3) {
@@ -135,7 +135,7 @@ class CheekFadeColorCallbacks : public NimBLECharacteristicCallbacks {
 };
 
 class DisplayEffectColor1Callbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         if (!BLEManager::instance) return;
         const auto value = pCharacteristic->getValue();
         if (value.length() >= 3) {
@@ -164,7 +164,7 @@ class DisplayEffectColor1Callbacks : public NimBLECharacteristicCallbacks {
 };
 
 class DisplayEffectColor2Callbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         if (!BLEManager::instance) return;
         const auto value = pCharacteristic->getValue();
         if (value.length() >= 3) {
