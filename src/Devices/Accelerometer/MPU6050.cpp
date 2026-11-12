@@ -126,16 +126,15 @@ void MPU6050::calibrateGyro() {
 void MPU6050::updateSensorFusion(float dt) {
     // Get accelerometer angles (in degrees)
     // These are noisy but don't drift over time
-    float accelPitch = atan2(accelEvent.acceleration.y,
-                             sqrt(accelEvent.acceleration.x * accelEvent.acceleration.x +
-                                  accelEvent.acceleration.z * accelEvent.acceleration.z)) * 57.2958f;
-    float accelRoll = atan2(-accelEvent.acceleration.x, accelEvent.acceleration.z) * 57.2958f;
+    // Board is mounted Y-down (rest accel is (0, -9.8, 0)). Axis/sign choice derived on paper, not checked on hardware.
+    float accelPitch = atan2f(accelEvent.acceleration.x, -accelEvent.acceleration.y) * 57.2958f;
+    float accelRoll = atan2f(accelEvent.acceleration.z, -accelEvent.acceleration.y) * 57.2958f;
 
     // Integrate gyroscope data (in degrees)
     // These are smooth but drift over time
     // Convert gyro from rad/s to deg/s and integrate
-    float gyroPitchDelta = gyroEvent.gyro.x * 57.2958f * dt;
-    float gyroRollDelta = gyroEvent.gyro.y * 57.2958f * dt;
+    float gyroPitchDelta = -gyroEvent.gyro.z * 57.2958f * dt;
+    float gyroRollDelta = gyroEvent.gyro.x * 57.2958f * dt;
 
     // Complementary filter: blend accelerometer and gyroscope
     // fusedAngle = ALPHA * accelAngle + (1 - ALPHA) * (fusedAngle + gyroRate * dt)
