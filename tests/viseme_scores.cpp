@@ -11,19 +11,28 @@ int main() {
     assert(std::memcmp(core.status.scoreWeights, expected, sizeof(expected)) == 0);
 
     const auto defaults = core.scales;
-    assert((defaults == std::array<uint8_t, 5>{35, 13, 15, 11, 10}));
-    const uint8_t tuned[] = {0, 0, 50, 0, 0};
-    core.writeScales(tuned, 5);
-    const uint8_t invalid[] = {1, 2, 3, 4, 51};
-    core.writeScales(invalid, 5);
-    core.writeScales(invalid, 4);
-    core.writeScales(invalid, 1);
-    assert(std::memcmp(core.scales.data(), tuned, 5) == 0);
+    assert((defaults == std::array<uint16_t, 5>{350, 130, 150, 110, 100}));
+    const uint8_t precise[] = {2, 163, 0, 1, 0, 244, 1, 0, 0, 100, 0};
+    core.writeScales(precise, sizeof(precise));
+    assert((core.scales == std::array<uint16_t, 5>{163, 1, 500, 0, 100}));
+    const auto readback = core.readScales();
+    assert(std::memcmp(readback.data(), precise, sizeof(precise)) == 0);
+    auto invalid = readback;
+    invalid[9] = 245; invalid[10] = 1; // 501: no partial update.
+    core.writeScales(invalid.data(), invalid.size());
+    invalid = readback; invalid[0] = 3;
+    core.writeScales(invalid.data(), invalid.size());
+    core.writeScales(precise, 10);
+    const uint8_t legacy[] = {0, 0, 50, 0, 0};
+    core.writeScales(legacy, sizeof(legacy));
+    assert(core.readScales() == readback);
+    const uint8_t tuned[] = {2, 0, 0, 0, 0, 244, 1, 0, 0, 0, 0};
+    core.writeScales(tuned, sizeof(tuned));
     core.frame(20, true, false, true, true, scores, 132);
     core.frame(20, true, false, true, true, scores, 164);
     assert(core.status.shape == 2 && core.status.scoreWeights[2] == 255);
-    const uint8_t zeros[5] = {};
-    core.writeScales(zeros, 5);
+    const uint8_t zeros[11] = {2};
+    core.writeScales(zeros, sizeof(zeros));
     core.frame(20, true, false, true, true, scores, 196);
     for (auto weight : core.status.scoreWeights) assert(weight == 0);
     const uint8_t reset = 0xff;

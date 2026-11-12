@@ -5,18 +5,32 @@
 #include "VisemeConfig.h"
 
 namespace {
-constexpr uint8_t tenths(float value) { return uint8_t(value * 10 + 0.5f); }
-constexpr std::array<uint8_t, 5> defaultScales = {tenths(visemeAhScale), tenths(visemeEeScale),
-    tenths(visemeOhScale), tenths(visemeOoScale), tenths(visemeThScale)};
+constexpr uint16_t hundredths(float value) { return uint16_t(value * 100 + 0.5f); }
+constexpr std::array<uint16_t, 5> defaultScales = {hundredths(visemeAhScale), hundredths(visemeEeScale),
+    hundredths(visemeOhScale), hundredths(visemeOoScale), hundredths(visemeThScale)};
 }
 
 LipSync::Core::Core() : scales(defaultScales) {}
 
 void LipSync::Core::writeScales(const uint8_t* bytes, size_t size) {
-    if (size == 1 && bytes[0] == 0xff) scales = defaultScales;
-    if (size != scales.size()) return;
-    for (size_t i = 0; i < size; ++i) if (bytes[i] > 50) return;
-    std::copy(bytes, bytes + size, scales.begin());
+    if (size == 1 && bytes[0] == 0xff) { scales = defaultScales; return; }
+    if (size != ScalesSize || bytes[0] != 2) return;
+    std::array<uint16_t, 5> next;
+    for (size_t i = 0; i < next.size(); ++i) {
+        next[i] = uint16_t(bytes[1 + i * 2]) | (uint16_t(bytes[2 + i * 2]) << 8);
+        if (next[i] > 500) return;
+    }
+    scales = next;
+}
+
+std::array<uint8_t, LipSync::ScalesSize> LipSync::Core::readScales() const {
+    std::array<uint8_t, ScalesSize> bytes{};
+    bytes[0] = 2;
+    for (size_t i = 0; i < scales.size(); ++i) {
+        bytes[1 + i * 2] = scales[i] & 0xff;
+        bytes[2 + i * 2] = scales[i] >> 8;
+    }
+    return bytes;
 }
 
 namespace LipSync {
@@ -111,7 +125,7 @@ void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
                  bool talking, const float rawScores[5], uint32_t now) {
     float scores[5] = {};
     if (rawScores)
-        for (size_t i = 0; i < scales.size(); ++i) scores[i] = rawScores[i] * (scales[i] / 10.0f);
+        for (size_t i = 0; i < scales.size(); ++i) scores[i] = rawScores[i] * (scales[i] / 100.0f);
     bool validScores = true;
     float total = 0;
     for (float score : scores) {

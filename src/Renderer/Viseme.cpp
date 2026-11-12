@@ -25,9 +25,9 @@ Viseme::Snapshot Viseme::snapshot() {
     xSemaphoreGive(mutex);
     return result;
 }
-std::array<uint8_t, 5> Viseme::readScales() {
+std::array<uint8_t, LipSync::ScalesSize> Viseme::readScales() {
     xSemaphoreTake(mutex, portMAX_DELAY);
-    const auto scales = core.scales;
+    const auto scales = core.readScales();
     xSemaphoreGive(mutex);
     return scales;
 }

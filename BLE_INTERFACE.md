@@ -70,11 +70,11 @@ new firmware retain basic controls, but their cached advanced sliders are unsupp
 | Calibration command | `b9725d02-7546-4e0b-9b91-486e25012a02` | WRITE | 1 byte |
 | Viseme status | `b9725d03-7546-4e0b-9b91-486e25012a02` | READ, NOTIFY | 16 bytes |
 | Viseme scores | `b9725d05-7546-4e0b-9b91-486e25012a02` | READ, NOTIFY | 5 bytes |
-| Viseme scale factors | `b9725d06-7546-4e0b-9b91-486e25012a02` | READ, WRITE | 5 bytes, or write one byte `FF` to reset |
+| Viseme scale factors | `b9725d06-7546-4e0b-9b91-486e25012a02` | READ, WRITE | 11 bytes (v2), or write one byte `FF` to reset |
 
-Scale factors are unsigned tenths (0–50 = 0.0×–5.0×) in AH, EE, OH, OO, TH order. Write all five together. Invalid lengths or values leave the active set intact. Readback always returns the five active factors. Changes affect scores and mouth selection on subsequent audio frames, survive disconnect, and reset to firmware defaults on reboot or reset command. Current defaults are 35, 13, 15, 11, 10. Panels can use score monitoring alone when this optional characteristic is absent.
+Scale factors are unsigned hundredths in v2: byte 0 = `02`, followed by five unsigned 16-bit little-endian values (0–500 = 0.00×–5.00×) in AH, EE, OH, OO, TH order. Write all five together. Invalid versions, lengths or values leave the active set intact. Readback always returns the 11-byte v2 frame. Changes affect scores and mouth selection on subsequent audio frames, survive disconnect, and reset to firmware defaults on reboot or reset command. Current defaults are 350, 130, 150, 110, 100. Panels can use score monitoring alone when this optional characteristic is absent.
 
-Viseme scores report the latest frame in AH, EE, OH, OO, TH order, with notifications up to 10 Hz. Each byte is the scaled FFT band score divided by the sum of the five scaled scores, multiplied by 255 and rounded independently. A zero total or skipped FFT produces five zeros. Mouth opening is available separately in viseme status.
+Panel sensitivity sliders use a quadratic mapping: `round(500 * t²)` wire units for slider fraction `t` in 0–1. This gives lower sensitivities more travel while retaining zero and the full 5.0× range. Arrow keys adjust one firmware step (0.01×). Update both panel and firmware: legacy 5-byte writes are rejected, and the new panel disables sensitivity editing with an update message on legacy readback. Reset remains the single byte `FF`. The golden frame for 1.63×, 0.01×, 5.00×, 0.00×, 1.00× is `02 A3 00 01 00 F4 01 00 00 64 00`.
 
 All multibyte fields are little-endian. Serialize fields explicitly, without C struct
 padding. Each settings write replaces the complete record atomically.

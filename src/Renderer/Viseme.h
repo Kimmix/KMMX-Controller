@@ -16,7 +16,7 @@ public:
     const uint8_t** getFrames(VisemeType type) { return visemeFrames[type]; }
     struct Snapshot { LipSync::Settings settings; LipSync::Status status; };
     Snapshot snapshot();
-    std::array<uint8_t, 5> readScales();
+    std::array<uint8_t, LipSync::ScalesSize> readScales();
     void writeScales(const uint8_t* bytes, size_t size);
     void readSettings(uint8_t* bytes);
     void readStatus(uint8_t* bytes);

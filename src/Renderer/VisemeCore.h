@@ -7,6 +7,7 @@
 namespace LipSync {
 constexpr size_t SettingsSize = 10;
 constexpr size_t StatusSize = 16;
+constexpr size_t ScalesSize = 11;
 enum class Response : uint8_t { Snappy, Natural, Smooth };
 enum class Calibration : uint8_t { Idle, Countdown, Measuring, Success, Failed, Cancelled };
 enum class MicState : uint8_t { Ready, ReadError, InitError };
@@ -39,7 +40,8 @@ void encodeStatus(const Status& status, uint8_t* bytes);
 class Core {
 public:
     Core();
-    std::array<uint8_t, 5> scales;
+    std::array<uint16_t, 5> scales;
+    std::array<uint8_t, ScalesSize> readScales() const;
     void writeScales(const uint8_t* bytes, size_t size);
     Settings settings;
     Status status;
