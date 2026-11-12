@@ -45,6 +45,7 @@ static bool readByte(NimBLECharacteristic* characteristic, uint8_t& value) {
 
 using ByteWriteHandler = void (*)(KMMXController&, uint8_t);
 using ByteValidator = bool (*)(uint8_t);
+using ByteGetter = uint8_t (*)(KMMXController&);  // live value for reads; nullptr = write-only
 
 static bool validAnyByte(uint8_t) { return true; }
 static bool validBoolean(uint8_t value) { return value <= 1; }
@@ -73,8 +74,14 @@ static void setFanSpeed(KMMXController& controller, uint8_t value) { controller.
 
 class ByteWriteCallbacks : public NimBLECharacteristicCallbacks {
    public:
-    ByteWriteCallbacks(const __FlashStringHelper* label, ByteWriteHandler handler, ByteValidator validator = validAnyByte, bool hex = false)
-        : label(label), handler(handler), validator(validator), hex(hex) {}
+    ByteWriteCallbacks(const __FlashStringHelper* label, ByteWriteHandler handler, ByteGetter getter, ByteValidator validator = validAnyByte, bool hex = false)
+        : label(label), handler(handler), getter(getter), validator(validator), hex(hex) {}
+
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        if (!getter || !BLEManager::instance) return;
+        const uint8_t value = getter(BLEManager::instance->controller);
+        pCharacteristic->setValue(&value, 1);
+    }
 
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         if (!BLEManager::instance) return;
@@ -92,6 +99,7 @@ class ByteWriteCallbacks : public NimBLECharacteristicCallbacks {
    private:
     const __FlashStringHelper* label;
     ByteWriteHandler handler;
+    ByteGetter getter;
     ByteValidator validator;
     bool hex;
 };
@@ -461,30 +469,30 @@ void BLEManager::setup() {
     #endif
 
     // Set callbacks for each characteristic (simple, direct callbacks)
-    displayBrightnessCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Display Brightness: "), setDisplayBrightness));
-    eyeStateCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Eye State: "), setEyeState));
-    mouthStateCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Mouth State: "), setMouthState));
-    visemeCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Viseme: "), setVisemeState, validBoolean));
-    hornBrightnessCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Horn Brightness: "), setHornBrightness));
-    cheekBrightnessCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Cheek Brightness: "), setCheekBrightness));
+    displayBrightnessCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Display Brightness: "), setDisplayBrightness, [](KMMXController& c) -> uint8_t { return c.displayControl().getBrightnessValue(); }));
+    eyeStateCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Eye State: "), setEyeState, nullptr));
+    mouthStateCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Mouth State: "), setMouthState, nullptr));
+    visemeCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Viseme: "), setVisemeState, [](KMMXController& c) -> uint8_t { return c.getViseme(); }, validBoolean));
+    hornBrightnessCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Horn Brightness: "), setHornBrightness, [](KMMXController& c) -> uint8_t { return c.getHornBrightness(); }));
+    cheekBrightnessCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Cheek Brightness: "), setCheekBrightness, [](KMMXController& c) -> uint8_t { return c.getCheekBrightness(); }));
     cheekBgColorCharacteristic->setCallbacks(new CheekBgColorCallbacks());
     cheekFadeColorCharacteristic->setCallbacks(new CheekFadeColorCallbacks());
-    displayColorModeCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Display Color Mode: "), setDisplayColorMode));
+    displayColorModeCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Display Color Mode: "), setDisplayColorMode, [](KMMXController& c) -> uint8_t { return c.displayControl().getColorMode(); }));
     displayEffectColor1Characteristic->setCallbacks(new DisplayEffectColor1Callbacks());
     displayEffectColor2Characteristic->setCallbacks(new DisplayEffectColor2Callbacks());
-    displayEffectOption1Characteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Display Effect Option 1 (Thickness): "), setDisplayEffectThickness));
-    displayEffectOption2Characteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Display Effect Option 2 (Speed): "), setDisplayEffectSpeed));
-    displayEffectOption3Characteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Display Effect Option 3 (Direction Inverted): "), setDisplayEffectDirection));
-    rebootCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Reboot requested: "), rebootController, validNonZero));
-    slotMachineEnableCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Slot Machine: "), setSlotMachineEnabled, validBoolean));
-    glitchTriggerCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Glitch Trigger: "), triggerGlitch));
-    motionEnableFlagsCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Motion Enable Flags: 0x"), setMotionFlags, validAnyByte, true));
-    tapSensitivityCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Tap Sensitivity: "), setTapSensitivity));
-    glitchIntensityCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Glitch Intensity: "), setGlitchIntensity));
+    displayEffectOption1Characteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Display Effect Option 1 (Thickness): "), setDisplayEffectThickness, [](KMMXController& c) -> uint8_t { return c.displayControl().getEffectThickness(); }));
+    displayEffectOption2Characteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Display Effect Option 2 (Speed): "), setDisplayEffectSpeed, [](KMMXController& c) -> uint8_t { return c.displayControl().getEffectSpeed(); }));
+    displayEffectOption3Characteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Display Effect Option 3 (Direction Inverted): "), setDisplayEffectDirection, [](KMMXController& c) -> uint8_t { return c.displayControl().getEffectDirectionInverted(); }));
+    rebootCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Reboot requested: "), rebootController, nullptr, validNonZero));
+    slotMachineEnableCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Slot Machine: "), setSlotMachineEnabled, [](KMMXController& c) -> uint8_t { return c.getSlotMachineEnabled(); }, validBoolean));
+    glitchTriggerCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Glitch Trigger: "), triggerGlitch, nullptr));
+    motionEnableFlagsCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Motion Enable Flags: 0x"), setMotionFlags, [](KMMXController& c) -> uint8_t { return c.getMotionEnableFlags(); }, validAnyByte, true));
+    tapSensitivityCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Tap Sensitivity: "), setTapSensitivity, [](KMMXController& c) -> uint8_t { return c.getTapSensitivity(); }));
+    glitchIntensityCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Glitch Intensity: "), setGlitchIntensity, [](KMMXController& c) -> uint8_t { return c.getGlitchIntensity(); }));
 
     // Set fan control callbacks
     #if HAS_FAN_CONTROL
-    fanSpeedCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Fan Speed: "), setFanSpeed));
+    fanSpeedCharacteristic->setCallbacks(new ByteWriteCallbacks(F("[BLE] Fan Speed: "), setFanSpeed, [](KMMXController& c) -> uint8_t { return c.getFanSpeed(); }));
     #endif
 
     // Start the server (this automatically starts all services)
