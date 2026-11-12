@@ -64,12 +64,6 @@ void ColorEffects::setDualSpiralColor(uint8_t spiralR, uint8_t spiralG, uint8_t 
     dualSpiralB = spiralB;
 }
 
-void ColorEffects::getDualSpiralColor(uint8_t& r, uint8_t& g, uint8_t& b) const {
-    r = dualSpiralR;
-    g = dualSpiralG;
-    b = dualSpiralB;
-}
-
 void ColorEffects::setEffectThickness(uint8_t thickness) {
     dualSpiralThickness = thickness;
 }
@@ -98,12 +92,6 @@ void ColorEffects::setDualCircleColor(uint8_t circleR, uint8_t circleG, uint8_t 
     dualCircleR = circleR;
     dualCircleG = circleG;
     dualCircleB = circleB;
-}
-
-void ColorEffects::getDualCircleColor(uint8_t& r, uint8_t& g, uint8_t& b) const {
-    r = dualCircleR;
-    g = dualCircleG;
-    b = dualCircleB;
 }
 
 // ============================================================================

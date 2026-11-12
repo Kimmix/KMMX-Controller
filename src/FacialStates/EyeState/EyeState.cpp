@@ -172,9 +172,6 @@ void EyeState::update() {
         case EyeStateEnum::UNIMPRESSED:
             playAnimationWithLoop(unimpressedData);
             break;
-        case EyeStateEnum::DETRANSITION:
-            detransition();
-            break;
         default:
             break;
     }
@@ -498,9 +495,6 @@ void EyeState::resetSleepFace() {
     sleepIndex = 0;
     startSleepTime = millis();
     nextSleepFrameChange = millis();
-}
-
-void EyeState::detransition() {
 }
 
 void EyeState::renderGooglyEye() {

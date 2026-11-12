@@ -44,7 +44,6 @@ class MouthState {
     void setSensorData(const SensorData& data);
     void setBoopCompleted(bool completed);
     void releaseBoop(unsigned long durationMs);
-    void resetMovingMouth();
     void setSlowAnimation(bool slow);
 
    private:
@@ -53,7 +52,6 @@ class MouthState {
     bool boopCompleted = false;
     MouthStateEnum prevState = MouthStateEnum::IDLE;
     std::atomic<MouthStateEnum> currentState{MouthStateEnum::IDLE};
-    unsigned long mouthInterval, nextAngry;
     unsigned long stateStartTime = 0;       // When current state started (for auto-reset)
     unsigned long customResetDuration = 0;  // Custom duration override (0 = infinite)
     bool isTransitioning = false;

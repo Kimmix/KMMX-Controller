@@ -200,28 +200,12 @@ class Hub75DMA {
     void setDualSpiralColor(uint8_t spiralR, uint8_t spiralG, uint8_t spiralB);
 
     /**
-     * @brief Gets the dual spiral color.
-     * @param r Reference to red component (output)
-     * @param g Reference to green component (output)
-     * @param b Reference to blue component (output)
-     */
-    void getDualSpiralColor(uint8_t& r, uint8_t& g, uint8_t& b) const;
-
-    /**
      * @brief Sets the dual circle color for Mode 5.
      * @param circleR Circle color red component (0-255)
      * @param circleG Circle color green component (0-255)
      * @param circleB Circle color blue component (0-255)
      */
     void setDualCircleColor(uint8_t circleR, uint8_t circleG, uint8_t circleB);
-
-    /**
-     * @brief Gets the dual circle color.
-     * @param r Reference to red component (output)
-     * @param g Reference to green component (output)
-     * @param b Reference to blue component (output)
-     */
-    void getDualCircleColor(uint8_t& r, uint8_t& g, uint8_t& b) const;
 
     /**
      * @brief Sets the effect thickness for Mode 4 & 5 (band width/spacing).

@@ -176,7 +176,7 @@ void KMMXController::checkMotionFeatures(KMMXController* controller) {
     }
 
     // Get current sensor data from active buffer
-    const SensorData& current = controller->sensorBuffer[controller->activeBuffer];
+    const SensorData& current = controller->currentSensor;
 
     // Get current facial states
     EyeStateEnum currentEyeState = controller->eyeState.getState();

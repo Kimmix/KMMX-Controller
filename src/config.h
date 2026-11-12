@@ -47,10 +47,6 @@
 #define BLE_PASSKEY 123456
 #endif
 
-#ifndef BLE_LOCAL_NAME
-#define BLE_LOCAL_NAME "KMMX-BLE"
-#endif
-
 // ============================================================================
 // SECTION 3: Display Geometry and Configuration
 // ============================================================================

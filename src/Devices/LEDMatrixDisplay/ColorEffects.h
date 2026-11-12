@@ -75,11 +75,6 @@ class ColorEffects {
     void setDualSpiralColor(uint8_t spiralR, uint8_t spiralG, uint8_t spiralB);
 
     /**
-     * @brief Get the dual spiral color
-     */
-    void getDualSpiralColor(uint8_t& r, uint8_t& g, uint8_t& b) const;
-
-    /**
      * @brief Set effect thickness for Mode 4 & 5 (affects band width/spacing)
      * @param thickness Thickness value (0-255), higher = thicker bands
      */
@@ -120,11 +115,6 @@ class ColorEffects {
      * @param circleB Circle color blue component (0-255)
      */
     void setDualCircleColor(uint8_t circleR, uint8_t circleG, uint8_t circleB);
-
-    /**
-     * @brief Get the dual circle color
-     */
-    void getDualCircleColor(uint8_t& r, uint8_t& g, uint8_t& b) const;
 
    private:
     uint8_t panelWidth;

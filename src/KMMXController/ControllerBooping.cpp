@@ -6,7 +6,7 @@ void KMMXController::handleBoop() {
     if (now - lastBoopUpdate < 50) return;
     lastBoopUpdate = now;
 
-    const BoopResult result = boop.update(sensorBuffer[activeBuffer].proximity, now);
+    const BoopResult result = boop.update(currentSensor.proximity, now);
 
     switch (result.event) {
         case BoopEvent::APPROACHING:

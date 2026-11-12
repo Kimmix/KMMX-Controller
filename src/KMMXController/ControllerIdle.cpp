@@ -53,7 +53,7 @@ void KMMXController::checkIdleAndSleep(KMMXController* controller, unsigned long
         return;
     }
 
-    const SensorData& current = controller->sensorBuffer[controller->activeBuffer];
+    const SensorData& current = controller->currentSensor;
 
     // Initialize baseline on first run
     if (!controller->baselineInitialized) {

@@ -197,11 +197,6 @@ bool TimeBasedAnimation::isComplete(const TimeBasedAnimState& anim) {
     return anim.hasCompleted;
 }
 
-float TimeBasedAnimation::getProgress(const TimeBasedAnimState& anim) {
-    if (anim.frameCount <= 1) return 1.0f;
-    return (float)anim.currentFrameIndex / (float)(anim.frameCount - 1);
-}
-
 const uint8_t* TimeBasedAnimation::update(TimeBasedAnimState& anim) {
     unsigned long currentTime = millis();
 

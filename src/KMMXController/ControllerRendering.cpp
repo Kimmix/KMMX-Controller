@@ -32,16 +32,6 @@ void KMMXController::update() {
     }
 }
 
-void KMMXController::renderFace() {
-    display.flipDMABuffer();
-    display.clearScreen();
-    display.updateColorEffectsFrame();  // Update cached time once per frame
-    display.drawNose(noseNew);
-    mouthState.update();
-    eyeState.update();
-    fxState.update();
-}
-
 void KMMXController::renderTask(void* parameter) {
     KMMXController* ctrl = static_cast<KMMXController*>(parameter);
 

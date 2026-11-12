@@ -24,8 +24,7 @@ enum class EyeStateEnum { IDLE,
                           ROUNDED,
                           SHARP,
                           GIGGLE,
-                          UNIMPRESSED,
-                          DETRANSITION };
+                          UNIMPRESSED };
 
 // Unified animation data structure to reduce repetition
 struct AnimationData {
@@ -207,7 +206,6 @@ class EyeState {
     void playAnimationWithLoop(AnimationData& animData);  // Generic animation playback
     void sleepFace();
     void resetSleepFace();
-    void detransition();
     void renderGooglyEye();
     void initAnimationData(AnimationData& data, const uint8_t** frames, uint8_t frameCount,
                           uint8_t loopFrameCount, unsigned long autoResetDuration,

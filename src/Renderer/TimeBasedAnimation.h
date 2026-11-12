@@ -120,7 +120,6 @@ public:
      * @param anim Animation state
      * @return Progress value
      */
-    static float getProgress(const TimeBasedAnimState& anim);
 
 private:
     /**

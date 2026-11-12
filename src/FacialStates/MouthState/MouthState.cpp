@@ -90,11 +90,7 @@ void MouthState::update() {
             angryBoop();
             break;
         case MouthStateEnum::TALKING:
-            if (visemeFrame == mouthDefault) {
-                drawDefault();
-            } else {
-                display->drawMouth(visemeFrame);
-            }
+            display->drawMouth(visemeFrame);
             break;
         case MouthStateEnum::WAH: {
             const uint8_t* wahFrame = TimeBasedAnimation::update(wahAnim);
@@ -247,10 +243,6 @@ void MouthState::releaseBoop(unsigned long durationMs) {
 
 void MouthState::drawDefault() {
     display->drawMouth(mouthFrame);
-}
-
-void MouthState::resetMovingMouth() {
-    TimeBasedAnimation::reset(idleAnim);
 }
 
 void MouthState::setSlowAnimation(bool slow) {
