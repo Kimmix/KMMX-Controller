@@ -151,7 +151,8 @@ void ColorEffects::modeSpiralVortex(uint8_t lightness, int row, int col, uint8_t
     float spiralValue = angle + distance * spiralTightness - cachedTime * spiralSpeed;
 
     // Normalize to 0-1 range using sine wave for smooth cycling
-    float hue = fmodf(spiralValue / (2.0f * PI) + 1.0f, 1.0f);
+    float hue = spiralValue / (2.0f * PI);
+    hue -= floorf(hue);
 
     // Add radial pulse effect (using cached time for performance)
     float pulse = sinf(distance * 0.1f - cachedTime * 3.0f) * 0.5f + 0.5f;
