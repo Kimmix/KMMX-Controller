@@ -3,6 +3,7 @@
 #include "Utils/Utils.h"
 #include "VisemeConfig.h"
 #include "VisemeCore.h"
+#include "AudioWindow.h"
 #include "Devices/Microphone/I2SMicrophone.h"
 #include "Bitmaps/Bitmaps.h"
 #include <freertos/semphr.h>
@@ -27,7 +28,8 @@ private:
     StaticSemaphore_t mutexStorage;
     SemaphoreHandle_t mutex = xSemaphoreCreateMutexStatic(&mutexStorage);
     LipSync::Core core;
-    int16_t i2sBuffer[i2sSamples];
+    int32_t i2sBuffer[i2sHopSamples];
+    LipSync::AudioWindow audioWindow;
     // The ESP32-S3 FFT uses paired loads/stores; keep alignment independent of sensor layout.
     alignas(16) float fftBuffer[2 * i2sSamples];
     float hannWindow[i2sSamples];

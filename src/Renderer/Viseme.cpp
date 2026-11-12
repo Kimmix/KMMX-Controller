@@ -2,7 +2,7 @@
 #include <cmath>
 
 bool Viseme::initMic() {
-    if (!mic.init(i2sSampleRate, i2sSamples)) { core.initFailed(); return false; }
+    if (!mic.init(i2sSampleRate, i2sHopSamples)) { core.initFailed(); return false; }
     if (dsps_fft2r_init_fc32(nullptr, i2sSamples) != ESP_OK) {
         mic.stop_i2s(); core.initFailed(); return false;
     }
@@ -49,19 +49,21 @@ void Viseme::calibrationCommand(const uint8_t* bytes, size_t size) {
     xSemaphoreGive(mutex);
 }
 const uint8_t* Viseme::renderViseme(bool talking) {
-    const bool validAudio = mic.read(i2sBuffer, i2sSamples);
+    const bool validAudio = mic.read(i2sBuffer, i2sHopSamples);
+    const bool ready = audioWindow.append(i2sBuffer, validAudio ? i2sHopSamples : 0);
+    if (validAudio && !ready) return mouthDefault1;
     float rms = 0, scores[5] = {};
     bool clipped = false, nonzero = false;
     if (validAudio) {
-        int32_t sum = 0;
-        for (int16_t sample : i2sBuffer) {
+        float sum = 0;
+        for (float sample : audioWindow.samples) {
             sum += sample; nonzero |= sample != 0;
             clipped |= sample >= 32760 || sample <= -32760;
         }
         const float mean = float(sum) / i2sSamples;
         float squares = 0;
         for (int i = 0; i < i2sSamples; ++i) {
-            const float sample = i2sBuffer[i] - mean;
+            const float sample = audioWindow.samples[i] - mean;
             squares += sample * sample;
             fftBuffer[2 * i] = sample * hannWindow[i];
             fftBuffer[2 * i + 1] = 0;

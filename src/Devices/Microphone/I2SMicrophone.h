@@ -14,7 +14,7 @@ class I2SMicrophone {
     I2SMicrophone();
     ~I2SMicrophone();
     bool init(uint32_t sampleRate, int samples);
-    bool read(int16_t* buffer, int samples);
+    bool read(int32_t* buffer, int samples);
     bool start_i2s();
     void stop_i2s();
 };

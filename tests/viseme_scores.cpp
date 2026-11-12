@@ -1,9 +1,60 @@
 #include "../src/Renderer/VisemeCore.h"
 #include <cassert>
+#include "../src/Renderer/AudioWindow.h"
 #include <cstring>
 #include <limits>
 
 int main() {
+    assert(LipSync::sampleAmplitude(0x7fffff00) > 32767);
+    assert(LipSync::sampleAmplitude(INT32_MIN) == -32768);
+    assert(LipSync::sampleAmplitude(65536) == 1);
+    assert(LipSync::sampleAmplitude(-65536) == -1);
+    LipSync::AudioWindow window;
+    int32_t block[i2sHopSamples];
+    std::fill(block, block + i2sHopSamples, 65536);
+    assert(!window.append(block, i2sHopSamples));
+    std::fill(block, block + i2sHopSamples, 131072);
+    assert(window.append(block, i2sHopSamples));
+    assert(window.samples[0] == 1 && window.samples[511] == 2);
+    std::fill(block, block + i2sHopSamples, 196608);
+    assert(window.append(block, i2sHopSamples));
+    assert(window.samples[0] == 2 && window.samples[511] == 3);
+    assert(!window.append(block, 17));
+    assert(!window.append(block, i2sHopSamples));
+    assert(window.append(block, i2sHopSamples));
+    assert(window.samples[0] == 3);
+    const float winner[] = {0, 100, 0, 0, 0};
+    for (uint32_t step : {16u, 32u}) {
+        LipSync::Core timed;
+        timed.frame(100, true, false, true, true, winner, 100);
+        if (step == 16) {
+            timed.frame(100, true, false, true, true, winner, 116);
+            assert(timed.status.shape == 0);
+        }
+        timed.frame(100, true, false, true, true, winner, 132);
+        assert(timed.status.shape == 1);
+    }
+    assert(LipSync::sampleAmplitude(2146959360) == 32760);
+    assert(LipSync::sampleAmplitude(-2146959360) == -32760);
+    LipSync::Core interrupted;
+    const float noWinner[5] = {};
+    interrupted.frame(100, true, false, true, true, winner, 100);
+    interrupted.frame(100, true, false, true, true, noWinner, 116);
+    interrupted.frame(100, true, false, true, true, winner, 132);
+    assert(interrupted.status.shape == 0);
+    interrupted.frame(0, false, false, false, true, nullptr, 148);
+    interrupted.frame(100, true, false, true, true, winner, 164);
+    assert(interrupted.status.shape == 0);
+    interrupted.frame(100, true, false, true, true, winner, 196);
+    assert(interrupted.status.shape == 1);
+    LipSync::Core calibration;
+    assert(calibration.command(1, 0));
+    for (uint32_t now = 0; now < 4016; now += 16)
+        calibration.frame(10, true, false, true, true, winner, now);
+    assert(calibration.status.calibration == LipSync::Calibration::Measuring);
+    calibration.frame(10, true, false, true, true, winner, 4016);
+    assert(calibration.status.calibration == LipSync::Calibration::Success);
+
     LipSync::Core core;
     const float scores[] = {10, 0, 20, 0, 0};
     core.frame(20, true, false, true, true, scores, 100);

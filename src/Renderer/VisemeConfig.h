@@ -14,8 +14,8 @@
 // ============================================================================
 
 // I2S Audio Configuration
-const float i2sSampleRate = 8000.0f;                            // Sample rate in Hz (8kHz is sufficient for speech)
-const uint16_t i2sSamples = 256;                                // Number of samples per FFT window (power of 2)
+const float i2sSampleRate = 16000.0f;                            // Sample rate in Hz (16 kHz speech capture)
+const uint16_t i2sSamples = 512;                                // Number of samples per FFT window (power of 2)
 
 // Viseme Frequency Ranges (Hz)
 // Each phoneme has a characteristic frequency range based on vocal formants
@@ -42,3 +42,5 @@ constexpr float visemeEeScale = 1.3f;                               // EE viseme
 constexpr float visemeOhScale = 1.5f;                               // OH viseme scale factor
 constexpr float visemeOoScale = 1.1f;                               // OO viseme scale factor
 constexpr float visemeThScale = 1.0f;                               // TH viseme scale factor
+
+constexpr uint16_t i2sHopSamples = 256; // 16 ms, 50% overlap
