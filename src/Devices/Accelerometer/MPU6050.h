@@ -25,7 +25,6 @@ private:
     // Sensor fusion state (complementary filter)
     float fusedPitch = 0.0f;  // Fused pitch angle (degrees)
     float fusedRoll = 0.0f;   // Fused roll angle (degrees)
-    float fusedYaw = 0.0f;    // Fused yaw angle (degrees) - will drift without magnetometer
     unsigned long lastUpdateTime = 0;  // For delta time calculation
 
     // Complementary filter coefficient (0.0 = trust gyro only, 1.0 = trust accel only)
@@ -84,9 +83,8 @@ public:
      *
      * @param pitch Output pitch angle in degrees (forward/backward tilt)
      * @param roll Output roll angle in degrees (left/right tilt)
-     * @param yaw Output yaw angle in degrees (heading - may drift)
      */
-    void getFusedOrientation(float& pitch, float& roll, float& yaw);
+    void getFusedOrientation(float& pitch, float& roll);
 
     /**
      * @brief Update sensor readings and fusion filter

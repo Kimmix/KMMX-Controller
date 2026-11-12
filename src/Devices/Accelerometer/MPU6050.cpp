@@ -50,10 +50,9 @@ sensors_event_t* MPU6050::getGyroEvent() {
     return &gyroEvent;
 }
 
-void MPU6050::getFusedOrientation(float& pitch, float& roll, float& yaw) {
+void MPU6050::getFusedOrientation(float& pitch, float& roll) {
     pitch = fusedPitch;
     roll = fusedRoll;
-    yaw = fusedYaw;
 }
 
 void MPU6050::update() {
@@ -137,18 +136,9 @@ void MPU6050::updateSensorFusion(float dt) {
     // Convert gyro from rad/s to deg/s and integrate
     float gyroPitchDelta = gyroEvent.gyro.x * 57.2958f * dt;
     float gyroRollDelta = gyroEvent.gyro.y * 57.2958f * dt;
-    float gyroYawDelta = gyroEvent.gyro.z * 57.2958f * dt;
 
     // Complementary filter: blend accelerometer and gyroscope
     // fusedAngle = ALPHA * accelAngle + (1 - ALPHA) * (fusedAngle + gyroRate * dt)
     fusedPitch = ALPHA * accelPitch + (1.0f - ALPHA) * (fusedPitch + gyroPitchDelta);
     fusedRoll = ALPHA * accelRoll + (1.0f - ALPHA) * (fusedRoll + gyroRollDelta);
-
-    // Yaw cannot be corrected by accelerometer (no magnetometer), so it will drift
-    // We still track it for rotation rate detection
-    fusedYaw += gyroYawDelta;
-
-    // Keep yaw in -180 to +180 range
-    if (fusedYaw > 180.0f) fusedYaw -= 360.0f;
-    if (fusedYaw < -180.0f) fusedYaw += 360.0f;
 }

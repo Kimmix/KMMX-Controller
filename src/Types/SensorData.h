@@ -17,7 +17,6 @@ struct SensorData {
     // Fused orientation data (degrees) - from complementary filter
     float pitch = 0;   // Forward/backward tilt angle
     float roll = 0;    // Left/right tilt angle
-    float yaw = 0;     // Heading (may drift without magnetometer)
 
     // Other sensors
     uint16_t proximity = 0;

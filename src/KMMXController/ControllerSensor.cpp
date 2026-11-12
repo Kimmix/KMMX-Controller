@@ -87,12 +87,12 @@ void KMMXController::readSensorTask(void* parameter) {
             data.gyroMagnitude = sqrtf(dotProduct);
 
             // Get fused orientation angles
-            ctrl->accelerometer.getFusedOrientation(data.pitch, data.roll, data.yaw);
+            ctrl->accelerometer.getFusedOrientation(data.pitch, data.roll);
         }
         Orientation::Snapshot orientation;
         if (ctrl->accelerometerInitialized && std::isfinite(data.pitch) &&
-            std::isfinite(data.roll) && std::isfinite(data.yaw)) {
-            orientation = {Orientation::Ready, data.pitch, data.roll, data.yaw};
+            std::isfinite(data.roll)) {
+            orientation = {Orientation::Ready, data.pitch, data.roll};
         }
         portENTER_CRITICAL(&ctrl->orientationMux);
         ctrl->orientation = orientation;

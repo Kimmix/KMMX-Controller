@@ -157,27 +157,26 @@ from accepted readback; serialize settings writes and reads and keep only the la
 queued slider update. Response presets adjust timing only; keep Mouth size logarithmic. Use the same linear meter scale for signal and threshold:
 `max(100, threshold * 1.25)`. Show actionable calibration/mic failures and explain that reboot resets tuning.
 
-### Live orientation (v1)
+### Live orientation (v2)
 
 | Characteristic | UUID | Properties | Length |
 |---|---|---|---|
-| Orientation | `b9725d04-7546-4e0b-9b91-486e25012a02` | READ, NOTIFY | 14 bytes |
+| Orientation | `b9725d04-7546-4e0b-9b91-486e25012a02` | READ, NOTIFY | 10 bytes |
 
 | Offset | Type | Meaning |
 |---|---|---|
-| 0 | uint8 | Version, exactly 1 |
+| 0 | uint8 | Version, exactly 2 |
 | 1 | uint8 | Status: 0 unsupported, 1 unavailable, 2 ready |
 | 2 | float32 | Pitch in degrees |
 | 6 | float32 | Roll in degrees |
-| 10 | float32 | Yaw in degrees |
 
 Multibyte fields are explicitly serialized little-endian, without struct padding.
 All angles come from the same sensor-task sample. V4 reuses the existing MPU6050
 fusion and reports unavailable until the first finite sample from an initialized
 sensor. Non-finite samples report unavailable. V2 exposes this characteristic but
 reports unsupported. Non-ready packets contain zero angles; never display those
-zeros as measurements. The ready golden packet for pitch -45, roll 90, yaw -180 is
-`01 02 00 00 34 c2 00 00 b4 42 00 00 34 c3`.
+zeros as measurements. The ready golden packet for pitch -45, roll 90 is
+`02 02 00 00 34 c2 00 00 b4 42`.
 
 READ returns the latest snapshot. Notifications use a nominal 100 ms cadence while
 connected and are delivered to subscribers. Subscribe and READ on every connection;
@@ -186,11 +185,11 @@ without a valid packet. Reject wrong lengths, unknown versions/status values, an
 non-finite ready angles. Treat an absent characteristic as older firmware; basic
 controls remain usable.
 
-Panel motion settings display pitch, roll, and yaw to one decimal place, with meter
-ranges ±90°, ±180°, and ±180° respectively. Clamp only the visual fill, retaining
+Panel motion settings display pitch and roll to one decimal place, with meter
+ranges ±90° and ±180° respectively. Clamp only the visual fill, retaining
 the actual numeric reading. Values follow the existing sensor-coordinate conventions.
-Yaw is relative and may drift; it is not compass heading. There is no recenter
-command or change to calibration/fusion. This stream is independent of lip sync
+Yaw tracking and its payload field have been removed. Update both panel and firmware
+for orientation v2; v1 packets are unsupported. There is no recenter command. This stream is independent of lip sync
 and motion-feature enable flags.
 
 ### LED Brightness Control
@@ -265,7 +264,7 @@ While game mode is enabled, a completed proximity boop spins the three reels. Ho
 ✅ Viseme
 ✅ Viseme Settings v2, Calibration, Status v3 (3)
 ✅ Viseme scores
-✅ Orientation v1 (reports unsupported on V2)
+✅ Orientation v2 (reports unsupported on V2)
 ✅ Horn Brightness
 ✅ Cheek Brightness
 ✅ Cheek Background Color
