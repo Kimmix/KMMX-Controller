@@ -14,7 +14,7 @@ enum class MicState : uint8_t { Ready, ReadError, InitError };
 enum class Result : uint8_t { Ok, Invalid, Busy, AudioError, Clipping, ZeroAudio, TooLoud };
 
 struct Settings {
-    float threshold = 13.0f;
+    float threshold = 66.0f;
     float gain = 1.0f;
     Response response = Response::Natural;
 };

@@ -75,9 +75,12 @@ const uint8_t* Viseme::renderViseme(bool talking) {
             dsps_bit_rev_fc32(fftBuffer, i2sSamples);
             const uint16_t low[] = {visemeAhFreqMin, visemeEeFreqMin, visemeOhFreqMin, visemeOoFreqMin, visemeThFreqMin};
             const uint16_t high[] = {visemeAhFreqMax, visemeEeFreqMax, visemeOhFreqMax, visemeOoFreqMax, visemeThFreqMax};
-            for (int i = 0; i < i2sSamples / 2; ++i) {
+            // Only bins that can fall inside some band (lowest min .. highest max).
+            const int firstBin = int(visemeOoFreqMin * i2sSamples / i2sSampleRate);
+            const int lastBin = int(visemeThFreqMax * i2sSamples / i2sSampleRate) + 1;
+            for (int i = firstBin; i <= lastBin; ++i) {
                 float frequency = i * i2sSampleRate / i2sSamples;
-                float magnitude = hypotf(fftBuffer[2 * i], fftBuffer[2 * i + 1]);
+                float magnitude = sqrtf(fftBuffer[2 * i] * fftBuffer[2 * i] + fftBuffer[2 * i + 1] * fftBuffer[2 * i + 1]);
                 for (int band = 0; band < 5; ++band)
                     if (frequency >= low[band] && frequency <= high[band]) scores[band] += magnitude;
             }

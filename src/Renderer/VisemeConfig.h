@@ -32,15 +32,15 @@ const uint16_t visemeOoFreqMin = 250;                           // Start frequen
 const uint16_t visemeOoFreqMax = 900;                           // End frequency of OO viseme
 
 const uint16_t visemeThFreqMin = 2800;                          // Start frequency of TH viseme (fricative sound like "think")
-const uint16_t visemeThFreqMax = 4000;                          // End frequency of TH viseme
+const uint16_t visemeThFreqMax = 5500;                        // End frequency of TH viseme
 
 // Normalization Scale Factors
 // These multipliers balance the sensitivity across different visemes
 // Lower values = less sensitive, Higher values = more sensitive
-constexpr float visemeAhScale = 3.5f;                               // AH viseme scale factor
+constexpr float visemeAhScale = 1.5f;                              // AH viseme scale factor
 constexpr float visemeEeScale = 1.3f;                               // EE viseme scale factor
-constexpr float visemeOhScale = 1.5f;                               // OH viseme scale factor
-constexpr float visemeOoScale = 1.1f;                               // OO viseme scale factor
-constexpr float visemeThScale = 1.0f;                               // TH viseme scale factor
+constexpr float visemeOhScale = 1.1f;                              // OH viseme scale factor
+constexpr float visemeOoScale = 0.7f;                              // OO viseme scale factor
+constexpr float visemeThScale = 4.2f;                              // TH viseme scale factor
 
 constexpr uint16_t i2sHopSamples = 256; // 16 ms, 50% overlap
