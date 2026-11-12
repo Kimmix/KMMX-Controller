@@ -7,8 +7,6 @@
 [![PlatformIO](https://img.shields.io/badge/Build-PlatformIO-F9826C.svg?style=flat-square&labelColor=1c1216)](https://platformio.org/)
 [![Status: In development](https://img.shields.io/badge/Status-In%20development-FF2B5B.svg?style=flat-square&labelColor=1c1216)](https://github.com/Kimmix/KMMX-Controller)
 
-<img src="doc/demo-viseme.webp" alt="Audio-reactive mouth visemes on the LED matrix" width="420">
-
 </div>
 
 > [!NOTE]
@@ -22,8 +20,6 @@
 <td align="center" width="50%"><img src="doc/demo-ble.webp" alt="Bluetooth smartphone control demo" width="100%"><br><b>Bluetooth control</b><br><a href="https://x.com/kimmix00/status/1704465522497397001/video/1">Watch on X</a></td>
 </tr>
 </table>
-
-Viseme demo (top): [watch on X](https://x.com/kimmix00/status/1638887564550754306/video/1).
 
 ## Features
 
