@@ -36,18 +36,6 @@ class SSD1306 {
     void update();
 
     /**
-     * @brief Set display contrast.
-     * @param contrast Contrast level (0-255)
-     */
-    void setContrast(uint8_t contrast);
-
-    /**
-     * @brief Turn display on or off.
-     * @param on true to turn on, false to turn off
-     */
-    void setPower(bool on);
-
-    /**
      * @brief Draw text at position.
      * @param x X coordinate
      * @param y Y coordinate (baseline)

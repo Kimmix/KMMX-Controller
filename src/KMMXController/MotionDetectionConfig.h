@@ -65,9 +65,7 @@ constexpr uint8_t tapGlitchMaxRows = 8;
 
 // Idle Detection
 const uint32_t idleTimeout = 10 * 60000;
-const uint16_t baselineUpdateDelay = 2000;
 const float idleAccThreshold = 1.5f;
 const float sleepingAccThreshold = 0.7f;
 const uint8_t motionHysteresisCount = 3;
 const uint8_t motionCounterDecayRate = 10;
-const float gravityMagnitude = 9.81f;

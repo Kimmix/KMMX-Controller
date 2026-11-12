@@ -15,9 +15,6 @@ void FXState::update() {
             flyingHeartState();
             blushingState();
             break;
-        case FXStateEnum::Blush:
-            blushingState();
-            break;
         case FXStateEnum::Tears:
             weepingTearsState();
             break;
@@ -38,9 +35,7 @@ void FXState::handleAutoStateChanges() {
         }
     } else {
         // Eye is not in SMILE or CRY, reset FX effects
-        if (currentState == FXStateEnum::Blush) {
-            currentState = FXStateEnum::IDLE;
-        } else if (currentState == FXStateEnum::Tears) {
+        if (currentState == FXStateEnum::Tears) {
             currentState = FXStateEnum::IDLE;
             weepingTears.resetAll();  // Clean up tears
         }
@@ -52,7 +47,6 @@ void FXState::setState(FXStateEnum newState) {
         resetHeart = millis();
         flyingHeart.reset();
     } else if (newState == FXStateEnum::Tears) {
-        resetTears = millis();
         weepingTears.reset();
     }
     currentState = newState;
@@ -79,19 +73,10 @@ void FXState::blushingState() {
 
 void FXState::weepingTearsState() {
     weepingTears.renderTears();
-    // Optional: auto-reset after duration (currently runs indefinitely)
-    // if (millis() - resetTears >= 10000) {
-    //     currentState = FXStateEnum::IDLE;
-    //     weepingTears.resetAll();
-    // }
 }
 
 void FXState::setFlyingSpeed(float i) {
     flyingHeart.setSpeed(i);
-}
-
-void FXState::setTearIntensity(float i) {
-    weepingTears.setIntensity(i);
 }
 
 void FXState::setEyeStatePtr(EyeState* eyeStatePtr) {

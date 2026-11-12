@@ -77,16 +77,8 @@ void Hub75DMA::setDualSpiralColor(uint8_t spiralR, uint8_t spiralG, uint8_t spir
     colorEffects.setDualSpiralColor(spiralR, spiralG, spiralB);
 }
 
-void Hub75DMA::getDualSpiralColor(uint8_t& r, uint8_t& g, uint8_t& b) const {
-    colorEffects.getDualSpiralColor(r, g, b);
-}
-
 void Hub75DMA::setDualCircleColor(uint8_t circleR, uint8_t circleG, uint8_t circleB) {
     colorEffects.setDualCircleColor(circleR, circleG, circleB);
-}
-
-void Hub75DMA::getDualCircleColor(uint8_t& r, uint8_t& g, uint8_t& b) const {
-    colorEffects.getDualCircleColor(r, g, b);
 }
 
 void Hub75DMA::setEffectThickness(uint8_t thickness) {

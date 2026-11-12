@@ -3,8 +3,6 @@
 #include "mouthAngry.h"
 #include "mouthBitmap.h"
 #include "mouthDefault.h"
-#include "mouthUp.h"
-#include "mouthDown.h"
 #include "mouthDrooling.h"
 #include "mouthEh.h"
 #include "mouthLower.h"

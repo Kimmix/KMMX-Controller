@@ -24,8 +24,7 @@ enum class EyeStateEnum { IDLE,
                           ROUNDED,
                           SHARP,
                           GIGGLE,
-                          UNIMPRESSED,
-                          DETRANSITION };
+                          UNIMPRESSED };
 
 // Unified animation data structure to reduce repetition
 struct AnimationData {
@@ -87,18 +86,11 @@ class EyeState {
     bool idleCorrectionMade = false;
     const uint8_t idleCorrectionFrames[10] = {0, 2, 1, 4, 3, 0, 7, 6, 0, 0};
 
-    // Accelerometer-based eye movement animations (currently disabled)
-    const uint8_t* eyeDownAnimation[20] = {
-        eyeDown1, eyeDown2, eyeDown3, eyeDown4, eyeDown5, eyeDown6, eyeDown7, eyeDown8, eyeDown9, eyeDown10,
-        eyeDown11, eyeDown12, eyeDown13, eyeDown14, eyeDown15, eyeDown16, eyeDown17, eyeDown18, eyeDown19, eyeDown20};
-    const uint8_t* eyeUpAnimation[20] = {
-        eyeUp1, eyeUp2, eyeUp3, eyeUp4, eyeUp5, eyeUp6, eyeUp7, eyeUp8, eyeUp9, eyeUp10,
-        eyeUp11, eyeUp12, eyeUp13, eyeUp14, eyeUp15, eyeUp16, eyeUp17, eyeUp18, eyeUp19, eyeUp20};
-
     // Blink animation (special case - no loop, just transition)
     const uint8_t* blinkAnimation[24] = {eyeBlink1, eyeBlink2, eyeBlink3, eyeBlink4, eyeBlink5, eyeBlink6, eyeBlink7, eyeBlink8, eyeBlink9, eyeBlink10, eyeBlink11, eyeBlink12, eyeBlink13, eyeBlink14, eyeBlink15, eyeBlink16, eyeBlink17, eyeBlink18, eyeBlink19, eyeBlink20, eyeBlink21, eyeBlink22, eyeBlink23, eyeBlink24};
     const uint8_t blinkAnimationLength = arrayLength(blinkAnimation);
     TimeBasedAnimState blinkAnim;
+    unsigned long blinkResumeAt = 0;  // non-zero while paused between double-blink halves
     uint8_t blinkCount = 0;
     bool shouldDoubleBlink = false;
 
@@ -214,7 +206,6 @@ class EyeState {
     void playAnimationWithLoop(AnimationData& animData);  // Generic animation playback
     void sleepFace();
     void resetSleepFace();
-    void detransition();
     void renderGooglyEye();
     void initAnimationData(AnimationData& data, const uint8_t** frames, uint8_t frameCount,
                           uint8_t loopFrameCount, unsigned long autoResetDuration,

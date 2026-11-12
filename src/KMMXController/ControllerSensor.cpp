@@ -129,9 +129,7 @@ SensorData KMMXController::getSensorData() const {
 }
 
 void KMMXController::acceptSensor(const SensorData& sample) {
-    prevSensorData = sensorBuffer[activeBuffer];
-    activeBuffer = 1 - activeBuffer;
-    sensorBuffer[activeBuffer] = sample;
+    currentSensor = sample;
     mouthState.setSensorData(sample);
     eyeState.setSensorData(sample);
     if (accelerometerInitialized && !slotMachine.isEnabled()) {

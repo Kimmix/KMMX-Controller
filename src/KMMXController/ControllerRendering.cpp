@@ -25,19 +25,11 @@ void KMMXController::update() {
         slotMachineWasEnabled = gameActive;
     }
     if (boopInitialized) {
-        slotMachine.update(getSensorData().proximity);
-        if (renderRunning.load() && !gameActive && enableBoopDetection) handleBoop();
+        const uint16_t proximity = getSensorData().proximity;
+        slotMachine.update(proximity);
+        if (proximity < boopMinThreshold) boopLockedOut = false;
+        if (renderRunning.load() && !gameActive && enableBoopDetection && !boopLockedOut) handleBoop();
     }
-}
-
-void KMMXController::renderFace() {
-    display.flipDMABuffer();
-    display.clearScreen();
-    display.updateColorEffectsFrame();  // Update cached time once per frame
-    display.drawNose(noseNew);
-    mouthState.update();
-    eyeState.update();
-    fxState.update();
 }
 
 void KMMXController::renderTask(void* parameter) {

@@ -9,7 +9,8 @@
  * @brief Manually trigger glitch effect with specified intensity
  * @param intensity Glitch intensity (0-100)
  */
-void KMMXController::triggerGlitch(uint8_t intensity) {
+void KMMXController::triggerGlitch(int intensity) {
+    if (queueControl(&KMMXController::triggerGlitch, intensity)) return;  // display is owned by the render task
     // Constrain to valid range
     intensity = constrain(intensity, 0, 100);
 

@@ -64,7 +64,7 @@ class KMMXController {
     int getSlotMachineEnabled() const;
 
     // Motion Detection & Glitch Control (BLE)
-    void triggerGlitch(uint8_t intensity);                      // Manually trigger glitch effect with intensity 0-100
+    void triggerGlitch(int intensity);                         // Manually trigger glitch effect with intensity 0-100
     void setMotionEnableFlags(uint8_t flags);                   // Set motion detection enable flags (bitfield)
     uint8_t getMotionEnableFlags();                             // Get current motion detection enable flags
     void setTapSensitivity(uint8_t sensitivity);                // Set tap sensitivity 0-100 (maps to threshold)
@@ -94,11 +94,9 @@ class KMMXController {
     #if HAS_FAN_CONTROL
     Fan fan;  // Fan controller
     #endif
-    // Double-buffer for thread-safe sensor access
-    SensorData sensorBuffer[2];
+    SensorData currentSensor;  // latest sample, written/read on the render task only
     portMUX_TYPE orientationMux = portMUX_INITIALIZER_UNLOCKED;
     Orientation::Snapshot orientation = {ACCEL_TYPE_MPU6050 ? Orientation::Unavailable : Orientation::Unsupported};
-    volatile uint8_t activeBuffer = 0;
     TaskHandle_t sensorTaskHandle;
     TaskHandle_t renderTaskHandle = nullptr;
     using ControlHandler = void (KMMXController::*)(int);
@@ -118,7 +116,6 @@ class KMMXController {
     FXState fxState = FXState(&display);
     Boop boop;
     SlotMachine slotMachine = SlotMachine(&display);
-    int16_t pixelPos = 0;
 
     // Performance tracking
     FPSCounter fpsCounter;
@@ -129,7 +126,6 @@ class KMMXController {
     bool initializeOLED();
     void printSensorStatus();
 
-    void renderFace();
     void handleBoop();
     void updateSlotMachineHorn();
     void updateSlotMachineCheeks();
@@ -175,12 +171,11 @@ class KMMXController {
                            float tiltX, float tiltZ);
 
     // Previous sensor values for idle detection
-    SensorData prevSensorData;
     SensorData baselineAccel;  // Baseline acceleration when motion was last detected
     unsigned long stillTime = 0;  // Time when the accelerometer became still
     uint8_t motionCounter = 0;  // Counter for hysteresis (sustained motion detection)
     bool baselineInitialized = false;  // Whether baseline has been set
-    unsigned long nextFrame;
+    bool boopLockedOut = false;  // runtime lock-out after sustained too-close; not the user setting
     unsigned long lastBoopUpdate = static_cast<unsigned long>(-50);
     bool isSleeping = false;
     bool accelerometerInitialized = false;  // Track if accelerometer successfully initialized
@@ -231,6 +226,7 @@ class KMMXController {
         bool isPetting = false;             // Currently showing petting response
         EyeStateEnum previousEyeState = EyeStateEnum::IDLE;
         MouthStateEnum previousMouthState = MouthStateEnum::IDLE;
+        uint8_t previousCheekBrightness = 0;
     } pettingDetector;
 
     struct TapDetector {

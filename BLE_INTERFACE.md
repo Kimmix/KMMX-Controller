@@ -22,6 +22,12 @@ The KMMX controller supports two hardware versions with different capabilities:
 
 ---
 
+## Pairing (required)
+
+All writable characteristics require an encrypted, bonded link (LE Secure Connections, passkey). The controller is display-only: the phone/browser prompts for a **6-digit passkey** (default `123456`; set `-DBLE_PASSKEY=<n>` in `platformio.ini` to change it). Reads work without pairing; a write from an unpaired client fails with an insufficient-authentication error until pairing completes. Clients must trigger pairing (e.g. OS pairing prompt on first write) before sending commands.
+
+---
+
 ## GATT Service
 
 **Service UUID:** `c1449275-bf34-40ab-979d-e34a1fdbb129`

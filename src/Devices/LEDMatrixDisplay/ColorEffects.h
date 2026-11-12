@@ -75,11 +75,6 @@ class ColorEffects {
     void setDualSpiralColor(uint8_t spiralR, uint8_t spiralG, uint8_t spiralB);
 
     /**
-     * @brief Get the dual spiral color
-     */
-    void getDualSpiralColor(uint8_t& r, uint8_t& g, uint8_t& b) const;
-
-    /**
      * @brief Set effect thickness for Mode 4 & 5 (affects band width/spacing)
      * @param thickness Thickness value (0-255), higher = thicker bands
      */
@@ -121,11 +116,6 @@ class ColorEffects {
      */
     void setDualCircleColor(uint8_t circleR, uint8_t circleG, uint8_t circleB);
 
-    /**
-     * @brief Get the dual circle color
-     */
-    void getDualCircleColor(uint8_t& r, uint8_t& g, uint8_t& b) const;
-
    private:
     uint8_t panelWidth;
     uint8_t panelHeight;
@@ -138,6 +128,14 @@ class ColorEffects {
     // Pre-calculated constants for performance optimization
     static constexpr float maxDistLeft = sqrtf(effectCenterLeftX * effectCenterLeftX + effectCenterY * effectCenterY);
     static constexpr float maxDistRight = sqrtf(effectCenterRightX * effectCenterRightX + effectCenterY * effectCenterY);
+
+    // Per-pixel angle/distance to the nearest eye centre, fixed-point to halve RAM (2 x 8 KB); built in the constructor
+    static constexpr float lutAngleScale = 10000.0f;    // radians, +-pi fits int16
+    static constexpr float lutDistanceScale = 100.0f;   // pixels
+    int16_t angleLut[screenHeight][screenWidth];
+    uint16_t distanceLut[screenHeight][screenWidth];
+    float angleAt(int row, int col) const { return angleLut[row][col] / lutAngleScale; }
+    float distanceAt(int row, int col) const { return distanceLut[row][col] / lutDistanceScale; }
 
     // Cached time value (updated once per frame for performance)
     float cachedTime;

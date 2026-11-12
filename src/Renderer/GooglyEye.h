@@ -7,7 +7,7 @@
 
 class GooglyEye {
 public:
-    GooglyEye() : x(0), y(0), lastTime(0), vx(0), vy(0), firstFrame(true) {}
+    GooglyEye() : x(0), y(0), lastTime(0), vx(0), vy(0) {}
     float x, y;
     void renderEye(float accX, float accY) {
         // Orient the sensor directions to the display directions
@@ -17,7 +17,6 @@ public:
 private:
     unsigned long lastTime;
     float vx, vy;
-    bool firstFrame;
 
     void update(float inputX, float inputY);
 };

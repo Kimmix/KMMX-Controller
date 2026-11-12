@@ -39,16 +39,6 @@ void SSD1306::update() {
     u8g2->sendBuffer();
 }
 
-void SSD1306::setContrast(uint8_t contrast) {
-    if (!u8g2) return;
-    u8g2->setContrast(contrast);
-}
-
-void SSD1306::setPower(bool on) {
-    if (!u8g2) return;
-    u8g2->setPowerSave(!on);  // setPowerSave(0) = on, setPowerSave(1) = off
-}
-
 void SSD1306::drawText(int16_t x, int16_t y, const char* text) {
     if (!u8g2) return;
     u8g2->drawStr(x, y, text);

@@ -17,7 +17,6 @@ class FXState {
     WeepingTears weepingTears;
 
     unsigned long resetHeart;
-    unsigned long resetTears;
 
     void handleAutoStateChanges();
 
@@ -31,6 +30,5 @@ class FXState {
     void blushingState();
     void weepingTearsState();
     void setFlyingSpeed(float i);
-    void setTearIntensity(float i);
     void setEyeStatePtr(EyeState* eyeStatePtr);
 };

@@ -6,7 +6,7 @@ void KMMXController::handleBoop() {
     if (now - lastBoopUpdate < 50) return;
     lastBoopUpdate = now;
 
-    const BoopResult result = boop.update(sensorBuffer[activeBuffer].proximity, now);
+    const BoopResult result = boop.update(currentSensor.proximity, now);
 
     switch (result.event) {
         case BoopEvent::APPROACHING:
@@ -40,7 +40,7 @@ void KMMXController::handleBoop() {
             break;
 
         case BoopEvent::LOCKED_OUT:
-            enableBoopDetection = false;
+            boopLockedOut = true;  // cleared in the render loop once proximity drops below boopMinThreshold
             if (eyeState.getState() == EyeStateEnum::ANGRY) {
                 eyeState.setState(EyeStateEnum::ANGRY, false, 1500);
             }

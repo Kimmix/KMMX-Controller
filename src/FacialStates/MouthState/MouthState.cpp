@@ -74,14 +74,7 @@ void MouthState::update() {
             if (boopCompleted) {
                 display->drawMouth(boopData.frames[boopData.frameCount - 1]);
             } else if (sensorData.proximity > boopMinThreshold && sensorData.proximity < boopMaxThreshold) {
-                float progress = static_cast<float>(constrain(sensorData.proximity, boopMinThreshold, boopMaxThreshold) - boopMinThreshold) /
-                                 (boopMaxThreshold - boopMinThreshold);
-                progress = progress * progress * (3.0f - 2.0f * progress);
-                short targetFrame = roundf(progress * (boopData.frameCount - 1));
-                short currentFrame = boopData.transitionAnim.currentFrameIndex;
-                currentFrame += constrain(targetFrame - currentFrame, -1, 1);
-                TimeBasedAnimation::reset(boopData.transitionAnim, currentFrame);
-                display->drawMouth(boopData.frames[currentFrame]);
+                display->drawMouth(boopData.frames[TimeBasedAnimation::boopFrame(boopData.transitionAnim, sensorData.proximity, boopData.frameCount)]);
             } else {
                 playAnimationWithLoop(boopData);
             }
@@ -90,11 +83,7 @@ void MouthState::update() {
             angryBoop();
             break;
         case MouthStateEnum::TALKING:
-            if (visemeFrame == mouthDefault) {
-                drawDefault();
-            } else {
-                display->drawMouth(visemeFrame);
-            }
+            display->drawMouth(visemeFrame);
             break;
         case MouthStateEnum::WAH: {
             const uint8_t* wahFrame = TimeBasedAnimation::update(wahAnim);
@@ -249,8 +238,9 @@ void MouthState::drawDefault() {
     display->drawMouth(mouthFrame);
 }
 
-void MouthState::resetMovingMouth() {
-    TimeBasedAnimation::reset(idleAnim);
+void MouthState::playAnimationWithLoop(MouthAnimationData& animData) {
+    display->drawMouth(TimeBasedAnimation::playWithLoop(animData.transitionAnim, animData.loopAnim, animData.loopFrameCount > 0,
+                                                       animData.frames[animData.frameCount - 1], isTransitioning));
 }
 
 void MouthState::setSlowAnimation(bool slow) {
@@ -355,34 +345,4 @@ bool MouthState::getAnimationFrames(MouthStateEnum state, const uint8_t**& frame
         case MouthStateEnum::WORRY: frames = worryData.frames; frameCount = worryData.frameCount; return true;
         default: return false;
     }
-}
-
-void MouthState::playAnimationWithLoop(MouthAnimationData& animData) {
-    const uint8_t* currentFrame;
-
-    if (isTransitioning) {
-        // During transition: use full animation
-        currentFrame = TimeBasedAnimation::update(animData.transitionAnim);
-
-        // Also update loop animation in the background so it's in sync when we switch
-        if (animData.loopFrameCount > 0) {
-            TimeBasedAnimation::update(animData.loopAnim);
-        }
-
-        // Check if transition animation is complete
-        if (TimeBasedAnimation::isComplete(animData.transitionAnim)) {
-            isTransitioning = false;
-            // Loop animation is already running in sync, no reset needed
-        }
-    } else {
-        // After transition: loop only the last N frames (or hold on last frame if no loop)
-        if (animData.loopFrameCount > 0) {
-            currentFrame = TimeBasedAnimation::update(animData.loopAnim);
-        } else {
-            // No loop - hold on last frame
-            currentFrame = animData.frames[animData.frameCount - 1];
-        }
-    }
-
-    display->drawMouth(currentFrame);
 }

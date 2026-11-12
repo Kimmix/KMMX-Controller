@@ -10,3 +10,4 @@ struct SerialStub { void println(const char*) {} };
 extern SerialStub Serial;
 bool ledcAttachChannel(int, int, int, int);
 void ledcWriteChannel(int, int);
+unsigned long millis();

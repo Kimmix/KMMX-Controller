@@ -23,6 +23,7 @@ int KMMXController::getCheekBrightness() {
 }
 
 void KMMXController::setCheekBrightness(int i) {
+    if (renderRunning.load() && queueControl(&KMMXController::setCheekBrightness, i)) return;  // no render task: apply directly
     // Map 0-100 input range to 0-255 range for NeoPixel brightness
     int mappedBrightness = fastMap<int>(constrain(i, 0, 100), 0, 100, 0, 255);
     cheekPanel.setBrightness(mappedBrightness);
@@ -45,90 +46,27 @@ uint32_t KMMXController::getCheekFadeColor() {
 }
 
 // State control for BLE
+// BLE value -> state; index 0 and out-of-range fall back to IDLE
+static const EyeStateEnum eyeStates[] = {
+    EyeStateEnum::IDLE, EyeStateEnum::GOOGLY, EyeStateEnum::HEART, EyeStateEnum::SMILE, EyeStateEnum::ANGRY,
+    EyeStateEnum::SAD, EyeStateEnum::ARROW, EyeStateEnum::OEYE, EyeStateEnum::CRY, EyeStateEnum::DOUBTED,
+    EyeStateEnum::ROUNDED, EyeStateEnum::SHARP, EyeStateEnum::GIGGLE, EyeStateEnum::UNIMPRESSED};
+static const MouthStateEnum mouthStates[] = {
+    MouthStateEnum::IDLE, MouthStateEnum::WAH, MouthStateEnum::EH, MouthStateEnum::POUT, MouthStateEnum::DROOLING,
+    MouthStateEnum::ANGRY, MouthStateEnum::LOWER, MouthStateEnum::SHOCK, MouthStateEnum::SMALL, MouthStateEnum::WORRY};
+
 void KMMXController::setEye(int i) {
     if (queueControl(&KMMXController::setEye, i)) return;
-    switch (i) {
-        case 1:
-            eyeState.setState(EyeStateEnum::GOOGLY, true, 0);  // Persistent, no timeout
-            break;
-        case 2:
-            eyeState.setState(EyeStateEnum::HEART, true, 0);  // Persistent, no timeout
-            break;
-        case 3:
-            eyeState.setState(EyeStateEnum::SMILE, true, 0);  // Persistent, no timeout
-            break;
-        case 4:
-            eyeState.setState(EyeStateEnum::ANGRY, true, 0);  // Persistent, no timeout
-            break;
-        case 5:
-            eyeState.setState(EyeStateEnum::SAD, true, 0);  // Persistent, no timeout
-            break;
-        case 6:
-            eyeState.setState(EyeStateEnum::ARROW, true, 0);  // Changed from BOOP to ARROW for BLE control, Persistent, no timeout
-            break;
-        case 7:
-            eyeState.setState(EyeStateEnum::OEYE, true, 0);  // Persistent, no timeout
-            break;
-        case 8:
-            eyeState.setState(EyeStateEnum::CRY, true, 0);  // Persistent, no timeout
-            break;
-        case 9:
-            eyeState.setState(EyeStateEnum::DOUBTED, true, 0);  // Persistent, no timeout
-            break;
-        case 10:
-            eyeState.setState(EyeStateEnum::ROUNDED, true, 0);  // Persistent, no timeout
-            break;
-        case 11:
-            eyeState.setState(EyeStateEnum::SHARP, true, 0);  // Persistent, no timeout
-            break;
-        case 12:
-            eyeState.setState(EyeStateEnum::GIGGLE, true, 0);  // Persistent, no timeout
-            break;
-        case 13:
-            eyeState.setState(EyeStateEnum::UNIMPRESSED, true, 0);  // Persistent, no timeout
-            break;
-        default:
-            eyeState.setState(EyeStateEnum::IDLE, true, 0);  // Persistent, no timeout
-            eyeState.savePrevState(EyeStateEnum::IDLE);  // Reset restore point to IDLE for clean slate
-            break;
-    }
+    const bool known = i > 0 && i < static_cast<int>(sizeof(eyeStates) / sizeof(eyeStates[0]));
+    eyeState.setState(known ? eyeStates[i] : EyeStateEnum::IDLE, true, 0);  // Persistent, no timeout
+    if (!known) eyeState.savePrevState(EyeStateEnum::IDLE);  // Reset restore point to IDLE for clean slate
 }
 
 void KMMXController::setMouth(int i) {
     if (queueControl(&KMMXController::setMouth, i)) return;
-    switch (i) {
-        case 1:
-            mouthState.setState(MouthStateEnum::WAH, true, 0);  // Persistent, no timeout
-            break;
-        case 2:
-            mouthState.setState(MouthStateEnum::EH, true, 0);  // Persistent, no timeout
-            break;
-        case 3:
-            mouthState.setState(MouthStateEnum::POUT, true, 0);  // Persistent, no timeout
-            break;
-        case 4:
-            mouthState.setState(MouthStateEnum::DROOLING, true, 0);  // Persistent, no timeout
-            break;
-        case 5:
-            mouthState.setState(MouthStateEnum::ANGRY, true, 0);  // Persistent, no timeout
-            break;
-        case 6:
-            mouthState.setState(MouthStateEnum::LOWER, true, 0);  // Persistent, no timeout
-            break;
-        case 7:
-            mouthState.setState(MouthStateEnum::SHOCK, true, 0);  // Persistent, no timeout
-            break;
-        case 8:
-            mouthState.setState(MouthStateEnum::SMALL, true, 0);  // Persistent, no timeout
-            break;
-        case 9:
-            mouthState.setState(MouthStateEnum::WORRY, true, 0);  // Persistent, no timeout
-            break;
-        default:
-            mouthState.setState(MouthStateEnum::IDLE, true, 0);  // Persistent, no timeout
-            mouthState.savePrevState(MouthStateEnum::IDLE);  // Reset restore point to IDLE for clean slate
-            break;
-    }
+    const bool known = i > 0 && i < static_cast<int>(sizeof(mouthStates) / sizeof(mouthStates[0]));
+    mouthState.setState(known ? mouthStates[i] : MouthStateEnum::IDLE, true, 0);  // Persistent, no timeout
+    if (!known) mouthState.savePrevState(MouthStateEnum::IDLE);  // Reset restore point to IDLE for clean slate
 }
 
 void KMMXController::setViseme(int b) {

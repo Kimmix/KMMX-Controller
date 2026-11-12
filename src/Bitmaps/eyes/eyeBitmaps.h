@@ -7,7 +7,6 @@
 #include "eyeCircle.h"
 #include "eyeCry.h"
 #include "eyeDoubted.h"
-#include "eyeDown.h"
 #include "eyeGiggle.h"
 #include "eyeLookSharp.h"
 #include "eyeRounded.h"

@@ -197,11 +197,6 @@ bool TimeBasedAnimation::isComplete(const TimeBasedAnimState& anim) {
     return anim.hasCompleted;
 }
 
-float TimeBasedAnimation::getProgress(const TimeBasedAnimState& anim) {
-    if (anim.frameCount <= 1) return 1.0f;
-    return (float)anim.currentFrameIndex / (float)(anim.frameCount - 1);
-}
-
 const uint8_t* TimeBasedAnimation::update(TimeBasedAnimState& anim) {
     unsigned long currentTime = millis();
 
@@ -365,3 +360,24 @@ float TimeBasedAnimation::applyEasing(float t, EasingType easingType) {
     }
 }
 
+const uint8_t* TimeBasedAnimation::playWithLoop(TimeBasedAnimState& transition, TimeBasedAnimState& loop, bool hasLoop,
+                                                const uint8_t* holdFrame, bool& isTransitioning) {
+    if (isTransitioning) {
+        const uint8_t* frame = update(transition);
+        if (hasLoop) update(loop);
+        if (isComplete(transition)) isTransitioning = false;
+        return frame;
+    }
+    return hasLoop ? update(loop) : holdFrame;
+}
+
+short TimeBasedAnimation::boopFrame(TimeBasedAnimState& transition, uint16_t proximity, uint8_t frameCount) {
+    float progress = static_cast<float>(constrain(proximity, boopMinThreshold, boopMaxThreshold) - boopMinThreshold) /
+                     (boopMaxThreshold - boopMinThreshold);
+    progress = progress * progress * (3.0f - 2.0f * progress);
+    short targetFrame = roundf(progress * (frameCount - 1));
+    short currentFrame = transition.currentFrameIndex;
+    currentFrame += constrain(targetFrame - currentFrame, -1, 1);
+    reset(transition, currentFrame);
+    return currentFrame;
+}
