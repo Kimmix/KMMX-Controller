@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include "config.h"
 
 /**
  * Time-based animation system that renders frames based on elapsed time
@@ -116,10 +117,19 @@ public:
     static bool isComplete(const TimeBasedAnimState& anim);
 
     /**
-     * Get current progress (0.0 - 1.0)
-     * @param anim Animation state
-     * @return Progress value
+     * Shared by eye and mouth: play the full transition once, then the loop (or hold holdFrame if hasLoop is false).
+     * The loop is advanced during the transition so it is in sync when taking over.
+     * @param isTransitioning cleared when the transition completes
+     * @return Frame to draw
      */
+    static const uint8_t* playWithLoop(TimeBasedAnimState& transition, TimeBasedAnimState& loop, bool hasLoop,
+                                       const uint8_t* holdFrame, bool& isTransitioning);
+
+    /**
+     * Shared by eye and mouth: boop frame driven by proximity (smoothstep, moves at most 1 frame per call).
+     * Updates the transition state's frame index and returns it. Caller checks the proximity range.
+     */
+    static short boopFrame(TimeBasedAnimState& transition, uint16_t proximity, uint8_t frameCount);
 
 private:
     /**

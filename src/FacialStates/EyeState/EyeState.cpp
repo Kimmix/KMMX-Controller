@@ -118,14 +118,7 @@ void EyeState::update() {
             if (boopCompleted) {
                 display->drawEye(boopAnimation[arrayLength(boopAnimation) - 1]);
             } else if (sensorData.proximity > boopMinThreshold && sensorData.proximity < boopMaxThreshold) {
-                float progress = static_cast<float>(constrain(sensorData.proximity, boopMinThreshold, boopMaxThreshold) - boopMinThreshold) /
-                                 (boopMaxThreshold - boopMinThreshold);
-                progress = progress * progress * (3.0f - 2.0f * progress);
-                short targetFrame = roundf(progress * (arrayLength(boopAnimation) - 1));
-                short currentFrame = boopData.transitionAnim.currentFrameIndex;
-                currentFrame += constrain(targetFrame - currentFrame, -1, 1);
-                TimeBasedAnimation::reset(boopData.transitionAnim, currentFrame);
-                display->drawEye(boopAnimation[currentFrame]);
+                display->drawEye(boopAnimation[TimeBasedAnimation::boopFrame(boopData.transitionAnim, sensorData.proximity, arrayLength(boopAnimation))]);
             } else {
                 playAnimationWithLoop(boopData);
             }
@@ -442,26 +435,7 @@ void EyeState::blink() {
 }
 
 void EyeState::playAnimationWithLoop(AnimationData& animData) {
-    const uint8_t* currentFrame;
-
-    if (isTransitioning) {
-        // During transition: use full animation
-        currentFrame = TimeBasedAnimation::update(animData.transitionAnim);
-
-        // Also update loop animation in the background so it's in sync when we switch
-        TimeBasedAnimation::update(animData.loopAnim);
-
-        // Check if transition animation is complete
-        if (TimeBasedAnimation::isComplete(animData.transitionAnim)) {
-            isTransitioning = false;
-            // Loop animation is already running in sync, no reset needed
-        }
-    } else {
-        // After transition: loop only the last N frames
-        currentFrame = TimeBasedAnimation::update(animData.loopAnim);
-    }
-
-    display->drawEye(currentFrame);
+    display->drawEye(TimeBasedAnimation::playWithLoop(animData.transitionAnim, animData.loopAnim, true, nullptr, isTransitioning));
 }
 
 void EyeState::sleepFace() {
