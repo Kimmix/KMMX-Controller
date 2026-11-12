@@ -4,6 +4,14 @@
 
 ColorEffects::ColorEffects(uint8_t width, uint8_t height)
     : panelWidth(width), panelHeight(height), cachedTime(0.0f) {
+    for (int row = 0; row < screenHeight; ++row) {
+        for (int col = 0; col < screenWidth; ++col) {
+            const float dx = col - ((col < panelResX) ? effectCenterLeftX : effectCenterRightX);
+            const float dy = row - effectCenterY;
+            angleLut[row][col] = static_cast<int16_t>(atan2f(dy, dx) * lutAngleScale);
+            distanceLut[row][col] = static_cast<uint16_t>(sqrtf(dx * dx + dy * dy) * lutDistanceScale);
+        }
+    }
 }
 
 void ColorEffects::updateFrame() {
@@ -120,16 +128,9 @@ void ColorEffects::modeGradient(uint8_t lightness, int row, uint8_t& r, uint8_t&
 // Mode 1: Spiral/Vortex Effect (VRChat Hypno Shader Inspired)
 // ============================================================================
 void ColorEffects::modeSpiralVortex(uint8_t lightness, int row, int col, uint8_t& r, uint8_t& g, uint8_t& b) {
-    // Determine which eye center to use based on horizontal position (split at single panel width)
-    const float centerX = (col < panelResX) ? effectCenterLeftX : effectCenterRightX;
-
-    // Calculate position relative to the nearest eye center
-    const float dx = col - centerX;
-    const float dy = row - effectCenterY;
-
-    // Calculate angle and distance from center
-    const float angle = atan2f(dy, dx);
-    const float distance = sqrtf(dx * dx + dy * dy);
+    // Angle and distance from the nearest eye center (precomputed tables)
+    const float angle = angleAt(row, col);
+    const float distance = distanceAt(row, col);
 
     // Create animated spiral effect (using cached time for performance)
     const float spiralSpeed = 2.0f;        // Rotation speed
@@ -190,13 +191,10 @@ void ColorEffects::modePlasmaEffect(uint8_t lightness, int row, int col, uint8_t
 // ============================================================================
 void ColorEffects::modeRadialPulse(uint8_t lightness, int row, int col, uint8_t& r, uint8_t& g, uint8_t& b) {
     // Determine which eye center to use based on horizontal position (split at single panel width)
-    const float centerX = (col < panelResX) ? effectCenterLeftX : effectCenterRightX;
     const float maxDist = (col < panelResX) ? maxDistLeft : maxDistRight;
 
-    // Calculate distance from center (using nearest eye center)
-    const float dx = col - centerX;
-    const float dy = row - effectCenterY;
-    const float distance = sqrtf(dx * dx + dy * dy);
+    // Distance from the nearest eye center (precomputed table)
+    const float distance = distanceAt(row, col);
 
     // Normalize distance using pre-calculated constant
     const float normalizedDist = distance / maxDist;  // 0 at center, 1 at corners
@@ -236,16 +234,9 @@ void ColorEffects::modeDualSpiral(uint8_t lightness, int row, int col, uint8_t& 
     }
 
     // Pixel is in eye region - apply the spiral effect
-    // Determine which eye center to use based on horizontal position (split at single panel width)
-    const float centerX = (col < panelResX) ? effectCenterLeftX : effectCenterRightX;
-
-    // Calculate position relative to the nearest eye center
-    const float dx = col - centerX;
-    const float dy = row - effectCenterY;
-
-    // Calculate angle and distance from center
-    const float angle = atan2f(dy, dx);
-    const float distance = sqrtf(dx * dx + dy * dy);
+    // Angle and distance from the nearest eye center (precomputed tables)
+    const float angle = angleAt(row, col);
+    const float distance = distanceAt(row, col);
 
     // Create rotating spiral pattern (using cached time for performance)
     const float spiralArms = 12.0f;        // Number of spiral arms/bands
@@ -300,15 +291,8 @@ void ColorEffects::modeDualCircle(uint8_t lightness, int row, int col, uint8_t& 
     }
 
     // Pixel is in eye region - apply the circle effect
-    // Determine which eye center to use based on horizontal position (split at single panel width)
-    const float centerX = (col < panelResX) ? effectCenterLeftX : effectCenterRightX;
-
-    // Calculate position relative to the nearest eye center
-    const float dx = col - centerX;
-    const float dy = row - effectCenterY;
-
-    // Calculate distance from center
-    const float distance = sqrtf(dx * dx + dy * dy);             // Number of circle bands
+    // Distance from the nearest eye center (precomputed table)
+    const float distance = distanceAt(row, col);
 
     // Speed control: map 0-255 to rotation speed (2.0 to 20.0)
     // 0 = very slow (2.0), 128 = medium (10.0), 255 = very fast (20.0)

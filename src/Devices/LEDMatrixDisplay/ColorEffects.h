@@ -129,6 +129,14 @@ class ColorEffects {
     static constexpr float maxDistLeft = sqrtf(effectCenterLeftX * effectCenterLeftX + effectCenterY * effectCenterY);
     static constexpr float maxDistRight = sqrtf(effectCenterRightX * effectCenterRightX + effectCenterY * effectCenterY);
 
+    // Per-pixel angle/distance to the nearest eye centre, fixed-point to halve RAM (2 x 8 KB); built in the constructor
+    static constexpr float lutAngleScale = 10000.0f;    // radians, +-pi fits int16
+    static constexpr float lutDistanceScale = 100.0f;   // pixels
+    int16_t angleLut[screenHeight][screenWidth];
+    uint16_t distanceLut[screenHeight][screenWidth];
+    float angleAt(int row, int col) const { return angleLut[row][col] / lutAngleScale; }
+    float distanceAt(int row, int col) const { return distanceLut[row][col] / lutDistanceScale; }
+
     // Cached time value (updated once per frame for performance)
     float cachedTime;
 
