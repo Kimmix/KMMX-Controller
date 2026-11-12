@@ -73,17 +73,10 @@ const uint8_t* Viseme::renderViseme(bool talking) {
         if (talking && state != LipSync::Calibration::Countdown && state != LipSync::Calibration::Measuring) {
             dsps_fft2r_fc32(fftBuffer, i2sSamples);
             dsps_bit_rev_fc32(fftBuffer, i2sSamples);
-            const uint16_t low[] = {visemeAhFreqMin, visemeEeFreqMin, visemeOhFreqMin, visemeOoFreqMin, visemeThFreqMin};
-            const uint16_t high[] = {visemeAhFreqMax, visemeEeFreqMax, visemeOhFreqMax, visemeOoFreqMax, visemeThFreqMax};
-            // Only bins that can fall inside some band (lowest min .. highest max).
-            const int firstBin = int(visemeOoFreqMin * i2sSamples / i2sSampleRate);
-            const int lastBin = int(visemeThFreqMax * i2sSamples / i2sSampleRate) + 1;
-            for (int i = firstBin; i <= lastBin; ++i) {
-                float frequency = i * i2sSampleRate / i2sSamples;
-                float magnitude = sqrtf(fftBuffer[2 * i] * fftBuffer[2 * i] + fftBuffer[2 * i + 1] * fftBuffer[2 * i + 1]);
-                for (int band = 0; band < 5; ++band)
-                    if (frequency >= low[band] && frequency <= high[band]) scores[band] += magnitude;
-            }
+            // Magnitudes overwrite the buffer in place: index i is written after 2i and 2i+1 are read.
+            for (int i = 0; i < i2sSamples / 2; ++i)
+                fftBuffer[i] = sqrtf(fftBuffer[2 * i] * fftBuffer[2 * i] + fftBuffer[2 * i + 1] * fftBuffer[2 * i + 1]);
+            LipSync::formantScores(fftBuffer, scores);
         }
     }
     xSemaphoreTake(mutex, portMAX_DELAY);

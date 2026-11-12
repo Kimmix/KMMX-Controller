@@ -17,30 +17,13 @@
 const float i2sSampleRate = 16000.0f;                            // Sample rate in Hz (16 kHz speech capture)
 const uint16_t i2sSamples = 512;                                // Number of samples per FFT window (power of 2)
 
-// Viseme Frequency Ranges (Hz)
-// Each phoneme has a characteristic frequency range based on vocal formants
-const uint16_t visemeAhFreqMin = 700;                           // Start frequency of AH viseme (open mouth sound like "cat")
-const uint16_t visemeAhFreqMax = 1500;                          // End frequency of AH viseme
-
-const uint16_t visemeEeFreqMin = 1000;                          // Start frequency of EE viseme (teeth-showing sound like "see")
-const uint16_t visemeEeFreqMax = 3000;                          // End frequency of EE viseme
-
-const uint16_t visemeOhFreqMin = 400;                           // Start frequency of OH viseme (rounded mouth sound like "go")
-const uint16_t visemeOhFreqMax = 1100;                          // End frequency of OH viseme
-
-const uint16_t visemeOoFreqMin = 250;                           // Start frequency of OO viseme (pursed lips sound like "food")
-const uint16_t visemeOoFreqMax = 900;                           // End frequency of OO viseme
-
-const uint16_t visemeThFreqMin = 2800;                          // Start frequency of TH viseme (fricative sound like "think")
-const uint16_t visemeThFreqMax = 5500;                        // End frequency of TH viseme
-
 // Normalization Scale Factors
-// These multipliers balance the sensitivity across different visemes
-// Lower values = less sensitive, Higher values = more sensitive
-constexpr float visemeAhScale = 1.5f;                              // AH viseme scale factor
-constexpr float visemeEeScale = 1.3f;                               // EE viseme scale factor
-constexpr float visemeOhScale = 1.1f;                              // OH viseme scale factor
-constexpr float visemeOoScale = 0.7f;                              // OO viseme scale factor
-constexpr float visemeThScale = 4.2f;                              // TH viseme scale factor
+// Formant scores (LipSync::formantScores) are already level-independent, so these start
+// neutral; BLE can still bias a viseme. Lower = less sensitive, higher = more sensitive.
+constexpr float visemeAhScale = 1.0f;                              // AH viseme scale factor
+constexpr float visemeEeScale = 1.0f;                              // EE viseme scale factor
+constexpr float visemeOhScale = 1.0f;                              // OH viseme scale factor
+constexpr float visemeOoScale = 1.0f;                              // OO viseme scale factor
+constexpr float visemeThScale = 1.0f;                              // TH viseme scale factor
 
 constexpr uint16_t i2sHopSamples = 256; // 16 ms, 50% overlap
