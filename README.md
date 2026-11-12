@@ -1,183 +1,166 @@
-<div align="left">
-
-# ✨ KMMX-Fursuit Controller ✨
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Platform: ESP32](https://img.shields.io/badge/Platform-ESP32-blue.svg)](https://www.espressif.com/en/products/socs/esp32)
-[![IDE: PlatformIO](https://img.shields.io/badge/IDE-PlatformIO-orange.svg)](https://platformio.org/)
-[![Status](https://img.shields.io/badge/Status-In%20Development-orange.svg)](https://github.com/Kimmix/KMMX-Controller)
-
-ESP32-S3 firmware for HUB75 fursuit face displays, BLE control, proximity/motion/audio reactions, accent LEDs, OLED HUD.
-
-### Controller V4 Preview
-
-<img src="doc/ControllerV4.3_real.webp" alt="Kimmix Controller V4 real board">
-<img src="doc/ControllerV4.3.webp" alt="Kimmix Controller V4">
-
-</div>
-
-Custom PCB designed in collaboration with [Tas.Polar](https://github.com/BaiTian6641)
-
-## 📢 Project Status
-
-> **Note:** This is a personal project built for my own fursuit and is currently in active development. While the code is shared under the MIT License and you're welcome to use, modify, and adapt it for your own projects, please be aware that:
->
-> - ⚠️ **No support is provided** at this time
-> - 🔧 Features and APIs may change without notice
-> - 🚧 Documentation may be incomplete or outdated
-> - 🐛 Bugs and incomplete features are expected
->
-> Feel free to fork, experiment, and build upon this work within the terms of the MIT License. I'm sharing this publicly in the spirit of the maker community, but I'm not able to provide assistance, answer questions, or accept contributions at this stage of development.
-
-Current hardware target: **KMMX Controller V4**. V2 remains in the project as older supported hardware.
-
-## 🌟 Features
-
-- **Animated LED Matrix Displays** for eyes and mouth expressions
-- **Real-time facial animations** including blinking, emoting, and mouth movements
-- **Audio-reactive visemes** that respond to speech
-- **Proximity sensing** for interactive "booping" responses
-- **Accelerometer integration** for motion-based animations and responses
-- **Bluetooth connectivity** for remote control and configuration
-- **Customizable expressions** using bitmap assets
-
-## 🦊 Demo & Gallery
-
 <div align="center">
 
-### Booping Interaction
+<img src="assets/readme/hero.svg" alt="KMMX Controller: ESP32-S3 firmware for fursuit LED matrix faces" width="100%">
 
-<img src="doc/demo-boop.webp" alt="Booping Demo" width="400">
+[![License: MIT](https://img.shields.io/badge/License-MIT-FF446C.svg?style=flat-square&labelColor=1c1216)](LICENSE)
+[![Platform: ESP32-S3](https://img.shields.io/badge/Platform-ESP32--S3-FFA393.svg?style=flat-square&labelColor=1c1216)](https://www.espressif.com/en/products/socs/esp32s3)
+[![PlatformIO](https://img.shields.io/badge/Build-PlatformIO-F9826C.svg?style=flat-square&labelColor=1c1216)](https://platformio.org/)
+[![Status: In development](https://img.shields.io/badge/Status-In%20development-FF2B5B.svg?style=flat-square&labelColor=1c1216)](https://github.com/Kimmix/KMMX-Controller)
 
-[🎥 Watch full video on X](https://x.com/kimmix00/status/1687878110430339072/video/1)
-
-### Bluetooth Smartphone Control
-
-<img src="doc/demo-ble.webp" alt="BLE Control Demo" width="400">
-
-[🎥 Watch full video on X](https://x.com/kimmix00/status/1704465522497397001/video/1)
-
-### Viseme (Audio-Reactive)
-
-<img src="doc/demo-viseme.webp" alt="Viseme Demo" width="400">
-
-[🎥 Watch full video on X](https://x.com/kimmix00/status/1638887564550754306/video/1)
+<img src="doc/demo-viseme.webp" alt="Audio-reactive mouth visemes on the LED matrix" width="420">
 
 </div>
 
-## 📋 Project Structure
+> [!NOTE]
+> A personal project built for my own fursuit. MIT-licensed, so fork and adapt it freely, but **no support, no pull requests, and APIs may change without notice.**
+
+## Demo
+
+<table>
+<tr>
+<td align="center" width="50%"><img src="doc/demo-boop.webp" alt="Booping demo" width="100%"><br><b>Booping</b><br><a href="https://x.com/kimmix00/status/1687878110430339072/video/1">Watch on X</a></td>
+<td align="center" width="50%"><img src="doc/demo-ble.webp" alt="Bluetooth smartphone control demo" width="100%"><br><b>Bluetooth control</b><br><a href="https://x.com/kimmix00/status/1704465522497397001/video/1">Watch on X</a></td>
+</tr>
+</table>
+
+Viseme demo (top): [watch on X](https://x.com/kimmix00/status/1638887564550754306/video/1).
+
+## Features
+
+- **Animated eyes and mouth** on HUB75 LED matrices: blinking, emotes, custom bitmap expressions
+- **Audio-reactive visemes** from an I2S microphone
+- **Boop sensing** with an APDS9930 or VL6180X proximity sensor
+- **Motion reactions** from a LIS3DH (V2) or MPU6050 (V4) IMU
+- **BLE control** of expressions, brightness, colours, fan and settings; see [BLE_INTERFACE.md](BLE_INTERFACE.md)
+- **Extras:** WS2812/SK6812 accent LEDs, SSD1306 OLED HUD, PWM fan (V4)
+
+## Expressions
+
+Eyes and mouths are 8-bit grayscale bitmaps in `src/Bitmaps/`, animated frame by frame and mirrored onto the second panel.
+
+| | Available |
+| --- | --- |
+| **Eyes** | default, angry, arrow, blink, circle, cry, doubted, giggle, look sharp, rounded, sad, sharp, sleep, smile, unimpressed, up |
+| **Mouths** | default, angry, drooling, eh, lower, pout, shock, small, wah, worry |
+| **Visemes** | AH, EE, OH, OO, TH, picked from the microphone's frequency bands |
+| **Effects** | blush, flying hearts, weeping tears, googly eyes driven by the IMU, glitch |
+
+## Reactions
+
+| Trigger | Response |
+| --- | --- |
+| Boop (proximity) | boop animation, hearts |
+| Tap | glitch effect |
+| Repeated pats | smile |
+| Head tilt | expression change |
+| Held upside down | crying |
+| Speech (I2S mic) | live lip-sync with visemes |
+
+Each motion trigger can be switched on or off over BLE.
+
+## Display colours
+
+The default is a coral-to-pink vertical gradient (`#FFA393` to `#FF2B5B`), the one used in the hero above. Six colour modes are selectable over BLE:
+
+| Mode | Effect |
+| --- | --- |
+| 0 | Gradient (default, two custom colours) |
+| 1 | Spiral / vortex, rainbow cycling |
+| 2 | Plasma interference pattern |
+| 3 | Radial pulse from the eye centres |
+| 4 | Dual spiral |
+| 5 | Dual circle |
+
+The side LED strip has its own brightness and colours, defaulting to `#FF446C` with a `#F9826C` wave. Horn brightness is set separately.
+
+## Slot machine
+
+A small game mode for the face: enable it over BLE, and each completed boop spins three reels. Wins flash the horn LED.
+
+## Bluetooth
+
+The controller advertises a single GATT service with about 25 characteristics: brightness, colour modes, eye and mouth state, viseme tuning, LED colours, motion flags, glitch, orientation, slot machine and (V4) fan speed. Writes need an encrypted, bonded link with a 6-digit passkey. Full spec: [BLE_INTERFACE.md](BLE_INTERFACE.md).
+
+## V2 and V4
+
+| | V2 | V4 |
+| --- | --- | --- |
+| IMU | LIS3DH | MPU6050 |
+| Status LED | WS2812 (IO45) | SK6812 (IO38) |
+| Fan | none | PWM, 25 kHz |
+| PSRAM | none | 8 MB |
+
+## Hardware
+
+Current target is **Controller V4**; V2 is still supported.
+
+<div align="center">
+<img src="doc/ControllerV4.3_real.webp" alt="KMMX Controller V4 assembled board" width="48%">
+<img src="doc/ControllerV4.3.webp" alt="KMMX Controller V4 render" width="48%">
+</div>
+
+Custom PCB designed in collaboration with [Tas.Polar](https://github.com/BaiTian6641).
+
+| Part | Notes |
+| --- | --- |
+| Controller | KMMX V2/V4 ESP32-S3 board, or any ESP32-S3 with matching pin changes |
+| Display | HUB75 panels, 64x32 recommended |
+| Proximity | APDS9930 or VL6180X (optional) |
+| IMU | LIS3DH (V2) / MPU6050 (V4) (optional) |
+| Microphone | I2S module (optional) |
+| LEDs / HUD / fan | WS2812 or SK6812, SSD1306 OLED, PWM fan (all optional) |
+| Power | 5V, sized for your panels |
+
+## Build and flash
+
+> [!WARNING]
+> For experienced ESP32 / PlatformIO users. Pins and settings are specific to my hardware.
+
+```bash
+pio run -e KimmixControllerV4 -t upload     # V4 (debug)
+pio run -e KimmixControllerV4-release -t upload   # V4 (release, no serial logging)
+pio run -e KimmixControllerV2 -t upload     # V2 (debug)
+```
+
+Where to configure things:
+
+- Pins: `boards/kmmx-protogen-v*pins.h`
+- Matrix, animation, sensor and feature flags: `src/config.h`
+- Drivers: `src/Devices/`
+- BLE service and characteristics: [BLE_INTERFACE.md](BLE_INTERFACE.md)
+- Bitmap headers live in `src/Bitmaps/`; the generator tool is private and not included.
+
+Host-side tests (no board needed) cover boop, fan PWM, viseme scoring and the startup queue:
+
+```bash
+python tests/run_host_tests.py
+```
 
 <details>
-<summary>Click to expand project structure</summary>
+<summary>Project layout</summary>
 
-- **`src/`** - Main source code
-  - **`Bitmaps/`** - Bitmap assets for eye and mouth animations
-  - **`Devices/`** - Hardware driver implementations
-  - **`FacialStates/`** - Facial animation state machines
-  - **`KMMXController/`** - Main controller logic
-  - **`Network/`** - Bluetooth connectivity
-  - **`Renderer/`** - Animation and rendering code
-  - **`Utils/`** - Helper functions
-- **`include/`** - Header files
-- **`lib/`** - External libraries
-- **`boards/`** - Custom board definitions
+- `src/` firmware: `Bitmaps/`, `Devices/`, `FacialStates/`, `Games/`, `KMMXController/`, `Network/`, `Renderer/`, `Types/`, `Utils/`, `config.h`, `main.cpp`
+- `boards/` custom board definitions and pin maps
+- `scripts/` PlatformIO build patches for the HUB75 library
+- `tests/` host-side tests (boop, fan PWM, viseme scoring)
+- `doc/` images
 
 </details>
 
-## 🚀 Getting Started
+## Web control panel
 
-> **⚠️ Advanced Users Only:** This setup assumes familiarity with ESP32 development, PlatformIO, and embedded systems. The configuration is specific to my custom hardware, so expect to need significant modifications for your own build.
-
-### Prerequisites
-
-**Required:**
-
-- [PlatformIO](https://platformio.org/) IDE or PlatformIO Core
-- KMMX Controller V2/V4 custom ESP32-S3 board, or an ESP32-S3 board with matching pin/config changes
-- Basic understanding of C/C++ and embedded development
-- Soldering skills for hardware assembly
-
-**Common Hardware Components:**
-
-- HUB75 LED Matrix panels (64x32 resolution recommended)
-- APDS9930 or VL6180X proximity sensor (optional, for booping feature)
-- LIS3DH (V2) or MPU6050 (V4) accelerometer/IMU (optional, for motion detection)
-- I2S microphone module (optional, for viseme/audio reactivity)
-- WS2812/SK6812 LED strips (optional, for cheek/status LEDs)
-- SSD1306 OLED display (optional, for HUD)
-- PWM fan (optional)
-- Appropriate power supply (5V, sufficient current for LED panels)
-
-## ⚙️ Configuration
-
-> **Note:** Configuration is currently scattered across multiple files and tailored to my specific hardware. Expect to dig through the source code to customize for your setup.
-
-Key configuration areas you'll need to review:
-
-- **Pin assignments** for all hardware components
-- **LED matrix settings** (resolution, brightness, color correction)
-- **Animation timing** parameters and frame rates
-- **Sensor thresholds** (proximity, accelerometer sensitivity)
-- **Bluetooth/BLE** device name and service UUIDs
-- **Feature flags** to enable/disable specific hardware modules
-
-Look for configuration in:
-
-- Board pin definitions in `boards/`
-- Main hardware settings in `src/config.h`
-- Individual device driver files in `src/Devices/`
-- BLE GATT service and characteristics in [`BLE_INTERFACE.md`](BLE_INTERFACE.md)
-- Generated bitmap headers in `src/Bitmaps/`; the bitmap generation tool is private and not included in this repository.
-
-## 🎮 Web Control Panel
-
-Control your fursuit remotely via Bluetooth using a web browser!
+Control the suit from a phone or laptop over Web Bluetooth (Chrome/Edge), no app install.
 
 <div align="center">
-  <img src="doc/ble-web-app.webp" alt="BLE Web Control Panel" width="600">
+<img src="doc/ble-web-app.webp" alt="BLE web control panel" width="600">
 
-  <p>
-    <strong>📦 <a href="https://github.com/Kimmix/KMMX-ControlPanel">Project Repository</a></strong> |
-    <strong>🌐 <a href="https://kimmix-control.anthro.asia">Live Demo</a></strong>
-  </p>
-
-  <p>A web-based control interface using Web Bluetooth API to wirelessly control expressions, animations, and settings from your smartphone or computer.</p>
+**[Live demo](https://kimmix-control.anthro.asia)** · **[Source: KMMX-ControlPanel](https://github.com/Kimmix/KMMX-ControlPanel)**
 </div>
 
-**Features:**
+Change expressions, adjust brightness and colours, and tweak controller settings remotely.
 
-- 📱 Works on any device with Web Bluetooth support (Chrome/Edge on Android, macOS, Windows)
-- 🎭 Change facial expressions on the fly
-- 🎨 Adjust LED brightness and colors
-- ⚙️ Configure controller settings remotely
-- 🔋 No app installation required - runs directly in your browser
+## License and contact
 
-## 📄 License
+[MIT](LICENSE): use, modify and distribute freely, with no warranty.
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-**TL;DR:** You're free to use, modify, and distribute this code for any purpose (commercial or personal), but it comes with no warranty. This project was built for my personal use, so while you're welcome to use it, please understand it's tailored to my specific hardware setup and requirements.
-
-## 🤝 Support & Contributing
-
-As this is a personal project still in active development, I'm not currently:
-
-- ❌ Accepting pull requests or contributions
-- ❌ Providing technical support or troubleshooting help
-- ❌ Answering questions about setup or usage
-- ❌ Maintaining issues or feature requests
-
-**However**, you're absolutely encouraged to:
-
-- ✅ Fork this repository and make it your own
-- ✅ Learn from the code and adapt it to your needs
-- ✅ Share your own creations with the community
-- ✅ Use this as a starting point for your own fursuit projects
-
-## 📱 Contact
-
-<div align="center">
-  <p>Find me on Discord: kimmix</p>
-  <p>Or my website: <a href="https://kimmix.anthro.asia/" target="_blank">kimmix.anthro.asia/</a></p>
-
-</div>
+Discord: `kimmix` · Web: [kimmix.anthro.asia](https://kimmix.anthro.asia/)
