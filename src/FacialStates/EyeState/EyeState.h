@@ -99,6 +99,7 @@ class EyeState {
     const uint8_t* blinkAnimation[24] = {eyeBlink1, eyeBlink2, eyeBlink3, eyeBlink4, eyeBlink5, eyeBlink6, eyeBlink7, eyeBlink8, eyeBlink9, eyeBlink10, eyeBlink11, eyeBlink12, eyeBlink13, eyeBlink14, eyeBlink15, eyeBlink16, eyeBlink17, eyeBlink18, eyeBlink19, eyeBlink20, eyeBlink21, eyeBlink22, eyeBlink23, eyeBlink24};
     const uint8_t blinkAnimationLength = arrayLength(blinkAnimation);
     TimeBasedAnimState blinkAnim;
+    unsigned long blinkResumeAt = 0;  // non-zero while paused between double-blink halves
     uint8_t blinkCount = 0;
     bool shouldDoubleBlink = false;
 

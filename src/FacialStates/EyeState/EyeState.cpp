@@ -403,6 +403,15 @@ void EyeState::blink() {
     const uint8_t* currentFrame = TimeBasedAnimation::update(blinkAnim);
     display->drawEye(currentFrame);
 
+    // Between double-blink halves: hold the closed frame without blocking the render task
+    if (blinkResumeAt != 0) {
+        if ((long)(millis() - blinkResumeAt) >= 0) {
+            blinkResumeAt = 0;
+            TimeBasedAnimation::reset(blinkAnim);
+        }
+        return;
+    }
+
     // Check if blink animation is complete
     if (TimeBasedAnimation::isComplete(blinkAnim)) {
         blinkCount++;
@@ -424,8 +433,7 @@ void EyeState::blink() {
                 pauseDuration = 150 + (esp_random() % 100);
             }
 
-            delay(pauseDuration);
-            TimeBasedAnimation::reset(blinkAnim);
+            blinkResumeAt = millis() + pauseDuration;
         } else {
             // Reset for next blink
             blinkCount = 0;
