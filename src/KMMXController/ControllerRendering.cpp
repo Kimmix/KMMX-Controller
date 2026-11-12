@@ -4,7 +4,11 @@
 extern BLEManager& bleManager;
 
 void KMMXController::update() {
-    if (renderTaskHandle && xTaskGetCurrentTaskHandle() != renderTaskHandle) return;
+    const bool onRenderTask = renderTaskHandle && xTaskGetCurrentTaskHandle() == renderTaskHandle;
+    // The OLED I2C flush blocks ~44ms, so it runs on the loop task (core 1), never the render task.
+    // It only reads render state (pointers/enums), so a stale value is the worst case.
+    if (oledInitialized && !onRenderTask) updateOLED();
+    if (renderTaskHandle && !onRenderTask) return;
     statusLED.update();
     updateSlotMachineCheeks();
     if (!slotMachine.isEnabled()) cheekPanel.update();
@@ -23,9 +27,6 @@ void KMMXController::update() {
     if (boopInitialized) {
         slotMachine.update(getSensorData().proximity);
         if (renderRunning.load() && !gameActive && enableBoopDetection) handleBoop();
-    }
-    if (oledInitialized) {
-        updateOLED();
     }
 }
 
