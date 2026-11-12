@@ -58,7 +58,9 @@ private:
     uint32_t calibrationAt = 0, belowAt = 0, lastFrame = 0;
     bool below = false, wasTalking = false, hasFrame = false;
     float opening = 0, appliedThreshold = -1;
-    uint8_t candidate = 0, candidateFrames = 0, sampleCount = 0;
+    uint8_t candidate = 0, sampleCount = 0;
+    bool candidatePending = false;
+    uint32_t candidateAt = 0, calibrationSampleAt = 0;
     bool anyNonzero = false;
     float calibrationSamples[64] = {};
 };

@@ -10,7 +10,7 @@ bool I2SMicrophone::i2s_install(uint32_t sampleRate, int samples) {
     const i2s_config_t i2s_config = {
         .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_RX),
         .sample_rate = sampleRate,
-        .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
+        .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
         .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
         .communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_STAND_I2S),
         .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
@@ -48,11 +48,11 @@ bool I2SMicrophone::init(uint32_t sampleRate, int samples) {
     return false;
 }
 
-bool I2SMicrophone::read(int16_t* buffer, int samples) {
+bool I2SMicrophone::read(int32_t* buffer, int samples) {
     if (!installed) return false;
     size_t bytesRead = 0;
-    esp_err_t err = i2s_read(I2S_PORT, buffer, samples * sizeof(int16_t), &bytesRead, pdMS_TO_TICKS(100));
-    return err == ESP_OK && bytesRead == samples * sizeof(int16_t);
+    esp_err_t err = i2s_read(I2S_PORT, buffer, samples * sizeof(int32_t), &bytesRead, pdMS_TO_TICKS(100));
+    return err == ESP_OK && bytesRead == samples * sizeof(int32_t);
 }
 
 bool I2SMicrophone::start_i2s() {

@@ -111,7 +111,7 @@ bool Core::command(uint8_t command, uint32_t now) {
 }
 void Core::resetAnimation() {
     opening = 0; status.opening = 0; status.gate = false; status.shape = 0;
-    below = false; candidateFrames = 0; appliedThreshold = -1;
+    below = false; candidatePending = false; appliedThreshold = -1;
 }
 void Core::failCalibration(Result result) {
     status.calibration = Calibration::Failed;
@@ -150,7 +150,10 @@ void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
             status.progress = uint32_t(now - calibrationAt) * 100 / 2000;
         } else {
             status.calibration = Calibration::Measuring;
-            calibrationSamples[sampleCount++] = rms;
+            if (sampleCount == 0 || uint32_t(now - calibrationSampleAt) >= 32) {
+                calibrationSampleAt = now;
+                calibrationSamples[sampleCount++] = rms;
+            }
             anyNonzero |= nonzero;
             status.progress = sampleCount * 100 / 64;
             if (sampleCount == 64) {
@@ -180,7 +183,7 @@ void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
         if (uint32_t(now - belowAt) >= 80) status.gate = false;
     } else below = false;
 
-    if (!talking) { opening = 0; status.opening = 0; candidateFrames = 0; return; }
+    if (!talking) { opening = 0; status.opening = 0; candidatePending = false; return; }
     if (status.gate && rawScores && validScores) {
         int winner = 0;
         float second = 0;
@@ -189,10 +192,14 @@ void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
             else second = std::max(second, scores[i]);
         }
         if (scores[winner] > 0 && scores[winner] >= second * 1.15f && winner != status.shape) {
-            if (candidate != winner) { candidate = winner; candidateFrames = 0; }
-            if (++candidateFrames >= 2) { status.shape = winner; candidateFrames = 0; }
-        } else candidateFrames = 0;
-    } else candidateFrames = 0;
+            if (!candidatePending || candidate != winner) {
+                candidate = winner; candidateAt = now; candidatePending = true;
+            }
+            if (uint32_t(now - candidateAt) >= 32) {
+                status.shape = winner; candidatePending = false;
+            }
+        } else candidatePending = false;
+    } else candidatePending = false;
     const float target = status.gate ? std::pow(std::min(std::max(rms - settings.threshold, 0.0f) * settings.gain / 80, 1.0f), 0.8f) : 0;
     const float attack[] = {25, 50, 90}, release[] = {70, 120, 200};
     const float tau = target > opening ? attack[uint8_t(settings.response)] : release[uint8_t(settings.response)];

@@ -130,10 +130,10 @@ old hold timer. Sustained speech never changes the threshold. While open, target
 opening is `pow(clamp(max(RMS - threshold, 0) * gain / 80, 0, 1), 0.8)`; otherwise zero. At defaults the target starts above RMS 13 and reaches full
 opening at RMS 93. Response attack/
 release constants in milliseconds: Snappy 25/70, Natural 50/120, Smooth 90/200.
-The 8 kHz, 256-sample analysis cadence is nominally 32 ms; browser writes also incur
-BLE/queue latency. Shape switching needs a 15% margin for two consecutive frames.
+The 16 kHz, 512-sample Hann analysis window spans 32 ms and advances by 256 samples (16 ms); browser writes also incur
+BLE/queue latency. Shape switching needs a continuous 15% winning margin for 32 ms.
 
-**Calibrate Room:** Stay quiet for a two-second countdown and 64 frames of measurement.
+**Calibrate Room:** Stay quiet for a two-second countdown and 64 RMS observations spaced at least 32 ms apart (about two seconds).
 Use sorted frame RMS index 57 (nearest-rank 90th percentile), then threshold
 `max(1, 1.5 * percentile + 2)`. Commit only on success. Read failures, clipping
 (raw samples >=32760 or <=-32760), an entirely zero stream, or a threshold above 1,000
