@@ -58,7 +58,8 @@ const uint8_t screenHeight = panelResY;                 // Total screen height =
 // Display settings
 const uint8_t panelInitBrightness = 255;        // Initial brightness (0-255)
 const uint16_t minRefreshRate = 240;            // Minimum refresh rate in Hz
-const bool doubleBuffer = true;                 // Enable double buffering for smoother animations
+const uint8_t renderFrameMs = 8;               // Render frame period in ms (8 = 125fps, 10 = 100fps, 16 = ~60fps)
+const bool doubleBuffer = true;                // Enable double buffering for smoother animations
 const uint8_t minimumPixelBrightness = 40;      // Minimum pixel brightness threshold for drawing
 
 // --- Facial Feature Geometry (position and size in pixels) ---

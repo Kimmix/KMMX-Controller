@@ -264,7 +264,7 @@ void SlotMachine::drawPanel(unsigned long now) {
         } else if (winning) drawWord(jackpotWord, 8, 10, 1, theme);
         else drawWord(awDangItWord, 10, 5, 1, red);
     }
-    if (phase == State::READY || phase == State::RESULT) drawChargeMeter(getCharge(), pink);
+    if (phase == State::READY || phase == State::RESULT) drawChargeMeter(getCharge(), yellow);
 
     const uint16_t frameColor = phase == State::RESULT && winning
                                     ? ((now / 150) % 2 ? theme : white)

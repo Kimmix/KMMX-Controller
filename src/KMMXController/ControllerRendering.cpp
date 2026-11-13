@@ -43,6 +43,7 @@ void KMMXController::renderTask(void* parameter) {
     // Initialize FPS counter with target rate
     ctrl->fpsCounter.setTargetFPS(refreshRate);
 
+    TickType_t lastWake = xTaskGetTickCount();
     while (true) {
         RenderCommand command;
         for (unsigned count = 0; count < commandCapacity && xQueueReceive(ctrl->commandQueue, &command, 0) == pdTRUE; ++count) {
@@ -71,5 +72,9 @@ void KMMXController::renderTask(void* parameter) {
 
         // Update FPS counter
         ctrl->fpsCounter.update();
+
+        // Cap all modes to renderFrameMs; uncapped it flickers.
+        // DelayUntil paces from a fixed schedule so render time doesn't stretch the frame.
+        vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(renderFrameMs));
     }
 }
