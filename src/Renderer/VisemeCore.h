@@ -55,11 +55,12 @@ private:
     void change(const Settings& value);
     void resetAnimation();
     void failCalibration(Result result);
-    uint32_t calibrationAt = 0, belowAt = 0, lastFrame = 0;
+    uint32_t calibrationAt = 0, belowAt = 0, lastFrame = 0, gateAt = 0;
     bool below = false, wasTalking = false, hasFrame = false;
     float opening = 0, appliedThreshold = -1;
+    float average = 0, peak = 0; // slow mean and decaying max of loudness above the gate
     uint8_t candidate = 0, sampleCount = 0;
-    bool candidatePending = false;
+    bool candidatePending = false, dipping = false; // dipping: closing the mouth before swapping to `candidate`
     uint32_t candidateAt = 0, calibrationSampleAt = 0;
     bool anyNonzero = false;
     float calibrationSamples[64] = {};

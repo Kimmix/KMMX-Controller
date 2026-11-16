@@ -54,7 +54,7 @@ bool operator==(const Settings& a, const Settings& b) {
     return a.threshold == b.threshold && a.gain == b.gain && a.response == b.response;
 }
 bool valid(const Settings& s) {
-    return std::isfinite(s.threshold) && s.threshold >= 500 && s.threshold <= 10000 &&
+    return std::isfinite(s.threshold) && s.threshold >= 300 && s.threshold <= 10000 &&
            std::isfinite(s.gain) && s.gain >= 0.25f && s.gain <= 4 && uint8_t(s.response) <= 2;
 }
 bool decodeSettings(const uint8_t* bytes, size_t size, Settings& settings) {
@@ -110,8 +110,8 @@ bool Core::command(uint8_t command, uint32_t now) {
     return true;
 }
 void Core::resetAnimation() {
-    opening = 0; status.opening = 0; status.gate = false; status.shape = 0;
-    below = false; candidatePending = false; appliedThreshold = -1;
+    opening = 0; average = 0; peak = 0; status.opening = 0; status.gate = false; status.shape = 0;
+    below = false; candidatePending = false; dipping = false; appliedThreshold = -1;
 }
 void Core::failCalibration(Result result) {
     status.calibration = Calibration::Failed;
@@ -159,7 +159,7 @@ void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
             if (sampleCount == 64) {
                 std::sort(calibrationSamples, calibrationSamples + 64);
                 Settings value = settings;
-                value.threshold = std::max(500.0f, 1.5f * calibrationSamples[57] + 2);
+                value.threshold = std::max(300.0f, 1.5f * calibrationSamples[57] + 2);
                 if (!anyNonzero) failCalibration(Result::ZeroAudio);
                 else if (!valid(value)) failCalibration(Result::TooLoud);
                 else {
@@ -174,6 +174,7 @@ void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
     status.applied = status.accepted;
     if (talking != wasTalking) resetAnimation();
     wasTalking = talking;
+    const bool gateWas = status.gate;
     if (appliedThreshold != settings.threshold) {
         status.gate = rms >= settings.threshold;
         appliedThreshold = settings.threshold; below = false;
@@ -182,9 +183,11 @@ void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
         if (!below) { below = true; belowAt = now; }
         if (uint32_t(now - belowAt) >= 80) status.gate = false;
     } else below = false;
+    if (status.gate && !gateWas) gateAt = now;
 
-    if (!talking) { opening = 0; status.opening = 0; candidatePending = false; return; }
-    if (status.gate && rawScores && validScores) {
+    if (!talking) { opening = 0; status.opening = 0; candidatePending = false; dipping = false; return; }
+    constexpr float openFloor = 0.3f, dipOpen = openFloor + 0.1f; // dipOpen must stay above the floor to be reachable
+    if (!dipping && status.gate && rawScores && validScores) {
         int winner = 0;
         float second = 0;
         for (int i = 1; i < 5; ++i) {
@@ -196,14 +199,31 @@ void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
                 candidate = winner; candidateAt = now; candidatePending = true;
             }
             if (uint32_t(now - candidateAt) >= 32) {
-                status.shape = winner; candidatePending = false;
+                // A swap at a wide opening is a visible jump: close to dipOpen first, swap there, then reopen.
+                // The first 100 ms after the gate opens swaps directly, or every word would start with a stutter.
+                if (opening <= dipOpen || uint32_t(now - gateAt) < 100) status.shape = winner;
+                else dipping = true; // committed to `candidate`; detection pauses until the swap lands
+                candidatePending = false;
             }
         } else candidatePending = false;
     } else candidatePending = false;
-    const float target = status.gate ? std::pow(std::min(std::max(rms - settings.threshold, 0.0f) * settings.gain / 80, 1.0f), 0.8f) : 0;
+    // Opening follows loudness relative to the recent level, so a constant loud sound settles at the floor
+    // while syllable peaks still open fully. Gate open always shows at least openFloor.
+    // Average rises slowly (held sounds close gradually) and falls fast (a short pause re-arms full opening).
+    constexpr float averageRiseTau = 2000, averageFallTau = 300, peakTau = 1500, dipTau = 25;
+    const float over = status.gate ? std::max(rms - settings.threshold, 0.0f) * settings.gain : 0;
+    average += (over - average) * (1 - std::exp(-dt / (over > average ? averageRiseTau : averageFallTau)));
+    peak = std::max(over, peak + (over - peak) * (1 - std::exp(-dt / peakTau)));
+    const float range = std::max(80.0f, peak * 0.5f);
+    float target = status.gate
+        ? openFloor + (1 - openFloor) * std::pow(std::min(std::max(over - average, 0.0f) / range, 1.0f), 0.8f) : 0;
+    if (dipping) target = std::min(target, openFloor);
     const float attack[] = {25, 50, 90}, release[] = {70, 120, 200};
-    const float tau = target > opening ? attack[uint8_t(settings.response)] : release[uint8_t(settings.response)];
+    // The dip uses its own fast time: the normal release (70-200 ms) would hold the old shape for up to half a second.
+    const float tau = dipping ? dipTau
+        : target > opening ? attack[uint8_t(settings.response)] : release[uint8_t(settings.response)];
     opening += (target - opening) * (1 - std::exp(-dt / tau));
+    if (dipping && opening <= dipOpen) { status.shape = candidate; dipping = false; }
     if (!status.gate && opening < 1.0f / 120) opening = 0;
     status.opening = uint8_t(std::min(60.0f, std::round(opening * 60)));
 }

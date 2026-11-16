@@ -55,6 +55,19 @@ int main() {
     calibration.frame(10, true, false, true, true, winner, 4016);
     assert(calibration.status.calibration == LipSync::Calibration::Success);
 
+    LipSync::Core loud; // constant loud sound opens wide, then settles at the 30% floor (18/60)
+    uint8_t widest = 0, swaps = 0;
+    for (uint32_t now = 0; now < 20000; now += 16) {
+        const bool other = now >= 1000 && now < 1300; // a different winner while the mouth is wide
+        const float ah[] = {100, 0, 0, 0, 0};
+        const uint8_t before = loud.status.shape;
+        loud.frame(3000, true, false, true, true, other ? ah : winner, now);
+        // After the onset, a swap only lands once the mouth has dipped to 40% (24/60).
+        if (now > 100 && loud.status.shape != before) { assert(loud.status.opening <= 24); ++swaps; }
+        if (loud.status.opening > widest) widest = loud.status.opening;
+    }
+    assert(widest > 40 && loud.status.opening == 18 && swaps == 2);
+
     LipSync::Core core;
     const float scores[] = {10, 0, 20, 0, 0};
     core.frame(20, true, false, true, true, scores, 100);
