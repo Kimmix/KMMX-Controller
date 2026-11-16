@@ -73,7 +73,6 @@ new firmware retain basic controls, but their cached advanced sliders are unsupp
 | Characteristic | UUID | Properties | Length |
 |---|---|---|---|
 | Viseme settings | `b9725d01-7546-4e0b-9b91-486e25012a02` | READ, WRITE | 10 bytes |
-| Calibration command | `b9725d02-7546-4e0b-9b91-486e25012a02` | WRITE | 1 byte |
 | Viseme status | `b9725d03-7546-4e0b-9b91-486e25012a02` | READ, NOTIFY | 16 bytes |
 | Viseme scores | `b9725d05-7546-4e0b-9b91-486e25012a02` | READ, NOTIFY | 5 bytes |
 | Viseme scale factors | `b9725d06-7546-4e0b-9b91-486e25012a02` | READ, WRITE | 11 bytes (v2), or write one byte `FF` to reset |
@@ -92,15 +91,13 @@ padding. Each settings write replaces the complete record atomically.
 | 5 | float32 | Mouth gain, 0.25–4; default 1 |
 | 9 | uint8 | Response: 0 Snappy, 1 Natural (default), 2 Smooth |
 
-Reject wrong lengths, unsupported versions, NaN/infinity, invalid ranges/enums, and
-settings writes during calibration. Rejection changes no settings. READ always returns
+Reject wrong lengths, unsupported versions, NaN/infinity, and invalid ranges/enums.
+Rejection changes no settings. READ always returns
 the canonical accepted values, including immediately after a rejected write. Inspect
 status and compare readback; a successful transport write alone does not prove acceptance.
 Default settings golden bytes: `02 00 00 50 41 00 00 80 3f 01`.
 
-Calibration command: **1 start**, **2 cancel**; all other payloads are invalid.
-Start while already calibrating reports Busy; start with an unhealthy mic reports
-AudioError. Cancel is idempotent. Commands never change the active expression.
+The former calibration command characteristic (`b9725d02-…`) is removed; its UUID is not reused.
 
 | Status offset | Type | Meaning |
 |---|---|---|
@@ -111,24 +108,24 @@ AudioError. Cancel is idempotent. Commands never change the active expression.
 | 9 | uint8 | Gate: 0 closed, 1 open |
 | 10 | uint8 | Selected shape: 0 AH, 1 EE, 2 OH, 3 OO, 4 TH |
 | 11 | uint8 | Rendered opening level, 0–60 |
-| 12 | uint8 | Calibration: 0 Idle, 1 Countdown, 2 Measuring, 3 Success, 4 Failed, 5 Cancelled |
-| 13 | uint8 | Progress 0–100 within current calibration phase |
+| 12 | uint8 | Reserved, always 0 |
+| 13 | uint8 | Reserved, always 0 |
 | 14 | uint8 | Mic: 0 Ready, 1 ReadError (recoverable), 2 InitError (reboot required) |
-| 15 | uint8 | Last result: 0 OK, 1 Invalid, 2 Busy, 3 AudioError, 4 Clipping, 5 ZeroAudio, 6 TooLoud |
+| 15 | uint8 | Last result: 0 OK, 1 Invalid, 3 AudioError (2 and 4–6 are retired) |
 
 Revisions are session-local counters, start at 1, and wrap skipping 0; compare for
 equality, not numerical ordering. Matching accepted/applied revisions mean the
 settings reached processing. Mic faults can prevent application.
 The status version changed because saved revision, save state, and storage errors
 were removed. Update both panel and firmware for tuning; mismatched versions retain
-basic controls. Status and calibration payloads and all three UUIDs are unchanged. Settings use the original 10-byte v2 payload. Panels must check both versions
+basic controls. The status payload and UUIDs are unchanged. Settings use the original 10-byte v2 payload. Panels must check both versions
 before tuning; basic lip-sync on/off remains compatible.
 
-Status is sent at 10 Hz while connected, plus gate, calibration, revision, health, and
+Status is sent at 10 Hz while connected, plus gate, revision, health, and
 result transitions. READ is authoritative on reconnect; do not replay browser defaults.
 The gate is independent of whether a temporary expression is showing; opening is zero
 when lip-sync animation is inactive. A closed gate may have a nonzero closing-animation
-level. Calibration reports a closed gate and zero opening.
+level.
 
 **Signal behavior:** Open at RMS >= threshold. Close after 80 ms continuously below
 80% of threshold. A threshold change re-evaluates on the next audio frame without the
@@ -139,17 +136,8 @@ release constants in milliseconds: Snappy 25/70, Natural 50/120, Smooth 90/200.
 The 16 kHz, 512-sample Hann analysis window spans 32 ms and advances by 256 samples (16 ms); browser writes also incur
 BLE/queue latency. Shape switching needs a continuous 15% winning margin for 32 ms.
 
-**Calibrate Room:** Stay quiet for a two-second countdown and 64 RMS observations spaced at least 32 ms apart (about two seconds).
-Use sorted frame RMS index 57 (nearest-rank 90th percentile), then threshold
-`max(1, 1.5 * percentile + 2)`. Commit only on success. Read failures, clipping
-(raw samples >=32760 or <=-32760), an entirely zero stream, or a threshold above 1,000
-fail without changing settings. Cancellation also preserves settings. Calibration
-works with lip sync off, survives temporary expressions and BLE disconnect, and stops
-on reboot. It is not speech recognition: talking during measurement can set an
-excessive threshold. There is no automatic recalibration or background adaptation.
-
-**Session-only tuning:** Settings and calibration live in RAM. Every reboot restores
-threshold 13, mouth gain 1, and Natural response, and starts IDLE. Temporary expressions
+**Session-only tuning:** Settings live in RAM. Every reboot restores
+threshold 13, mouth gain 1, and Natural response. Temporary expressions
 and BLE disconnects preserve tuning while the controller remains powered.
 There are no viseme NVS reads, writes, save timers, retries, or save indicators.
 Previously saved viseme records are ignored and left untouched; unrelated NVS data
@@ -161,7 +149,7 @@ characteristic because persistence never had a dedicated characteristic.
 `low * pow(high/low, t)` for slider fraction t in 0–1. Display pending edits separately
 from accepted readback; serialize settings writes and reads and keep only the latest
 queued slider update. Response presets adjust timing only; keep Mouth size logarithmic. Use the same linear meter scale for signal and threshold:
-`max(100, threshold * 1.25)`. Show actionable calibration/mic failures and explain that reboot resets tuning.
+`max(100, threshold * 1.25)`. Show actionable mic failures and explain that reboot resets tuning.
 
 ### Live orientation (v2)
 
@@ -281,7 +269,7 @@ While game mode is enabled, a completed proximity boop spins the three reels. Ho
 ✅ Eye State
 ✅ Mouth State
 ✅ Viseme
-✅ Viseme Settings v2, Calibration, Status v3 (3)
+✅ Viseme Settings v2, Status v3 (2)
 ✅ Viseme scores
 ✅ Orientation v2 (reports unsupported on V2)
 ✅ Display FPS
@@ -300,8 +288,8 @@ While game mode is enabled, a completed proximity boop spins the three reels. Ho
 🆕 Fan Speed
 
 **Total Characteristics:**
-- V2: 26 characteristics
-- V4: 27 characteristics (26 + fan control)
+- V2: 25 characteristics
+- V4: 26 characteristics (25 + fan control)
 
 ---
 

@@ -364,8 +364,6 @@ void KMMXController::drawOLEDSensorBars(const SensorData& sensors) {
     u8g2->drawLine(gatePos, VU_BAR_Y, gatePos, VU_BAR_Y + BAR_HEIGHT - 1);
     char label[32];
     if (audio.status.mic != LipSync::MicState::Ready) snprintf(label, sizeof(label), "MIC ERROR");
-    else if (audio.status.calibration == LipSync::Calibration::Countdown) snprintf(label, sizeof(label), "Quiet %u%%", audio.status.progress);
-    else if (audio.status.calibration == LipSync::Calibration::Measuring) snprintf(label, sizeof(label), "Cal %u%%", audio.status.progress);
     else if (audio.status.result != LipSync::Result::Ok) snprintf(label, sizeof(label), "Audio error %u", unsigned(audio.status.result));
     else snprintf(label, sizeof(label), "%s %s %u T:%.0f",
         StateNames::getVisemeName(Viseme::VisemeType(audio.status.shape)),

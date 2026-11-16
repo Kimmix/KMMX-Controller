@@ -167,12 +167,6 @@ class VisemeSettingsCallbacks : public NimBLECharacteristicCallbacks {
         onRead(characteristic, info); // Never leave a rejected payload as the readable value.
     }
 };
-class VisemeCalibrationCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* characteristic, NimBLEConnInfo&) override {
-        const auto value = characteristic->getValue();
-        BLEManager::instance->controller.viseme().calibrationCommand(value.data(), value.size());
-    }
-};
 class OrientationCallbacks : public NimBLECharacteristicCallbacks {
     void onRead(NimBLECharacteristic* characteristic, NimBLEConnInfo&) override {
         uint8_t bytes[Orientation::PacketSize];
@@ -329,10 +323,8 @@ void BLEManager::setup() {
     #endif
 
     auto* visemeSettings = pService->createCharacteristic(BLE_VISEME_SETTINGS_UUID, BLE_RW);
-    auto* visemeCalibration = pService->createCharacteristic(BLE_VISEME_CALIBRATION_UUID, BLE_WRITE);
     visemeStatus = pService->createCharacteristic(BLE_VISEME_STATUS_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
     visemeSettings->setCallbacks(new VisemeSettingsCallbacks());
-    visemeCalibration->setCallbacks(new VisemeCalibrationCallbacks());
     visemeStatus->setCallbacks(new VisemeStatusCallbacks());
     pService->createCharacteristic(BLE_VISEME_SCALES_UUID, BLE_RW)
         ->setCallbacks(new VisemeScalesCallbacks());

@@ -9,9 +9,8 @@ constexpr size_t SettingsSize = 10;
 constexpr size_t StatusSize = 16;
 constexpr size_t ScalesSize = 11;
 enum class Response : uint8_t { Snappy, Natural, Smooth };
-enum class Calibration : uint8_t { Idle, Countdown, Measuring, Success, Failed, Cancelled };
 enum class MicState : uint8_t { Ready, ReadError, InitError };
-enum class Result : uint8_t { Ok, Invalid, Busy, AudioError, Clipping, ZeroAudio, TooLoud };
+enum class Result : uint8_t { Ok, Invalid, AudioError = 3 }; // wire values; 2 and 4-6 are retired
 
 struct Settings {
     float threshold = 700.0f;
@@ -29,8 +28,6 @@ struct Status {
     bool gate = false;
     uint8_t shape = 0, opening = 0;
     uint8_t scoreWeights[5] = {};
-    Calibration calibration = Calibration::Idle;
-    uint8_t progress = 0;
     MicState mic = MicState::Ready;
     Result result = Result::Ok;
 };
@@ -46,23 +43,17 @@ public:
     Settings settings;
     Status status;
     bool accept(const uint8_t* bytes, size_t size);
-    bool command(uint8_t command, uint32_t now);
-    bool calibrating() const;
     void initFailed();
-    void frame(float rms, bool validAudio, bool clipped, bool nonzero,
-               bool talking, const float scores[5], uint32_t now);
+    void frame(float rms, bool validAudio, bool talking, const float scores[5], uint32_t now);
 private:
     void change(const Settings& value);
     void resetAnimation();
-    void failCalibration(Result result);
-    uint32_t calibrationAt = 0, belowAt = 0, lastFrame = 0, gateAt = 0;
+    uint32_t belowAt = 0, lastFrame = 0, gateAt = 0;
     bool below = false, wasTalking = false, hasFrame = false;
     float opening = 0, appliedThreshold = -1;
     float average = 0, peak = 0; // slow mean and decaying max of loudness above the gate
-    uint8_t candidate = 0, sampleCount = 0;
+    uint8_t candidate = 0;
     bool candidatePending = false, dipping = false; // dipping: closing the mouth before swapping to `candidate`
-    uint32_t candidateAt = 0, calibrationSampleAt = 0;
-    bool anyNonzero = false;
-    float calibrationSamples[64] = {};
+    uint32_t candidateAt = 0;
 };
 }

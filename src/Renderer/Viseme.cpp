@@ -43,23 +43,14 @@ void Viseme::writeSettings(const uint8_t* bytes, size_t size) {
     core.accept(bytes, size);
     xSemaphoreGive(mutex);
 }
-void Viseme::calibrationCommand(const uint8_t* bytes, size_t size) {
-    xSemaphoreTake(mutex, portMAX_DELAY);
-    core.command(size == 1 ? bytes[0] : 0, millis());
-    xSemaphoreGive(mutex);
-}
 const uint8_t* Viseme::renderViseme(bool talking) {
     const bool validAudio = mic.read(i2sBuffer, i2sHopSamples);
     const bool ready = audioWindow.append(i2sBuffer, validAudio ? i2sHopSamples : 0);
     if (validAudio && !ready) return mouthDefault1;
     float rms = 0, scores[5] = {};
-    bool clipped = false, nonzero = false;
     if (validAudio) {
         float sum = 0;
-        for (float sample : audioWindow.samples) {
-            sum += sample; nonzero |= sample != 0;
-            clipped |= sample >= 32760 || sample <= -32760;
-        }
+        for (float sample : audioWindow.samples) sum += sample;
         const float mean = float(sum) / i2sSamples;
         float squares = 0;
         for (int i = 0; i < i2sSamples; ++i) {
@@ -69,8 +60,7 @@ const uint8_t* Viseme::renderViseme(bool talking) {
             fftBuffer[2 * i + 1] = 0;
         }
         rms = sqrtf(squares / i2sSamples);
-        const auto state = snapshot().status.calibration;
-        if (talking && state != LipSync::Calibration::Countdown && state != LipSync::Calibration::Measuring) {
+        if (talking) {
             dsps_fft2r_fc32(fftBuffer, i2sSamples);
             dsps_bit_rev_fc32(fftBuffer, i2sSamples);
             const uint16_t low[] = {visemeAhFreqMin, visemeEeFreqMin, visemeOhFreqMin, visemeOoFreqMin, visemeThFreqMin};
@@ -87,7 +77,7 @@ const uint8_t* Viseme::renderViseme(bool talking) {
         }
     }
     xSemaphoreTake(mutex, portMAX_DELAY);
-    core.frame(rms, validAudio, clipped, nonzero, talking, scores, millis());
+    core.frame(rms, validAudio, talking, scores, millis());
     const auto status = core.status;
     xSemaphoreGive(mutex);
     return status.opening ? visemeFrames[status.shape][status.opening - 1] : mouthDefault1;

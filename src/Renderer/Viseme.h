@@ -22,7 +22,6 @@ public:
     void readSettings(uint8_t* bytes);
     void readStatus(uint8_t* bytes);
     void writeSettings(const uint8_t* bytes, size_t size);
-    void calibrationCommand(const uint8_t* bytes, size_t size);
 private:
     I2SMicrophone mic;
     StaticSemaphore_t mutexStorage;

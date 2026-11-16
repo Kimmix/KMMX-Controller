@@ -75,11 +75,8 @@ void encodeStatus(const Status& s, uint8_t* bytes) {
     put16(bytes + 1, s.accepted); put16(bytes + 3, s.applied);
     putFloat(bytes + 5, s.rms);
     bytes[9] = s.gate; bytes[10] = s.shape; bytes[11] = s.opening;
-    bytes[12] = uint8_t(s.calibration); bytes[13] = s.progress;
+    bytes[12] = 0; bytes[13] = 0; // reserved: formerly calibration state and progress
     bytes[14] = uint8_t(s.mic); bytes[15] = uint8_t(s.result);
-}
-bool Core::calibrating() const {
-    return status.calibration == Calibration::Countdown || status.calibration == Calibration::Measuring;
 }
 void Core::change(const Settings& value) {
     if (!(settings == value)) {
@@ -90,39 +87,18 @@ void Core::change(const Settings& value) {
 bool Core::accept(const uint8_t* bytes, size_t size) {
     Settings value;
     if (!decodeSettings(bytes, size, value)) { status.result = Result::Invalid; return false; }
-    if (calibrating()) { status.result = Result::Busy; return false; }
     status.result = Result::Ok;
     change(value);
-    return true;
-}
-bool Core::command(uint8_t command, uint32_t now) {
-    if (command != 1 && command != 2) { status.result = Result::Invalid; return false; }
-    if (command == 2) {
-        if (calibrating()) status.calibration = Calibration::Cancelled;
-        status.result = Result::Ok;
-        return true;
-    }
-    if (calibrating()) { status.result = Result::Busy; return false; }
-    if (status.mic != MicState::Ready) { status.result = Result::AudioError; return false; }
-    calibrationAt = now; sampleCount = 0; anyNonzero = false;
-    status.calibration = Calibration::Countdown; status.progress = 0; status.result = Result::Ok;
-    resetAnimation();
     return true;
 }
 void Core::resetAnimation() {
     opening = 0; average = 0; peak = 0; status.opening = 0; status.gate = false; status.shape = 0;
     below = false; candidatePending = false; dipping = false; appliedThreshold = -1;
 }
-void Core::failCalibration(Result result) {
-    status.calibration = Calibration::Failed;
-    status.result = result;
-}
 void Core::initFailed() {
     resetAnimation(); status.mic = MicState::InitError; status.result = Result::AudioError;
-    if (calibrating()) failCalibration(Result::AudioError);
 }
-void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
-                 bool talking, const float rawScores[5], uint32_t now) {
+void Core::frame(float rms, bool validAudio, bool talking, const float rawScores[5], uint32_t now) {
     float scores[5] = {};
     if (rawScores)
         for (size_t i = 0; i < scales.size(); ++i) scores[i] = rawScores[i] * (scales[i] / 100.0f);
@@ -140,54 +116,26 @@ void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
     if (status.mic == MicState::InitError) return;
     if (!validAudio || !std::isfinite(rms) || rms < 0) {
         resetAnimation(); status.rms = 0; status.mic = MicState::ReadError;
-        if (calibrating()) failCalibration(Result::AudioError);
         return;
     }
     status.mic = MicState::Ready; status.rms = rms;
-    if (calibrating()) {
-        if (clipped) failCalibration(Result::Clipping);
-        else if (uint32_t(now - calibrationAt) < 2000) {
-            status.progress = uint32_t(now - calibrationAt) * 100 / 2000;
-        } else {
-            status.calibration = Calibration::Measuring;
-            if (sampleCount == 0 || uint32_t(now - calibrationSampleAt) >= 32) {
-                calibrationSampleAt = now;
-                calibrationSamples[sampleCount++] = rms;
-            }
-            anyNonzero |= nonzero;
-            status.progress = sampleCount * 100 / 64;
-            if (sampleCount == 64) {
-                std::sort(calibrationSamples, calibrationSamples + 64);
-                Settings value = settings;
-                value.threshold = std::max(300.0f, 1.5f * calibrationSamples[57] + 2);
-                if (!anyNonzero) failCalibration(Result::ZeroAudio);
-                else if (!valid(value)) failCalibration(Result::TooLoud);
-                else {
-                    change(value);
-                    status.calibration = Calibration::Success; status.result = Result::Ok;
-                }
-            }
-        }
-        resetAnimation(); status.applied = status.accepted;
-        return;
-    }
     status.applied = status.accepted;
     if (talking != wasTalking) resetAnimation();
     wasTalking = talking;
     const bool gateWas = status.gate;
-    if (appliedThreshold != settings.threshold) {
+    if (appliedThreshold != settings.threshold || !status.gate) {
         status.gate = rms >= settings.threshold;
         appliedThreshold = settings.threshold; below = false;
-    } else if (!status.gate) { status.gate = rms >= settings.threshold; below = false; }
-    else if (rms < settings.threshold * 0.8f) {
+    } else if (rms < settings.threshold * 0.8f) {
         if (!below) { below = true; belowAt = now; }
         if (uint32_t(now - belowAt) >= 80) status.gate = false;
     } else below = false;
     if (status.gate && !gateWas) gateAt = now;
 
-    if (!talking) { opening = 0; status.opening = 0; candidatePending = false; dipping = false; return; }
+    if (!talking) return; // already reset by the talking change above
     constexpr float openFloor = 0.3f, dipOpen = openFloor + 0.1f; // dipOpen must stay above the floor to be reachable
-    if (!dipping && status.gate && rawScores && validScores) {
+    constexpr float averageRiseTau = 2000, averageFallTau = 300, peakTau = 1500, dipTau = 25;
+    if (!dipping && status.gate && validScores) {
         int winner = 0;
         float second = 0;
         for (int i = 1; i < 5; ++i) {
@@ -210,7 +158,6 @@ void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
     // Opening follows loudness relative to the recent level, so a constant loud sound settles at the floor
     // while syllable peaks still open fully. Gate open always shows at least openFloor.
     // Average rises slowly (held sounds close gradually) and falls fast (a short pause re-arms full opening).
-    constexpr float averageRiseTau = 2000, averageFallTau = 300, peakTau = 1500, dipTau = 25;
     const float over = status.gate ? std::max(rms - settings.threshold, 0.0f) * settings.gain : 0;
     average += (over - average) * (1 - std::exp(-dt / (over > average ? averageRiseTau : averageFallTau)));
     peak = std::max(over, peak + (over - peak) * (1 - std::exp(-dt / peakTau)));
@@ -219,9 +166,9 @@ void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
         ? openFloor + (1 - openFloor) * std::pow(std::min(std::max(over - average, 0.0f) / range, 1.0f), 0.8f) : 0;
     if (dipping) target = std::min(target, openFloor);
     const float attack[] = {25, 50, 90}, release[] = {70, 120, 200};
+    const uint8_t response = uint8_t(settings.response);
     // The dip uses its own fast time: the normal release (70-200 ms) would hold the old shape for up to half a second.
-    const float tau = dipping ? dipTau
-        : target > opening ? attack[uint8_t(settings.response)] : release[uint8_t(settings.response)];
+    const float tau = dipping ? dipTau : target > opening ? attack[response] : release[response];
     opening += (target - opening) * (1 - std::exp(-dt / tau));
     if (dipping && opening <= dipOpen) { status.shape = candidate; dipping = false; }
     if (!status.gate && opening < 1.0f / 120) opening = 0;
