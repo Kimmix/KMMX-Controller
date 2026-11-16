@@ -54,7 +54,7 @@ bool operator==(const Settings& a, const Settings& b) {
     return a.threshold == b.threshold && a.gain == b.gain && a.response == b.response;
 }
 bool valid(const Settings& s) {
-    return std::isfinite(s.threshold) && s.threshold >= 1 && s.threshold <= 1000 &&
+    return std::isfinite(s.threshold) && s.threshold >= 500 && s.threshold <= 10000 &&
            std::isfinite(s.gain) && s.gain >= 0.25f && s.gain <= 4 && uint8_t(s.response) <= 2;
 }
 bool decodeSettings(const uint8_t* bytes, size_t size, Settings& settings) {
@@ -159,7 +159,7 @@ void Core::frame(float rms, bool validAudio, bool clipped, bool nonzero,
             if (sampleCount == 64) {
                 std::sort(calibrationSamples, calibrationSamples + 64);
                 Settings value = settings;
-                value.threshold = std::max(1.0f, 1.5f * calibrationSamples[57] + 2);
+                value.threshold = std::max(500.0f, 1.5f * calibrationSamples[57] + 2);
                 if (!anyNonzero) failCalibration(Result::ZeroAudio);
                 else if (!valid(value)) failCalibration(Result::TooLoud);
                 else {

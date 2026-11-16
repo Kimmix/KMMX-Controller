@@ -37,10 +37,10 @@ const uint16_t visemeThFreqMax = 5500;                        // End frequency o
 // Normalization Scale Factors
 // These multipliers balance the sensitivity across different visemes
 // Lower values = less sensitive, Higher values = more sensitive
-constexpr float visemeAhScale = 1.5f;                              // AH viseme scale factor
-constexpr float visemeEeScale = 1.3f;                               // EE viseme scale factor
-constexpr float visemeOhScale = 1.1f;                              // OH viseme scale factor
-constexpr float visemeOoScale = 0.7f;                              // OO viseme scale factor
+constexpr float visemeAhScale = 2.39f;                             // AH viseme scale factor
+constexpr float visemeEeScale = 2.46f;                              // EE viseme scale factor
+constexpr float visemeOhScale = 1.01f;                             // OH viseme scale factor
+constexpr float visemeOoScale = 0.46f;                             // OO viseme scale factor
 constexpr float visemeThScale = 4.2f;                              // TH viseme scale factor
 
 constexpr uint16_t i2sHopSamples = 256; // 16 ms, 50% overlap

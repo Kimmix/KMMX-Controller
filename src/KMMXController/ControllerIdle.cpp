@@ -21,11 +21,11 @@ void KMMXController::resetIdleTime() {
         eyeState.playPrevState();
         mouthState.playPrevState();  // Restore previous state, not just reset animation
         mouthState.setSlowAnimation(false);
+        hornLED.setBrightness(prevHornBright, 5);  // only restore when waking; awake boops must not touch the horn
     }
     stillTime = 0;
     motionCounter = 0;
     isSleeping = false;
-    hornLED.setBrightness(prevHornBright, 5);
 
     if (enableMotionDebug) {
         Serial.println("[IDLE] Reset - Motion detected, returning to active state");
