@@ -9,11 +9,6 @@ float Boop::speedFor(unsigned long elapsed) {
 BoopResult Boop::update(uint16_t proximity, unsigned long now) {
     switch (state) {
         case State::IDLE:
-            if (proximity >= 1023) {
-                state = State::TOO_CLOSE;
-                tooCloseStartedAt = now;
-                return {BoopEvent::TOO_CLOSE};
-            }
             if (proximity >= boopMaxThreshold) {
                 state = State::HELD;
                 return {BoopEvent::COMPLETED, 1.0f};
@@ -53,21 +48,6 @@ BoopResult Boop::update(uint16_t proximity, unsigned long now) {
                 return {BoopEvent::RELEASED};
             }
             return {BoopEvent::IDLE};
-
-        case State::TOO_CLOSE:
-            if (proximity >= 1023) {
-                if (now - tooCloseStartedAt >= disableAfterTooCloseMs) {
-                    state = State::IDLE;
-                    return {BoopEvent::LOCKED_OUT};
-                }
-                return {BoopEvent::TOO_CLOSE};
-            }
-            if (proximity < boopMaxThreshold) {
-                state = State::IDLE;
-                return {BoopEvent::RELEASED};
-            }
-            state = State::HELD;
-            return {BoopEvent::HELD};
 
     }
 

@@ -175,7 +175,6 @@ class KMMXController {
     unsigned long stillTime = 0;  // Time when the accelerometer became still
     uint8_t motionCounter = 0;  // Counter for hysteresis (sustained motion detection)
     bool baselineInitialized = false;  // Whether baseline has been set
-    bool boopLockedOut = false;  // runtime lock-out after sustained too-close; not the user setting
     unsigned long lastBoopUpdate = static_cast<unsigned long>(-50);
     bool isSleeping = false;
     bool accelerometerInitialized = false;  // Track if accelerometer successfully initialized

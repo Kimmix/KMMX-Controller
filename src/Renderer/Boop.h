@@ -7,8 +7,6 @@ enum class BoopEvent {
     APPROACHING,
     COMPLETED,
     HELD,
-    TOO_CLOSE,
-    LOCKED_OUT,
     RELEASED,
     INCOMPLETE_RELEASE
 };
@@ -20,13 +18,10 @@ struct BoopResult {
 
 class Boop {
    private:
-    enum class State { IDLE, APPROACHING, HELD, RELEASING, TOO_CLOSE };
+    enum class State { IDLE, APPROACHING, HELD, RELEASING };
 
     State state = State::IDLE;
     unsigned long approachStartedAt = 0;
-    unsigned long tooCloseStartedAt = 0;
-
-    static constexpr unsigned long disableAfterTooCloseMs = 10000;
 
     static float speedFor(unsigned long elapsed);
 

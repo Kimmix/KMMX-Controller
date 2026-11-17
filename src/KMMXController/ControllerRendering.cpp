@@ -27,8 +27,7 @@ void KMMXController::update() {
     if (boopInitialized) {
         const uint16_t proximity = getSensorData().proximity;
         slotMachine.update(proximity);
-        if (proximity < boopMinThreshold) boopLockedOut = false;
-        if (renderRunning.load() && !gameActive && enableBoopDetection && !boopLockedOut) handleBoop();
+        if (renderRunning.load() && !gameActive && enableBoopDetection) handleBoop();
     }
 }
 

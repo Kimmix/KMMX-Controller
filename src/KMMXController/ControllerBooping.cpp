@@ -32,40 +32,21 @@ void KMMXController::handleBoop() {
             setStateIfDifferent(mouthState, MouthStateEnum::BOOP, 0);
             break;
 
-        case BoopEvent::TOO_CLOSE:
-            fxState.setState(FXStateEnum::IDLE);
-            setStateIfDifferent(eyeState, EyeStateEnum::ANGRY, 0);
-            setStateIfDifferent(mouthState, MouthStateEnum::ANGRYBOOP, 0);
-            resetIdleTime();
-            break;
-
-        case BoopEvent::LOCKED_OUT:
-            boopLockedOut = true;  // cleared in the render loop once proximity drops below boopMinThreshold
-            if (eyeState.getState() == EyeStateEnum::ANGRY) {
-                eyeState.setState(EyeStateEnum::ANGRY, false, 1500);
-            }
-            if (mouthState.getState() == MouthStateEnum::ANGRYBOOP) {
-                mouthState.setState(MouthStateEnum::ANGRYBOOP, false, 1500);
-            }
-            break;
-
         case BoopEvent::INCOMPLETE_RELEASE:
             if (mouthState.getState() == MouthStateEnum::BOOP) {
                 mouthState.setState(MouthStateEnum::BOOP, false, 700);
             }
-            setStateIfDifferent(eyeState, EyeStateEnum::SAD, 3000);
+            if (eyeState.getState() == EyeStateEnum::BOOP) {
+                eyeState.setState(EyeStateEnum::BOOP, false, 700);  // sad face removed on this branch
+            }
             break;
 
         case BoopEvent::RELEASED:
             if (eyeState.getState() == EyeStateEnum::BOOP) {
                 eyeState.releaseBoop(boopFaceDuration);
-            } else if (eyeState.getState() == EyeStateEnum::ANGRY) {
-                eyeState.setState(EyeStateEnum::ANGRY, false, 1500);
             }
             if (mouthState.getState() == MouthStateEnum::BOOP) {
                 mouthState.releaseBoop(boopFaceDuration);
-            } else if (mouthState.getState() == MouthStateEnum::ANGRYBOOP) {
-                mouthState.setState(MouthStateEnum::ANGRYBOOP, false, 1500);
             }
             break;
 
