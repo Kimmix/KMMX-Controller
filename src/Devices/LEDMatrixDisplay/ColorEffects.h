@@ -141,12 +141,12 @@ class ColorEffects {
     float cachedTime;
 
     // Gradient colors for Mode 0 (default KMMX colors, customizable)
-    uint8_t gradientTopR = 255;
-    uint8_t gradientTopG = 163;
-    uint8_t gradientTopB = 147;
-    uint8_t gradientBottomR = 255;
-    uint8_t gradientBottomG = 43;
-    uint8_t gradientBottomB = 91;
+    uint8_t gradientTopR = 0;
+    uint8_t gradientTopG = 64;
+    uint8_t gradientTopB = 238;
+    uint8_t gradientBottomR = 0;
+    uint8_t gradientBottomG = 64;
+    uint8_t gradientBottomB = 238;
 
     // Dual spiral colors for Mode 4 (default cyan, customizable)
     uint8_t dualSpiralR = 0;
