@@ -117,11 +117,11 @@ class EyeState {
         eyeAngry41, eyeAngry42, eyeAngry43, eyeAngry44, eyeAngry45, eyeAngry46, eyeAngry47, eyeAngry48};
 
     const uint8_t* eyeSleepAnimation[48] = {
-        eyeSleep1, eyeSleep2, eyeSleep3, eyeSleep4, eyeSleep5, eyeSleep6, eyeSleep7, eyeSleep8, eyeSleep9, eyeSleep10,
+        eyeSleep0, eyeSleep1, eyeSleep2, eyeSleep3, eyeSleep4, eyeSleep5, eyeSleep6, eyeSleep7, eyeSleep8, eyeSleep9, eyeSleep10,
         eyeSleep11, eyeSleep12, eyeSleep13, eyeSleep14, eyeSleep15, eyeSleep16, eyeSleep17, eyeSleep18, eyeSleep19, eyeSleep20,
         eyeSleep21, eyeSleep22, eyeSleep23, eyeSleep24, eyeSleep25, eyeSleep26, eyeSleep27, eyeSleep28, eyeSleep29, eyeSleep30,
         eyeSleep31, eyeSleep32, eyeSleep33, eyeSleep34, eyeSleep35, eyeSleep36, eyeSleep37, eyeSleep38, eyeSleep39, eyeSleep40,
-        eyeSleep41, eyeSleep42, eyeSleep43, eyeSleep44, eyeSleep45, eyeSleep46, eyeSleep47, eyeSleep48};
+        eyeSleep41, eyeSleep42, eyeSleep43, eyeSleep44, eyeSleep45, eyeSleep46, eyeSleep47 };
     const uint8_t sleepLength = arrayLength(eyeSleepAnimation);
 
     const uint8_t* sadAnimation[20] = {
