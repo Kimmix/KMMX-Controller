@@ -329,10 +329,7 @@ void EyeState::updateIdleMicroMovements() {
         return;
     }
 
-    const uint32_t expression = esp_random() % 100;
-    pendingIdleFrame = expression < 80 ? 1 + (esp_random() % 4)
-                       : expression < 95 ? ((esp_random() % 2) ? 5 : 9)
-                                         : 6 + (esp_random() % 3);
+    pendingIdleFrame = 1 + (esp_random() % 2);
     nextIdleAction = now + 40;
 }
 
