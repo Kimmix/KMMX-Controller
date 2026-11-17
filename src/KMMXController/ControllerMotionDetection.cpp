@@ -205,7 +205,7 @@ void KMMXController::checkMotionFeatures(KMMXController* controller) {
     // Petting detection (runs if already active OR if fully idle)
     // When active: runs happiness decay and state restoration logic
     // When idle: can trigger new petting responses
-    if (enablePettingDetection) {
+    if (false && enablePettingDetection) { // petting disabled on this branch
         bool shouldRunPetting = controller->pettingDetector.isPetting || isFullyIdle;
         if (shouldRunPetting) {
             controller->detectPetting(current);
