@@ -96,11 +96,11 @@ class EyeState {
 
     // Unified animation storage for states with transition + loop pattern
     const uint8_t* boopAnimation[48] = {
-        eyeArrow0, eyeArrow1, eyeArrow2, eyeArrow3, eyeArrow4, eyeArrow5, eyeArrow6, eyeArrow7, eyeArrow8, eyeArrow9, eyeArrow10,
+        eyeArrow1, eyeArrow2, eyeArrow3, eyeArrow4, eyeArrow5, eyeArrow6, eyeArrow7, eyeArrow8, eyeArrow9, eyeArrow10,
         eyeArrow11, eyeArrow12, eyeArrow13, eyeArrow14, eyeArrow15, eyeArrow16, eyeArrow17, eyeArrow18, eyeArrow19, eyeArrow20,
         eyeArrow21, eyeArrow22, eyeArrow23, eyeArrow24, eyeArrow25, eyeArrow26, eyeArrow27, eyeArrow28, eyeArrow29, eyeArrow30,
         eyeArrow31, eyeArrow32, eyeArrow33, eyeArrow34, eyeArrow35, eyeArrow36, eyeArrow37, eyeArrow38, eyeArrow39, eyeArrow40,
-        eyeArrow41, eyeArrow42, eyeArrow43, eyeArrow44, eyeArrow45, eyeArrow46, eyeArrow47};
+        eyeArrow41, eyeArrow42, eyeArrow43, eyeArrow44, eyeArrow45, eyeArrow46, eyeArrow47, eyeArrow48};
 
     const uint8_t* oFaceAnimation[48] = {
         eyeCircle1, eyeCircle2, eyeCircle3, eyeCircle4, eyeCircle5, eyeCircle6, eyeCircle7, eyeCircle8, eyeCircle9, eyeCircle10,
